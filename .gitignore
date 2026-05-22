@@ -1,0 +1,70 @@
+# Dependencias
+node_modules/
+**/node_modules/
+
+# Archivos y compilaciones de Expo/React Native
+.expo/
+dist/
+build/
+web-build/
+**/dist/
+**/build/
+
+# Compilaciones nativas (Android/iOS)
+android/build/
+android/app/build/
+android/.gradle
+android/.cxx
+android/local.properties
+android/captures/
+ios/build/
+ios/Pods/
+ios/DerivedData/
+
+# .NET build artifacts (si tienes un backend c# en el mismo repo)
+**/bin/
+**/obj/
+*.user
+*.suo
+
+# Variables de entorno (NUNCA SUBIR CREDENCIALES)
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDEs y editores de código
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.iml
+local.properties
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos temporales y otros
+*.tmp
+nul
+users.txt
+*.tsbuildinfo
+
+# Certificados y llaves (seguridad)
+*.pem
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*

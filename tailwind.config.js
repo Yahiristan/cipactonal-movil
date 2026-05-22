@@ -1,0 +1,10 @@
+
+module.exports = {
+  content: ['./App.{js,ts,tsx}', './components/**/*.{js,ts,tsx}'],
+
+  presets: [require('nativewind/dist/tailwind')],
+  theme: {
+    extend: {}
+  },
+  plugins: []
+};

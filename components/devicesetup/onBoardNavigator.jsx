@@ -1,0 +1,320 @@
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Alert, ActivityIndicator, View, Text, StatusBar } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { WelcomeScreen } from './WelcomeScreen';
+import { CompanyAffiliationScreen } from './CompanyAffilationScreen';
+import { DeviceConfigScreen } from './DeviceConfigScreen';
+import { PendingApprovalScreen } from './PendingApprovalScreen';
+import { ApprovedScreen } from './ApprovedScreen';
+import { RejectedScreen } from './RejectedScreen';
+import { getSolicitudPorToken } from '../../services/solicitudMovilService';
+import { getEmpresaPublicaById } from '../../services/empresaService';
+
+const STORAGE_KEYS = {
+  DEVICE_ID: '@device_id',
+  SOLICITUD_ID: '@solicitud_id',
+  TOKEN_SOLICITUD: '@token_solicitud',
+  USER_EMAIL: '@user_email',
+  DEVICE_INFO: '@device_info',
+  EMPRESA_ID: '@empresa_id',
+  EMPRESA_NOMBRE: '@empresa_nombre',
+  APPROVAL_DATE: '@approval_date',
+  ONBOARDING_COMPLETED: '@onboarding_completed'
+};
+
+export const OnboardingNavigator = ({ onComplete, userData, onLogout }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [onboardingData, setOnboardingData] = useState({
+    email: userData?.correo || '',
+    empresaId: userData?.empleadoInfo?.empresa_id || '',
+    empresaNombre: userData?.empleadoInfo?.empresa_nombre || '',
+    empresaIdentificador: userData?.empleadoInfo?.empresa_identificador || '',
+    nombreUsuario: userData?.nombre || '',
+    empleadoId: userData?.empleado_id || null,
+    deviceInfo: {},
+    tokenSolicitud: '',
+    idSolicitud: null,
+    idDispositivo: null,
+    fechaAprobacion: null,
+    motivoRechazo: ''
+  });
+
+  useEffect(() => {
+    checkExistingDevice();
+  }, []);
+
+  const checkExistingDevice = async () => {
+    try {
+
+      const [solicitudId, tokenSolicitud] = await Promise.all([
+      AsyncStorage.getItem(STORAGE_KEYS.SOLICITUD_ID),
+      AsyncStorage.getItem(STORAGE_KEYS.TOKEN_SOLICITUD)]
+      );
+
+      if (solicitudId && tokenSolicitud) {
+
+        try {
+          const response = await getSolicitudPorToken(tokenSolicitud);
+          const estadoLower = response.estado?.toLowerCase();
+
+          if (estadoLower === 'aceptado') {
+
+            await AsyncStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETED, 'true');
+
+            const savedData = {
+              idDispositivo: response.dispositivo_id || solicitudId,
+              idSolicitud: solicitudId,
+              email: userData?.correo || '',
+              empresaId: userData?.empleadoInfo?.empresa_id || '',
+              empresaNombre: userData?.empleadoInfo?.empresa_nombre || '',
+              deviceInfo: {},
+              fechaAprobacion: response.fecha_respuesta || null
+            };
+
+            onComplete(savedData);
+            return;
+          } else if (estadoLower === 'pendiente') {
+
+            setOnboardingData((prev) => ({
+              ...prev,
+              tokenSolicitud,
+              idSolicitud: solicitudId
+            }));
+            setCurrentStep(3);
+            setIsLoading(false);
+            return;
+          } else if (estadoLower === 'rechazado') {
+
+            setOnboardingData((prev) => ({
+              ...prev,
+              motivoRechazo: response.observaciones || 'No especificado'
+            }));
+            setCurrentStep(5);
+            setIsLoading(false);
+            return;
+          }
+        } catch (error) {
+
+          await clearDeviceData();
+        }
+      }
+
+      // Si el usuario tiene empresa_id, obtener el identificador slug desde el endpoint público
+      const empresaId = userData?.empleadoInfo?.empresa_id || userData?.empresa_id;
+      if (empresaId) {
+        try {
+          const publicData = await getEmpresaPublicaById(empresaId);
+          if (publicData?.success && publicData?.data?.identificador) {
+            setOnboardingData((prev) => ({
+              ...prev,
+              empresaIdentificador: publicData.data.identificador
+            }));
+          }
+        } catch (_) {
+          // Si falla, simplemente no pre-llena el campo, sin bloquear el flujo
+        }
+      }
+
+      setIsLoading(false);
+
+    } catch (error) {
+      setIsLoading(false);
+    }
+  };
+
+  const saveDeviceData = async (data) => {
+    try {
+      await Promise.all([
+      AsyncStorage.setItem(STORAGE_KEYS.DEVICE_ID, data.idDispositivo?.toString() || ''),
+      AsyncStorage.setItem(STORAGE_KEYS.SOLICITUD_ID, data.idSolicitud?.toString() || ''),
+      AsyncStorage.setItem(STORAGE_KEYS.TOKEN_SOLICITUD, data.tokenSolicitud || ''),
+      AsyncStorage.setItem(STORAGE_KEYS.USER_EMAIL, data.email || ''),
+      AsyncStorage.setItem(STORAGE_KEYS.EMPRESA_ID, data.empresaId || ''),
+      AsyncStorage.setItem(STORAGE_KEYS.EMPRESA_NOMBRE, data.empresaNombre || ''),
+      AsyncStorage.setItem(STORAGE_KEYS.DEVICE_INFO, JSON.stringify(data.deviceInfo || {})),
+      AsyncStorage.setItem(STORAGE_KEYS.APPROVAL_DATE, data.fechaAprobacion || ''),
+      AsyncStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETED, 'true')]
+      );
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const clearDeviceData = async () => {
+    try {
+      await Promise.all([
+      AsyncStorage.removeItem(STORAGE_KEYS.DEVICE_ID),
+      AsyncStorage.removeItem(STORAGE_KEYS.SOLICITUD_ID),
+      AsyncStorage.removeItem(STORAGE_KEYS.TOKEN_SOLICITUD),
+      AsyncStorage.removeItem(STORAGE_KEYS.USER_EMAIL),
+      AsyncStorage.removeItem(STORAGE_KEYS.EMPRESA_ID),
+      AsyncStorage.removeItem(STORAGE_KEYS.EMPRESA_NOMBRE),
+      AsyncStorage.removeItem(STORAGE_KEYS.DEVICE_INFO),
+      AsyncStorage.removeItem(STORAGE_KEYS.APPROVAL_DATE),
+      AsyncStorage.removeItem(STORAGE_KEYS.ONBOARDING_COMPLETED)]
+      );
+    } catch (error) {
+    }
+  };
+
+  const handleNext = (data) => {
+    setOnboardingData((prev) => ({ ...prev, ...data }));
+    setCurrentStep((prev) => prev + 1);
+  };
+
+  const handlePrevious = () => {
+    setCurrentStep((prev) => prev - 1);
+  };
+
+  const handleApproved = async (approvalData) => {
+    const completeData = {
+      ...onboardingData,
+      idDispositivo: approvalData.idDispositivo,
+      idSolicitud: approvalData.idSolicitud,
+      fechaAprobacion: approvalData.fechaAprobacion
+    };
+
+    setOnboardingData(completeData);
+    setCurrentStep(4);
+  };
+
+  const handleRejected = async (rejectionData) => {
+    const completeData = {
+      ...onboardingData,
+      motivoRechazo: rejectionData.observaciones || 'No se especificó un motivo'
+    };
+
+    setOnboardingData(completeData);
+    setCurrentStep(5);
+  };
+
+  const handleRetry = async () => {
+
+    await clearDeviceData();
+
+    setOnboardingData((prev) => ({
+      ...prev,
+      tokenSolicitud: '',
+      idSolicitud: null,
+      motivoRechazo: ''
+    }));
+
+    setCurrentStep(0);
+  };
+
+  const handleComplete = async () => {
+    try {
+      await saveDeviceData(onboardingData);
+      onComplete(onboardingData);
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        'No se pudieron guardar los datos. Por favor intenta nuevamente.',
+        [
+        { text: 'Reintentar', onPress: handleComplete },
+        { text: 'Cancelar', style: 'cancel' }]
+
+      );
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.container, styles.loadingContainer]}>
+        <StatusBar barStyle="light-content" backgroundColor="#2563eb" />
+        <ActivityIndicator size="large" color="#2563eb" />
+        <Text style={styles.loadingText}>Verificando estado del dispositivo...</Text>
+      </SafeAreaView>);
+
+  }
+
+  return (
+    <SafeAreaProvider>
+      <View style={styles.container}>
+        {}
+        {currentStep === 0 &&
+        <WelcomeScreen
+          onNext={() => setCurrentStep(1)}
+          userName={userData?.nombre} />
+
+        }
+
+        {}
+        {currentStep === 1 &&
+        <CompanyAffiliationScreen
+          onNext={handleNext}
+          onPrevious={() => setCurrentStep(0)}
+          initialEmpresaId={onboardingData.empresaId}
+          initialEmpresaIdentificador={onboardingData.empresaIdentificador} />
+
+        }
+
+        {}
+        {currentStep === 2 &&
+        <DeviceConfigScreen
+          empresaId={onboardingData.empresaId}
+          empresaNombre={onboardingData.empresaNombre}
+          onNext={handleNext}
+          onPrevious={() => setCurrentStep(1)}
+          initialEmail={onboardingData.email}
+          userData={userData} />
+
+        }
+
+        {}
+        {currentStep === 3 &&
+        <PendingApprovalScreen
+          tokenSolicitud={onboardingData.tokenSolicitud}
+          idSolicitud={onboardingData.idSolicitud}
+          onApproved={handleApproved}
+          onRejected={handleRejected} />
+
+        }
+
+        {}
+        {currentStep === 4 &&
+        <ApprovedScreen
+          email={onboardingData.email}
+          empresaNombre={onboardingData.empresaNombre}
+          deviceInfo={onboardingData.deviceInfo}
+          onComplete={handleComplete} />
+
+        }
+
+        {}
+        {currentStep === 5 &&
+        <RejectedScreen
+          motivoRechazo={onboardingData.motivoRechazo}
+          onRetry={handleRetry}
+          onCancel={async () => {
+
+            await clearDeviceData();
+            await AsyncStorage.removeItem('userToken');
+            await AsyncStorage.removeItem('userData');
+            if (onLogout) onLogout();
+          }} />
+
+        }
+      </View>
+    </SafeAreaProvider>);
+
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f9fafb'
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '500'
+  }
+});
