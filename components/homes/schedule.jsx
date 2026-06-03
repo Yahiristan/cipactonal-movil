@@ -328,11 +328,11 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
 
           { }
           {diaFestivo ?
-            <View style={[styles.dayOffCard, { borderColor: '#8b5cf6', borderWidth: 1, backgroundColor: darkMode ? 'rgba(139, 92, 246, 0.1)' : '#f3f0ff' }]}>
-              <View style={[styles.dayOffIcon, { backgroundColor: darkMode ? 'rgba(139, 92, 246, 0.2)' : '#ede9fe' }]}>
-                <Ionicons name="calendar-outline" size={48} color={darkMode ? "#c4b5fd" : "#8b5cf6"} />
+            <View style={styles.dayOffCard}>
+              <View style={styles.dayOffIcon}>
+                <Ionicons name="calendar-outline" size={48} color={darkMode ? "#60a5fa" : "#2563eb"} />
               </View>
-              <Text style={[styles.dayOffTitle, { color: darkMode ? '#c4b5fd' : '#7c3aed' }]}>Día Festivo</Text>
+              <Text style={styles.dayOffTitle}>Día Festivo</Text>
               <Text style={styles.dayOffText}>{diaFestivo.nombre}</Text>
             </View> :
             infoHoy.trabaja && infoHoy.turnoRelevante ?
@@ -352,7 +352,7 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
                 <View style={styles.currentShiftContainer}>
                   <View style={styles.shiftTimeRow}>
                     <View style={styles.shiftTimeBlock}>
-                      <Ionicons name="time-outline" size={24} color={darkMode ? "#3794fd" : "#6366f1"} />
+                      <Ionicons name="time-outline" size={24} color={darkMode ? "#60a5fa" : "#2563eb"} />
                       <View style={styles.shiftTimeInfo}>
                         <Text style={styles.shiftLabel}>
                           {infoHoy.turnoRelevante.estado === 'activo' ? 'En turno' : 'Próximo turno'}
@@ -375,11 +375,11 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
                         handleDayPress(diaHoy);
                       }}>
 
-                      <Ionicons name="albums-outline" size={18} color={darkMode ? "#3794fd" : "#6366f1"} />
+                      <Ionicons name="albums-outline" size={18} color={darkMode ? "#60a5fa" : "#2563eb"} />
                       <Text style={styles.moreTurnsText}>
                         {infoHoy.turnos.length} turnos hoy - Ver todos
                       </Text>
-                      <Ionicons name="chevron-forward" size={18} color={darkMode ? "#3794fd" : "#6366f1"} />
+                      <Ionicons name="chevron-forward" size={18} color={darkMode ? "#60a5fa" : "#2563eb"} />
                     </TouchableOpacity>
                   }
                 </View>
@@ -399,7 +399,7 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
 
                 <View style={styles.dayOffCard}>
                   <View style={styles.dayOffIcon}>
-                    <Ionicons name="cafe-outline" size={48} color={darkMode ? "#3794fd" : "#6366f1"} />
+                    <Ionicons name="cafe-outline" size={48} color={darkMode ? "#60a5fa" : "#2563eb"} />
                   </View>
                   <Text style={styles.dayOffTitle}>Día de Descanso</Text>
                   <Text style={styles.dayOffText}>Disfruta tu día libre</Text>
@@ -489,15 +489,10 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
                           <View style={styles.todayDot} />
                         }
                       </View>
-                      <Text style={[
-                        styles.scheduleLocation,
-                        !schedule.active && styles.scheduleLocationInactive]
-                      }>
-                        {schedule.location}
-                      </Text>
+                      
                       {tieneMasTurnos &&
                         <View style={styles.multipleTurnsBadge}>
-                          <Ionicons name="albums-outline" size={10} color={darkMode ? "#3794fd" : "#8b5cf6"} />
+                          <Ionicons name="albums-outline" size={10} color={darkMode ? "#60a5fa" : "#2563eb"} />
                           <Text style={styles.multipleTurnsText}>{schedule.turnos.length} turnos</Text>
                         </View>
                       }
@@ -530,7 +525,7 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
 
               <View style={styles.incidenciasLeft}>
                 <View style={styles.incidenciasIcon}>
-                  <Ionicons name="document-text-outline" size={24} color={darkMode ? '#d8b4fe' : '#9333ea'} />
+                  <Ionicons name="document-text-outline" size={24} color={darkMode ? '#60a5fa' : '#2563eb'} />
                 </View>
                 <View>
                   <Text style={styles.incidenciasTitle}>Incidencias</Text>
@@ -581,10 +576,10 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
               overScrollMode="never">
 
               {selectedDay?.festivo && (
-                <View style={{ marginBottom: 16, backgroundColor: darkMode ? 'rgba(139, 92, 246, 0.1)' : '#f3f0ff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#8b5cf6' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                    <Ionicons name="calendar-outline" size={24} color={darkMode ? "#c4b5fd" : "#8b5cf6"} />
-                    <Text style={{ marginLeft: 8, fontSize: 16, fontWeight: 'bold', color: darkMode ? '#c4b5fd' : '#7c3aed' }}>
+                <View style={{ marginBottom: 16, backgroundColor: darkMode ? 'rgba(37, 99, 235, 0.1)' : '#eff6ff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#2563eb' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Ionicons name="calendar-outline" size={24} color={darkMode ? "#60a5fa" : "#2563eb"} />
+                    <Text style={{ marginLeft: 8, fontSize: 16, fontWeight: 'bold', color: darkMode ? "#60a5fa" : "#2563eb" }}>
                       Día Festivo: {selectedDay.festivo.nombre}
                     </Text>
                   </View>

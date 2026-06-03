@@ -97,8 +97,8 @@ export const NotificationsScreen = ({ darkMode, onBack }) => {
     id: 'avisos',
     titulo: 'Avisos',
     icono: 'megaphone',
-    colorIcono: darkMode ? '#a78bfa' : '#7c3aed',
-    bgIcono: darkMode ? '#4c1d95' : '#ede9fe',
+    colorIcono: darkMode ? '#2dd4bf' : '#0d9488',
+    bgIcono: darkMode ? '#134e4a' : '#ccfbf1',
     opciones: [
     {
       key: 'avisos',
@@ -233,11 +233,13 @@ const notifStyles = StyleSheet.create({
     paddingBottom: 90
   },
   infoCard: {
-    backgroundColor: '#dbeafe',
+    backgroundColor: '#eff6ff',
     borderRadius: 16,
     padding: 18,
     alignItems: 'center',
-    marginBottom: 16
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#bfdbfe'
   },
   infoTitle: {
     fontSize: 16,
@@ -257,11 +259,8 @@ const notifStyles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 18,
     paddingVertical: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
     marginBottom: 0
   },
   seccionHeader: {
@@ -323,7 +322,8 @@ const notifStylesDark = StyleSheet.create({
   },
   infoCard: {
     ...notifStyles.infoCard,
-    backgroundColor: '#1e3a8a'
+    backgroundColor: '#1e3a8a',
+    borderColor: '#1e40af'
   },
   infoTitle: {
     ...notifStyles.infoTitle,
@@ -335,7 +335,8 @@ const notifStylesDark = StyleSheet.create({
   },
   seccion: {
     ...notifStyles.seccion,
-    backgroundColor: '#1e293b'
+    backgroundColor: '#1e293b',
+    borderColor: '#334155'
   },
   seccionTitulo: {
     ...notifStyles.seccionTitulo,

@@ -179,11 +179,7 @@ export const TermsAndConditionsScreen = ({ darkMode, onBack }) => {
             <View style={styles.introTextContainer}>
               <Text style={styles.introTitle}>Última actualización</Text>
               <Text style={styles.introDate}>
-                {new Date().toLocaleDateString('es-ES', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric'
-                })}
+                2 de Junio de 2026
               </Text>
             </View>
           </View>
@@ -326,14 +322,11 @@ const termsStyles = StyleSheet.create({
   },
   introCard: {
     backgroundColor: '#fff',
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 20,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
   },
   introHeader: {
     flexDirection: 'row',
@@ -378,18 +371,11 @@ const termsStyles = StyleSheet.create({
     borderRadius: 16,
     marginBottom: 12,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-    borderWidth: 2,
-    borderColor: 'transparent'
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0'
   },
   sectionCardExpanded: {
-    borderColor: '#dbeafe',
-    shadowOpacity: 0.12,
-    elevation: 4
+    borderColor: '#2563eb'
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -409,11 +395,6 @@ const termsStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3
   },
   sectionTitle: {
     fontSize: 15,
@@ -456,11 +437,6 @@ const termsStyles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#2563eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3
   },
   buttonGradient: {
     flexDirection: 'row',
@@ -477,10 +453,10 @@ const termsStyles = StyleSheet.create({
   },
 
   declineButton: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#fee2e2',
+    borderWidth: 1.5,
+    borderColor: '#ef4444',
     overflow: 'hidden'
   },
   declineContent: {
@@ -524,7 +500,8 @@ const termsStylesDark = StyleSheet.create({
   },
   introCard: {
     ...termsStyles.introCard,
-    backgroundColor: '#1e293b'
+    backgroundColor: '#1e293b',
+    borderColor: '#334155'
   },
   introIconContainer: {
     ...termsStyles.introIconContainer,
@@ -544,11 +521,12 @@ const termsStylesDark = StyleSheet.create({
   },
   sectionCard: {
     ...termsStyles.sectionCard,
-    backgroundColor: '#1e293b'
+    backgroundColor: '#1e293b',
+    borderColor: '#334155'
   },
   sectionCardExpanded: {
     ...termsStyles.sectionCardExpanded,
-    borderColor: '#2563eb'
+    borderColor: '#3b82f6'
   },
   sectionTitle: {
     ...termsStyles.sectionTitle,
@@ -569,12 +547,12 @@ const termsStylesDark = StyleSheet.create({
 
   declineButton: {
     ...termsStyles.declineButton,
-    backgroundColor: '#1e293b',
-    borderColor: '#7f1d1d'
+    backgroundColor: '#0f172a',
+    borderColor: '#ef4444'
   },
   declineButtonText: {
     ...termsStyles.declineButtonText,
-    color: '#fca5a5'
+    color: '#ef4444'
   },
   footer: {
     ...termsStyles.footer,

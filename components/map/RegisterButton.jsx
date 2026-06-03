@@ -1347,7 +1347,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         return;
       }
 
-(function () { })(' Validación facial detectó rostro de calidad, enviando imagen al servidor para verificar identidad...');
+      (function () { })(' Validación facial detectó rostro de calidad, enviando imagen al servidor para verificar identidad...');
 
       const empleadoId = userData?.empleado?.id || userData?.empleado_id || userData?.id;
 
@@ -1802,8 +1802,13 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
     if (!dentroDelArea) return 'Fuera del área';
     if (!puedeRegistrar) return 'Fuera de horario';
     if (!tipoSiguienteRegistro) return 'Calculando estado...';
-    if (tipoSiguienteRegistro === 'salida') return 'Listo para salida';
-    return 'Listo para entrada';
+    if (tipoSiguienteRegistro === 'salida' || tipoSiguienteRegistro === 'entrada' || tipoSiguienteRegistro) {
+      if (tieneOmisionGps) return 'GPS Omitido';
+      if (departamentoSeleccionado) return departamentoSeleccionado.nombre;
+      return 'Zona permitida';
+    }
+    
+    return 'Zona permitida';
   };
 
   const getButtonText = () => {
@@ -1931,7 +1936,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
                   }
                 </TouchableOpacity> :
 
-                <View style={[styles.locationInfo, { backgroundColor: '#fef2f2' }]}>
+                <View style={[styles.locationInfo, { borderColor: '#ef4444' }]}>
                   <Ionicons name="location-outline" size={14} color="#ef4444" />
                   <Text style={[styles.locationText, { color: '#ef4444' }]} numberOfLines={1}>
                     Fuera de zona
@@ -2025,7 +2030,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.authModalContent}>
             <View style={styles.authHeader}>
-              <Ionicons name="shield-checkmark" size={48} color="#3b82f6" />
+              <Ionicons name="shield-checkmark" size={48} color="#2563eb" />
               <Text style={styles.authTitle}>Verificar Identidad</Text>
               <Text style={styles.authSubtitle}>
                 Elige cómo deseas autenticarte
@@ -2042,10 +2047,10 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
                     activeOpacity={0.7}>
 
                     <View style={styles.authMethodIcon}>
-                      <Ionicons name={metodo.icono} size={32} color="#3b82f6" />
+                      <Ionicons name={metodo.icono} size={32} color="#2563eb" />
                     </View>
                     <Text style={styles.authMethodName}>{metodo.nombre}</Text>
-                    <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+                    <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
                   </TouchableOpacity>
                 )}
             </View>

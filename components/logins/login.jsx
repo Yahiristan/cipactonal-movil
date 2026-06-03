@@ -187,8 +187,13 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
     setIsOfflineLogin(false);
 
     if (!usuario || !password) {
-      if (!usuario) setUsuarioError('El usuario o correo es requerido');
-      if (!password) setPasswordError('La contraseña es requerida');
+      if (!usuario && !password) {
+        Alert.alert('Advertencia', 'El usuario y la contraseña son requeridos');
+      } else if (!usuario) {
+        Alert.alert('Advertencia', 'El usuario o correo es requerido');
+      } else {
+        Alert.alert('Advertencia', 'La contraseña es requerida');
+      }
       return;
     }
 
@@ -221,7 +226,7 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
           onLoginSuccess(offlineResult.data, true);
           return;
         } else {
-          setGeneralError(offlineResult.error || 'Credenciales inválidas (offline)');
+          Alert.alert('Error', offlineResult.error || 'Credenciales inválidas (offline)');
           setIsLoading(false);
           Animated.sequence([
             Animated.timing(pulseAnim, { toValue: 1.2, duration: 100, useNativeDriver: true }),
@@ -230,7 +235,7 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
           return;
         }
       } catch (err) {
-        setGeneralError('Error al iniciar sesión offline');
+        Alert.alert('Error', 'Error al iniciar sesión offline');
         setIsLoading(false);
         return;
       }
@@ -255,9 +260,9 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
               msg.includes('nválid') ||
               msg.includes('usuario')
             ) {
-              setGeneralError('Usuario o contraseña incorrectos');
+              Alert.alert('Error', 'Usuario o contraseña incorrectos');
             } else {
-              setGeneralError(msg || 'Error al iniciar sesión');
+              Alert.alert('Error', msg || 'Error al iniciar sesión');
             }
             setIsLoading(false);
             return;
@@ -441,9 +446,9 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
           ).start();
         }
       } else if (msg.includes('401') || msg.includes('credentials') || msg.includes('Credenciales')) {
-        setGeneralError('Usuario o contraseña incorrectos');
+        Alert.alert('Error', 'Usuario o contraseña incorrectos');
       } else {
-        setGeneralError(error.message || 'Error al iniciar sesión');
+        Alert.alert('Error', error.message || 'Error al iniciar sesión');
       }
     } finally {
       setIsLoading(false);
@@ -517,38 +522,11 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
               <Text style={styles.subtitle}>Fábrica de Software del ITLAC</Text>
             </View>
 
-            { }
-            <View style={styles.statusRow}>
-              <View style={styles.statusPill}>
-                <Animated.View style={[
-                  styles.statusDot,
-                  { backgroundColor: isWifiConnected ? '#4ade80' : '#f87171', opacity: pulseAnim }]
-                } />
-                <Ionicons
-                  name={isWifiConnected ? 'wifi' : 'wifi'}
-                  size={18}
-                  color="#ffffff" />
-
-              </View>
-
-              <View style={styles.statusPill}>
-                <Animated.View style={[
-                  styles.statusDot,
-                  { backgroundColor: isDbReady ? '#4ade80' : '#f87171', opacity: pulseAnim }]
-                } />
-                <Ionicons
-                  name="server"
-                  size={18}
-                  color="#ffffff" />
-
-              </View>
-            </View>
-
             <View style={styles.formContainer}>
               <Text style={styles.welcomeText}>Iniciar Sesión</Text>
               <View style={styles.inputWrapper}>
                 <Text style={styles.label}>Usuario o Correo</Text>
-                <View style={[styles.inputContainer, usuarioError ? styles.inputError : null]}>
+                <View style={styles.inputContainer}>
                   <Ionicons name="person" size={18} color={darkMode ? '#60a5fa' : '#2563eb'} style={styles.icon} />
                   <TextInput
                     style={styles.input}
@@ -561,17 +539,11 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
                     editable={!isLoading} />
 
                 </View>
-                {usuarioError ?
-                  <View style={styles.errorContainer}>
-                    <Ionicons name="alert-circle" size={12} color="#ef4444" />
-                    <Text style={styles.errorText}>{usuarioError}</Text>
-                  </View> :
-                  null}
               </View>
 
               <View style={styles.inputWrapper}>
                 <Text style={styles.label}>Contraseña</Text>
-                <View style={[styles.inputContainer, passwordError ? styles.inputError : null]}>
+                <View style={styles.inputContainer}>
                   <Ionicons name="lock-closed" size={18} color={darkMode ? '#60a5fa' : '#2563eb'} style={styles.icon} />
                   <TextInput
                     style={styles.input}
@@ -595,20 +567,7 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
 
                   </TouchableOpacity>
                 </View>
-                {passwordError ?
-                  <View style={styles.errorContainer}>
-                    <Ionicons name="alert-circle" size={12} color="#ef4444" />
-                    <Text style={styles.errorText}>{passwordError}</Text>
-                  </View> :
-                  null}
               </View>
-
-              {generalError ?
-                <View style={styles.generalErrorContainer}>
-                  <Ionicons name="warning" size={16} color="#dc2626" />
-                  <Text style={styles.generalErrorText}>{generalError}</Text>
-                </View> :
-                null}
 
               <TouchableOpacity
                 style={styles.loginButtonWrapper}
@@ -647,11 +606,11 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
 const loginStyles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#2563eb'
+    backgroundColor: '#FFFFFF'
   },
   safeArea: {
     flex: 1,
-    backgroundColor: '#2563eb'
+    backgroundColor: '#FFFFFF'
   },
   scrollContent: {
     flexGrow: 1,
@@ -664,15 +623,17 @@ const loginStyles = StyleSheet.create({
     marginBottom: 20
   },
   iconFrame: {
-    backgroundColor: 'white',
+    backgroundColor: '#F5F5F7',
     padding: 12,
     borderRadius: 20,
     marginBottom: 10,
-    elevation: 8,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: '#E5E5E7'
   },
   logoImage: {
     width: 80,
@@ -681,46 +642,14 @@ const loginStyles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#2563eb',
     marginBottom: 2,
     letterSpacing: 0.5
   },
   subtitle: {
     fontSize: 12,
-    color: '#e0f2fe',
+    color: '#6E6E73',
     fontWeight: '500'
-  },
-  statusRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 10,
-    marginBottom: 16
-  },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 30,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-    gap: 10
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 0
-    },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    elevation: 3
-  },
-  statusText: {
-    fontSize: 11,
-    fontWeight: '600'
   },
   formContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.98)',
@@ -767,12 +696,12 @@ const loginStyles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F5F5F7',
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: '#e2e8f0',
-    paddingHorizontal: 12,
-    height: 44
+    paddingHorizontal: 16,
+    height: 56
   },
   inputError: {
     borderColor: '#ef4444',
@@ -801,23 +730,6 @@ const loginStyles = StyleSheet.create({
     fontSize: 11,
     marginLeft: 4,
     fontWeight: '500'
-  },
-  generalErrorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fee2e2',
-    borderLeftWidth: 3,
-    borderLeftColor: '#dc2626',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 12
-  },
-  generalErrorText: {
-    color: '#991b1b',
-    fontSize: 12,
-    marginLeft: 8,
-    flex: 1,
-    fontWeight: '600'
   },
   loginButtonWrapper: {
     borderRadius: 12,
@@ -850,11 +762,11 @@ const loginStyles = StyleSheet.create({
     alignItems: 'center'
   },
   copyright: {
-    color: '#e0f2fe',
+    color: '#6E6E73',
     fontSize: 11,
     textAlign: 'center',
     marginTop: 16,
-    fontWeight: '500'
+    marginBottom: 20
   }
 });
 

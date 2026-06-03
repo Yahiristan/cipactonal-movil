@@ -409,9 +409,6 @@ export const HistoryScreen = ({ darkMode, userData }) => {
         }]
         } />
         <Text style={styles.sectionTitle}>{formatearTituloDia(section.fecha)}</Text>
-        <Text style={styles.sectionCount}>
-          {totalRegistros} {totalRegistros === 1 ? 'registro' : 'registros'}
-        </Text>
       </View>);
 
   }, [styles, formatearTituloDia]);
@@ -533,9 +530,6 @@ export const HistoryScreen = ({ darkMode, userData }) => {
             </TouchableOpacity>
           }
         </View>
-        <Text style={styles.recordsCount}>
-          {asistencias.length} registros en el mes
-        </Text>
       </View>
     </>;
 
@@ -605,7 +599,7 @@ const historyStyles = StyleSheet.create({
     paddingBottom: 20,
     paddingHorizontal: 20
   },
-  headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#fff' },
+  headerTitle: { fontSize: 28, fontWeight: '800', color: '#fff', letterSpacing: -0.3 },
   headerSubtitle: { fontSize: 12, color: '#e0f2fe', fontWeight: '500', marginTop: 2 },
 
   monthSelector: {
@@ -617,12 +611,12 @@ const historyStyles = StyleSheet.create({
     backgroundColor: '#fff',
     marginTop: 16,
     marginHorizontal: 16,
-    borderRadius: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    borderRadius: 20,
+    elevation: 3,
+    shadowColor: '#64748b',
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
-    shadowRadius: 3
+    shadowRadius: 12
   },
   monthButton: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
   monthButtonText: { color: '#2563eb' },
@@ -633,13 +627,13 @@ const historyStyles = StyleSheet.create({
     backgroundColor: '#fff',
     marginHorizontal: 16,
     marginTop: 12,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    elevation: 3,
+    shadowColor: '#64748b',
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
-    shadowRadius: 3
+    shadowRadius: 12
   },
   weekDays: { flexDirection: 'row', marginBottom: 10 },
   weekDay: { flex: 1, alignItems: 'center' },
@@ -669,14 +663,14 @@ const historyStyles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 16,
+    padding: 14,
     borderLeftWidth: 4,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2
+    elevation: 2,
+    shadowColor: '#64748b',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8
   },
   statNumber: { fontSize: 22, fontWeight: '800', color: '#1f2937' },
   statLabel: { fontSize: 11, color: '#64748b', marginTop: 2, fontWeight: '500' },
@@ -702,24 +696,26 @@ const historyStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 6,
+    padding: 16,
+    borderRadius: 20,
+    marginBottom: 10,
     marginHorizontal: 16,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2
+    elevation: 3,
+    shadowColor: '#64748b',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    borderWidth: 1,
+    borderColor: '#f8fafc'
   },
   recordIconContainer: {
     width: 40, height: 40, borderRadius: 10,
     justifyContent: 'center', alignItems: 'center', marginRight: 12
   },
   recordContent: { flex: 1 },
-  recordType: { fontSize: 15, fontWeight: '600', color: '#1f2937' },
-  recordEstado: { fontSize: 12, fontWeight: '500', marginTop: 2 },
-  recordHora: { fontSize: 15, fontWeight: '700', color: '#374151' },
+  recordType: { fontSize: 16, fontWeight: '800', color: '#072146', letterSpacing: -0.2 },
+  recordEstado: { fontSize: 12, fontWeight: '600', marginTop: 2 },
+  recordHora: { fontSize: 16, fontWeight: '800', color: '#072146' },
 
   recordIconContainerSmall: {
     width: 24, height: 24, borderRadius: 6,
@@ -729,15 +725,17 @@ const historyStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
+    padding: 18,
+    borderRadius: 20,
+    marginBottom: 12,
     marginHorizontal: 16,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2
+    elevation: 3,
+    shadowColor: '#64748b',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    borderWidth: 1,
+    borderColor: '#f8fafc'
   },
   pairHalf: {
     flex: 1

@@ -39,9 +39,10 @@ export const SettingsScreen = ({
   email,
   darkMode,
   onToggleDarkMode,
-  onLogout
+  onLogout,
+  initialSection
 }) => {
-  const [showPersonalInfo, setShowPersonalInfo] = useState(false);
+  const [showPersonalInfo, setShowPersonalInfo] = useState(initialSection === 'personalinfo');
   const [showTerms, setShowTerms] = useState(false);
   const [showSupport, setShowSupport] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
@@ -179,7 +180,7 @@ export const SettingsScreen = ({
         { }
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="image" size={18} color={darkMode ? '#3794fd' : '#6897ff'} />
+            <Ionicons name="image" size={18} color={darkMode ? '#3794fd' : '#2563eb'} />
             <Text style={styles.sectionTitle}>Apariencia</Text>
           </View>
 
@@ -212,7 +213,7 @@ export const SettingsScreen = ({
         { }
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="person-circle" size={18} color={darkMode ? '#3794fd' : '#6366f1'} />
+            <Ionicons name="person-circle" size={18} color={darkMode ? '#3794fd' : '#2563eb'} />
             <Text style={styles.sectionTitle}>Cuenta</Text>
           </View>
 
@@ -239,8 +240,8 @@ export const SettingsScreen = ({
             activeOpacity={0.7}>
 
             <View style={styles.settingLeft}>
-              <View style={[styles.iconCircle, { backgroundColor: darkMode ? '#4c1d95' : '#ede9fe' }]}>
-                <Ionicons name="lock-closed-outline" size={22} color={darkMode ? '#a78bfa' : '#7c3aed'} />
+              <View style={[styles.iconCircle, { backgroundColor: darkMode ? 'rgba(71, 85, 105, 0.2)' : '#f1f5f9' }]}>
+                <Ionicons name="lock-closed-outline" size={22} color={darkMode ? '#94a3b8' : '#475569'} />
               </View>
               <View style={styles.settingTextContainer}>
                 <Text style={styles.settingTitle}>Seguridad</Text>
@@ -253,7 +254,7 @@ export const SettingsScreen = ({
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="apps" size={18} color={darkMode ? '#3794fd' : '#6366f1'} />
+            <Ionicons name="apps" size={18} color={darkMode ? '#3794fd' : '#2563eb'} />
             <Text style={styles.sectionTitle}>Aplicación</Text>
           </View>
           <TouchableOpacity
@@ -292,7 +293,7 @@ export const SettingsScreen = ({
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="document-text" size={18} color={darkMode ? '#3794fd' : '#7476d3'} />
+            <Ionicons name="document-text" size={18} color={darkMode ? '#3794fd' : '#2563eb'} />
             <Text style={styles.sectionTitle}>Legal</Text>
           </View>
 
@@ -318,7 +319,7 @@ export const SettingsScreen = ({
             <Ionicons
               name="information-circle"
               size={18}
-              color={darkMode ? '#3794fd' : '#6366f1'} />
+              color={darkMode ? '#3794fd' : '#2563eb'} />
 
             <Text style={styles.sectionTitle}>Información de la App</Text>
           </View>
@@ -347,7 +348,7 @@ export const SettingsScreen = ({
           activeOpacity={0.85}>
 
           <View style={styles.logoutGradient}>
-            <Ionicons name="log-out-outline" size={24} color="#fff" />
+            <Ionicons name="log-out-outline" size={24} color="#ef4444" />
             <Text style={styles.logoutText}>Cerrar Sesión</Text>
           </View>
         </TouchableOpacity>
@@ -364,7 +365,7 @@ const settingsStyles = StyleSheet.create({
   header: {
     backgroundColor: '#2563eb',
     paddingTop: Platform.OS === 'android' ? 16 : 50,
-    paddingBottom: 20,
+    paddingBottom: 24,
     paddingHorizontal: 20
   },
   headerTitle: {
@@ -384,15 +385,12 @@ const settingsStyles = StyleSheet.create({
     paddingBottom: 120
   },
   profileCard: {
-    borderRadius: 24,
+    borderRadius: 16,
     marginBottom: 24,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-    backgroundColor: '#ffffff'
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
   },
   profileGradient: {
     padding: 24
@@ -473,14 +471,11 @@ const settingsStyles = StyleSheet.create({
   },
   section: {
     backgroundColor: '#fff',
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 20,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -552,25 +547,22 @@ const settingsStyles = StyleSheet.create({
     marginVertical: 4
   },
   logoutButton: {
-    borderRadius: 20,
+    borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3
+    borderWidth: 1.5,
+    borderColor: '#ef4444',
+    backgroundColor: '#ffffff',
   },
   logoutGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
+    paddingVertical: 16,
     gap: 12,
-    backgroundColor: '#ef4444'
   },
   logoutText: {
-    color: '#fff',
+    color: '#ef4444',
     fontSize: 17,
     fontWeight: '700',
     letterSpacing: 0.5
@@ -589,7 +581,8 @@ const settingsStylesDark = StyleSheet.create({
   },
   profileCard: {
     ...settingsStyles.profileCard,
-    backgroundColor: '#1e293b'
+    backgroundColor: '#1e293b',
+    borderColor: '#334155'
   },
   profileName: {
     ...settingsStyles.profileName,
@@ -601,7 +594,8 @@ const settingsStylesDark = StyleSheet.create({
   },
   section: {
     ...settingsStyles.section,
-    backgroundColor: '#1e293b'
+    backgroundColor: '#1e293b',
+    borderColor: '#334155'
   },
   sectionTitle: {
     ...settingsStyles.sectionTitle,
@@ -627,8 +621,13 @@ const settingsStylesDark = StyleSheet.create({
     ...settingsStyles.infoDivider,
     backgroundColor: '#374151'
   },
+  logoutButton: {
+    ...settingsStyles.logoutButton,
+    backgroundColor: '#0f172a',
+    borderColor: '#ef4444'
+  },
   logoutGradient: {
     ...settingsStyles.logoutGradient,
-    backgroundColor: '#dc2626'
-  }
+    backgroundColor: 'transparent'
+  },
 });

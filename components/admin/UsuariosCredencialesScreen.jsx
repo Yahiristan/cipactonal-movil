@@ -177,7 +177,6 @@ export const UsuariosCredencialesScreen = ({ userData, darkMode, onBack }) => {
                             </Text>
                         </View>
         }
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
         renderItem={({ item }) =>
         <TouchableOpacity
           style={styles.userRow}
@@ -239,10 +238,16 @@ const base = StyleSheet.create({
   searchIcon: { marginRight: 2 },
   searchInput: { flex: 1, fontSize: 14, padding: 0 },
   listContent: { paddingHorizontal: 16, paddingBottom: 80, flexGrow: 1 },
-  separator: { height: 1, marginLeft: 74 },
   userRow: {
     flexDirection: 'row', alignItems: 'center',
-    paddingVertical: 12, gap: 14
+    padding: 16, gap: 14,
+    borderRadius: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 2
   },
   userInfo: { flex: 1 },
   userName: { fontSize: 15, fontWeight: '600', marginBottom: 2 },
@@ -264,7 +269,6 @@ const lightStyles = StyleSheet.create({
   header: { ...base.header, backgroundColor: '#2563eb' },
   searchWrap: { ...base.searchWrap, backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 1 },
   searchInput: { ...base.searchInput, color: '#111827' },
-  separator: { ...base.separator, backgroundColor: '#f3f4f6' },
   userRow: { ...base.userRow, backgroundColor: '#fff' },
   userName: { ...base.userName, color: '#111827' },
   userEmail: { ...base.userEmail, color: '#6b7280' },
@@ -279,8 +283,7 @@ const darkStyles = StyleSheet.create({
   header: { ...base.header, backgroundColor: '#1e40af' },
   searchWrap: { ...base.searchWrap, backgroundColor: '#1f2937' },
   searchInput: { ...base.searchInput, color: '#f9fafb' },
-  separator: { ...base.separator, backgroundColor: '#1f2937' },
-  userRow: { ...base.userRow, backgroundColor: '#0f172a' },
+  userRow: { ...base.userRow, backgroundColor: '#1f2937' },
   userName: { ...base.userName, color: '#f9fafb' },
   userEmail: { ...base.userEmail, color: '#9ca3af' },
   loadingText: { ...base.loadingText, color: '#9ca3af' },

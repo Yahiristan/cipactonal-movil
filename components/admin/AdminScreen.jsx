@@ -98,12 +98,13 @@ const adminStyles = StyleSheet.create({
   headerSubtitle: { fontSize: 13, color: '#bfdbfe', marginTop: 2 },
   body: { flex: 1, padding: 20 },
   sectionLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6b7280',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#072146',
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginBottom: 12
+    letterSpacing: 0.5,
+    marginBottom: 12,
+    marginLeft: 4
   },
   card: {
     backgroundColor: '#fff',
@@ -122,8 +123,6 @@ const adminStyles = StyleSheet.create({
   iconWrap: {
     width: 50,
     height: 50,
-    borderRadius: 14,
-    backgroundColor: '#eff6ff',
     justifyContent: 'center',
     alignItems: 'center'
   },
@@ -140,6 +139,5 @@ const adminStylesDark = StyleSheet.create({
   sectionLabel: { ...adminStyles.sectionLabel, color: '#9ca3af' },
   card: { ...adminStyles.card, backgroundColor: '#1f2937' },
   cardTitle: { ...adminStyles.cardTitle, color: '#f9fafb' },
-  cardDesc: { ...adminStyles.cardDesc, color: '#9ca3af' },
-  iconWrap: { ...adminStyles.iconWrap, backgroundColor: '#1e3a8a' }
+  cardDesc: { ...adminStyles.cardDesc, color: '#9ca3af' }
 });

@@ -122,7 +122,7 @@ export const PersonalInfoScreen = ({ userData, darkMode, onBack }) => {
         {}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="person-circle" size={18} color={darkMode ? '#818cf8' : '#6366f1'} />
+            <Ionicons name="person-circle" size={18} color={darkMode ? '#60a5fa' : '#2563eb'} />
             <Text style={styles.sectionTitle}>Información Personal</Text>
           </View>
 
@@ -135,7 +135,7 @@ export const PersonalInfoScreen = ({ userData, darkMode, onBack }) => {
         {esEmpleado &&
         <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Ionicons name="briefcase" size={18} color={darkMode ? '#818cf8' : '#6366f1'} />
+              <Ionicons name="briefcase" size={18} color={darkMode ? '#60a5fa' : '#2563eb'} />
               <Text style={styles.sectionTitle}>Datos Laborales</Text>
             </View>
 
@@ -154,8 +154,8 @@ export const PersonalInfoScreen = ({ userData, darkMode, onBack }) => {
             {departamentos.length > 0 &&
           <View style={[styles.infoRow, { alignItems: 'flex-start' }]}>
                 <View style={styles.infoLeft}>
-                  <View style={[styles.iconCircle, { backgroundColor: darkMode ? '#581c87' : '#f3e8ff' }]}>
-                    <Ionicons name="business-outline" size={18} color={darkMode ? '#d8b4fe' : '#9333ea'} />
+                  <View style={[styles.iconCircle, { backgroundColor: darkMode ? 'rgba(59, 130, 246, 0.2)' : '#eff6ff' }]}>
+                    <Ionicons name="business-outline" size={18} color={darkMode ? '#60a5fa' : '#2563eb'} />
                   </View>
                   <Text style={styles.infoLabel}>Deptos.</Text>
                 </View>
@@ -265,14 +265,11 @@ const personalInfoStyles = StyleSheet.create({
     paddingBottom: 100
   },
   profileCard: {
-    borderRadius: 20,
+    borderRadius: 16,
     marginBottom: 20,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
     backgroundColor: '#ffffff'
   },
   profileGradient: {
@@ -354,11 +351,8 @@ const personalInfoStyles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0'
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -413,7 +407,7 @@ const personalInfoStyles = StyleSheet.create({
   departmentBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3e8ff',
+    backgroundColor: '#eff6ff',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
@@ -422,14 +416,14 @@ const personalInfoStyles = StyleSheet.create({
     maxWidth: '100%'
   },
   departmentText: {
-    color: '#6366f1',
+    color: '#2563eb',
     fontSize: 11,
     fontWeight: '600'
   },
   seeMoreText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#9333ea'
+    color: '#2563eb'
   },
   actionButton: {
     flexDirection: 'row',
@@ -462,7 +456,8 @@ const personalInfoStylesDark = StyleSheet.create({
   },
   profileCard: {
     ...personalInfoStyles.profileCard,
-    backgroundColor: '#1e293b'
+    backgroundColor: '#1e293b',
+    borderColor: '#334155'
   },
   profileName: {
     ...personalInfoStyles.profileName,
@@ -474,7 +469,8 @@ const personalInfoStylesDark = StyleSheet.create({
   },
   section: {
     ...personalInfoStyles.section,
-    backgroundColor: '#1e293b'
+    backgroundColor: '#1e293b',
+    borderColor: '#334155'
   },
   sectionTitle: {
     ...personalInfoStyles.sectionTitle,
@@ -494,6 +490,6 @@ const personalInfoStylesDark = StyleSheet.create({
   },
   seeMoreText: {
     ...personalInfoStyles.seeMoreText,
-    color: '#d8b4fe'
+    color: '#60a5fa'
   }
 });

@@ -28,7 +28,7 @@ const baseStyles = {
   },
   headerTitle: {
     fontSize: 26,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#fff',
     letterSpacing: -0.3,
     marginBottom: 4
@@ -68,10 +68,10 @@ const baseStyles = {
 
   todayCard: {
     backgroundColor: '#fff',
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 20,
     marginBottom: 16,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#e2e8f0'
   },
   todayHeader: {
@@ -81,20 +81,20 @@ const baseStyles = {
     backgroundColor: '#ef4444',
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
+    paddingVertical: 4,
+    borderRadius: 6,
     marginBottom: 8
   },
   todayBadgeText: {
     color: '#fff',
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 0.8
   },
   todayDate: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#1e293b',
+    fontWeight: '800',
+    color: '#072146',
     textTransform: 'capitalize'
   },
   currentShiftContainer: {
@@ -106,7 +106,7 @@ const baseStyles = {
   shiftTimeBlock: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#eef2ff',
+    backgroundColor: '#eff6ff',
     padding: 14,
     borderRadius: 14
   },
@@ -122,22 +122,22 @@ const baseStyles = {
   },
   shiftTime: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#1e293b',
+    fontWeight: '800',
+    color: '#072146',
     letterSpacing: -0.3
   },
   moreTurnsButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#eef2ff',
+    backgroundColor: '#eff6ff',
     padding: 10,
     borderRadius: 10,
     gap: 6
   },
   moreTurnsText: {
     fontSize: 13,
-    color: '#6366f1',
+    color: '#2563eb',
     fontWeight: '600'
   },
   finishedText: {
@@ -164,26 +164,26 @@ const baseStyles = {
 
   dayOffCard: {
     backgroundColor: '#fff',
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 32,
     alignItems: 'center',
     marginBottom: 16,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#e2e8f0'
   },
   dayOffIcon: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#eef2ff',
+    backgroundColor: '#f1f5f9',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 14
   },
   dayOffTitle: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#1e293b',
+    fontWeight: '800',
+    color: '#072146',
     marginBottom: 6
   },
   dayOffText: {
@@ -210,7 +210,7 @@ const baseStyles = {
   },
   summaryValue: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#fff',
     marginTop: 10,
     marginBottom: 2
@@ -219,15 +219,15 @@ const baseStyles = {
     fontSize: 12,
     color: '#fff',
     opacity: 0.85,
-    fontWeight: '500'
+    fontWeight: '600'
   },
 
 
   scheduleSection: {
     backgroundColor: '#fff',
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 16,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#e2e8f0'
   },
   scheduleSectionHeader: {
@@ -236,8 +236,8 @@ const baseStyles = {
   },
   scheduleSectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#1e293b',
+    fontWeight: '800',
+    color: '#072146',
     marginBottom: 2
   },
   scheduleSectionSubtitle: {
@@ -260,9 +260,9 @@ const baseStyles = {
     backgroundColor: 'transparent'
   },
   scheduleItemToday: {
-    backgroundColor: '#eef2ff',
+    backgroundColor: '#eff6ff',
     borderWidth: 1.5,
-    borderColor: '#818cf8'
+    borderColor: '#60a5fa'
   },
   scheduleLeft: {
     flexDirection: 'row',
@@ -279,7 +279,7 @@ const baseStyles = {
     marginRight: 10
   },
   dayIconActive: {
-    backgroundColor: '#c7d2fe'
+    backgroundColor: '#bfdbfe'
   },
   dayIconInactive: {
     backgroundColor: '#f1f5f9'
@@ -289,7 +289,7 @@ const baseStyles = {
     fontWeight: '700'
   },
   dayInitialActive: {
-    color: '#4f46e5'
+    color: '#2563eb'
   },
   dayInitialInactive: {
     color: '#94a3b8'
@@ -304,8 +304,8 @@ const baseStyles = {
   },
   scheduleDay: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#1e293b'
+    fontWeight: '800',
+    color: '#072146'
   },
   scheduleDayInactive: {
     color: '#94a3b8'
@@ -314,7 +314,7 @@ const baseStyles = {
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: '#818cf8',
+    backgroundColor: '#3b82f6',
     marginLeft: 6
   },
   scheduleLocation: {
@@ -328,7 +328,7 @@ const baseStyles = {
   multipleTurnsBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e0e7ff',
+    backgroundColor: '#dbeafe',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
@@ -338,7 +338,7 @@ const baseStyles = {
   },
   multipleTurnsText: {
     fontSize: 10,
-    color: '#6366f1',
+    color: '#1d4ed8',
     fontWeight: '600'
   },
   scheduleRight: {
@@ -348,8 +348,8 @@ const baseStyles = {
   },
   scheduleTime: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#1e293b',
+    fontWeight: '800',
+    color: '#072146',
     textAlign: 'right'
   },
   scheduleTimeInactive: {
@@ -528,7 +528,7 @@ const baseStyles = {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: '#f3e8ff',
+    backgroundColor: '#eff6ff',
     justifyContent: 'center',
     alignItems: 'center'
   },
@@ -741,7 +741,7 @@ export const scheduleStylesDark = StyleSheet.create({
   },
   incidenciasIcon: {
     ...baseStyles.incidenciasIcon,
-    backgroundColor: '#3b0764'
+    backgroundColor: 'rgba(59, 130, 246, 0.2)'
   },
   incidenciasTitle: {
     ...baseStyles.incidenciasTitle,

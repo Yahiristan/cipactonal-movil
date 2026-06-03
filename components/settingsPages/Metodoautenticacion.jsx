@@ -27,22 +27,28 @@ const API_URL = getApiEndpoint('/api');
 
 const ESTADO = {
   activo: {
-    bg: '#16a34a',
-    bgPressed: '#15803d',
-    texto: '#fff',
-    icono: '#fff'
+    bg: '#f0fdf4',
+    bgPressed: '#dcfce3',
+    texto: '#166534',
+    icono: '#16a34a',
+    borde: '#4ade80',
+    iconBg: '#dcfce3'
   },
   inactivo: {
-    bg: '#6b7280',
-    bgPressed: '#4b5563',
-    texto: '#fff',
-    icono: '#fff'
+    bg: '#f8fafc',
+    bgPressed: '#f1f5f9',
+    texto: '#334155',
+    icono: '#64748b',
+    borde: '#cbd5e1',
+    iconBg: '#f1f5f9'
   },
   noDisponible: {
-    bg: '#dc2626',
-    bgPressed: '#b91c1c',
-    texto: '#fff',
-    icono: '#fff'
+    bg: '#fef2f2',
+    bgPressed: '#fee2e2',
+    texto: '#991b1b',
+    icono: '#ef4444',
+    borde: '#fca5a5',
+    iconBg: '#fee2e2'
   }
 };
 
@@ -516,13 +522,14 @@ export const MetodoAutenticacionModal = ({
                           {
                             backgroundColor: estaPresionado ?
                               colores.bgPressed :
-                              colores.bg
+                              colores.bg,
+                            borderColor: colores.borde
                           }]
                         }
                         hitSlop={{ top: 4, bottom: 4, left: 0, right: 0 }}>
 
                         { }
-                        <View style={styles.botonIconContainer}>
+                        <View style={[styles.botonIconContainer, { backgroundColor: colores.iconBg }]}>
                           <Ionicons
                             name={metodo.icono}
                             size={32}
@@ -546,19 +553,19 @@ export const MetodoAutenticacionModal = ({
                             <Ionicons
                               name="checkmark-circle"
                               size={24}
-                              color="#fff" /> :
+                              color="#16a34a" /> :
 
                             estado === 'noDisponible' ?
                               <Ionicons
                                 name="ban"
                                 size={24}
-                                color="rgba(255,255,255,0.7)" /> :
+                                color="#f87171" /> :
 
 
                               <Ionicons
                                 name="add-circle-outline"
                                 size={24}
-                                color="rgba(255,255,255,0.8)" />
+                                color="#94a3b8" />
 
                           }
                         </View>
@@ -599,10 +606,10 @@ export const MetodoAutenticacionModal = ({
       { }
       <PinInputModal
         visible={showPinModal}
-        onClose={() => {
+        onClose={useCallback(() => {
           setShowPinModal(false);
           setProcesando(false);
-        }}
+        }, [])}
         onConfirm={handleConfirmarPIN}
         title={credenciales.tiene_pin ? 'Cambiar PIN' : 'Configurar PIN'}
         subtitle="Ingresa un PIN de 6 dígitos"
@@ -617,7 +624,7 @@ export const MetodoAutenticacionModal = ({
 const authStyles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end'
   },
   modalContent: {
@@ -625,12 +632,9 @@ const authStyles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '88%',
-
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 10
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    elevation: 0
   },
   header: {
     backgroundColor: '#2563eb',
@@ -700,18 +704,12 @@ const authStyles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 20,
     paddingVertical: 18,
-
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3
+    borderWidth: 1.5
   },
   botonIconContainer: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16

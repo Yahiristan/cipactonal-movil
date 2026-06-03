@@ -12,7 +12,6 @@ import {
   ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { height } = Dimensions.get('window');
@@ -26,11 +25,7 @@ const numbersMatrix = [
 
 const PinHeader = memo(({ styles, darkMode, handleClose, step, title, subtitle }) => {
   return (
-    <LinearGradient
-      colors={darkMode ? ['#1e40af', '#2563eb'] : ['#2563eb', '#3b82f6']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.header}>
+    <View style={[styles.header, { backgroundColor: darkMode ? '#1e3a8a' : '#2563eb' }]}>
       <TouchableOpacity onPress={handleClose} style={styles.closeButton} activeOpacity={0.6}>
         <Ionicons name="close" size={24} color="#fff" />
       </TouchableOpacity>
@@ -39,7 +34,7 @@ const PinHeader = memo(({ styles, darkMode, handleClose, step, title, subtitle }
       </View>
       <Text style={styles.title}>{step === 1 ? title : 'Confirmar PIN'}</Text>
       <Text style={styles.subtitle}>{step === 1 ? subtitle : 'Vuelve a ingresar tu PIN'}</Text>
-    </LinearGradient>
+    </View>
   );
 });
 
@@ -203,6 +198,17 @@ export const PinInputModal = ({
     }
   }, [step]);
 
+  const handleNumberPressRef = useRef(handleNumberPress);
+  const handleBackspaceRef = useRef(handleBackspace);
+
+  useEffect(() => {
+    handleNumberPressRef.current = handleNumberPress;
+    handleBackspaceRef.current = handleBackspace;
+  }, [handleNumberPress, handleBackspace]);
+
+  const stableOnNumberPress = useCallback((key) => handleNumberPressRef.current(key), []);
+  const stableOnBackspace = useCallback(() => handleBackspaceRef.current(), []);
+
   const renderPinDots = () => {
     const currentPin = step === 1 ? pin : confirmPin;
     return (
@@ -268,8 +274,8 @@ export const PinInputModal = ({
             </View>
 
             <Keypad
-              onNumberPress={handleNumberPress}
-              onBackspace={handleBackspace}
+              onNumberPress={stableOnNumberPress}
+              onBackspace={stableOnBackspace}
               styles={styles}
               darkMode={darkMode}
             />
@@ -343,13 +349,10 @@ const pinStyles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    borderWidth: 2,
-    borderColor: '#d1d5db',
-    backgroundColor: 'transparent'
+    backgroundColor: '#e2e8f0'
   },
   dotFilled: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#3b82f6'
+    backgroundColor: '#2563eb'
   },
   errorContainer: {
     flexDirection: 'row',
@@ -379,17 +382,19 @@ const pinStyles = StyleSheet.create({
     marginBottom: 12
   },
   keyButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#f3f4f6',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
     justifyContent: 'center',
     alignItems: 'center'
   },
   keyText: {
-    fontSize: 26,
-    fontWeight: '600',
-    color: '#1f2937'
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#072146'
   },
   tipsContainer: {
     paddingHorizontal: 20,

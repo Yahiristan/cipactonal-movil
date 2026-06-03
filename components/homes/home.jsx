@@ -7,8 +7,9 @@ import {
   StatusBar,
   Platform,
   Image,
-  ActivityIndicator } from
-'react-native';
+  ActivityIndicator
+} from
+  'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TouchableOpacity } from 'react-native';
@@ -33,7 +34,7 @@ const obtenerUrlFotoPerfil = (foto) => {
   return url;
 };
 
-export const HomeScreen = ({ userData, darkMode, onOpenAvisos }) => {
+export const HomeScreen = ({ userData, darkMode, onOpenAvisos, onOpenProfile }) => {
   const [token, setToken] = useState(null);
   const [infoHoy, setInfoHoy] = useState(null);
   const [loadingHorario, setLoadingHorario] = useState(true);
@@ -124,49 +125,41 @@ export const HomeScreen = ({ userData, darkMode, onOpenAvisos }) => {
       <StatusBar
         barStyle="light-content"
         backgroundColor={darkMode ? "#1e40af" : "#2563eb"} />
-      
+
       <View style={styles.headerWrapper}>
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <View style={[styles.headerLeft, { marginRight: 24 }]}>
-              <View style={styles.avatarContainer}>
+              <TouchableOpacity style={styles.avatarContainer} onPress={onOpenProfile} activeOpacity={0.8}>
                 {fotoUrl ?
-                <Image
-                  source={{ uri: fotoUrl }}
-                  style={styles.avatarImage} /> :
+                  <Image
+                    source={{ uri: fotoUrl }}
+                    style={styles.avatarImage} /> :
 
 
-                <View style={styles.avatarPlaceholder}>
+                  <View style={styles.avatarPlaceholder}>
                     <Ionicons name="person" size={26} color="#FFFF" />
                   </View>
                 }
                 <View style={[
-                styles.statusDot,
-                { backgroundColor: isConnected ? '#10b981' : '#9ca3af' }]
+                  styles.statusDot,
+                  { backgroundColor: isConnected ? '#10b981' : '#9ca3af' }]
                 } />
-              </View>
+              </TouchableOpacity>
 
               <View style={[styles.headerInfo, { flexShrink: 1, overflow: 'hidden' }]}>
                 <Text style={styles.headerGreeting} numberOfLines={1} ellipsizeMode="tail">{obtenerSaludo()}</Text>
                 <Text style={styles.headerName} numberOfLines={1} ellipsizeMode="tail">{userData.nombre}</Text>
-                <View style={styles.userTypeChip}>
-                  <Ionicons
-                    name={esEmpleado ? "briefcase" : "person"}
-                    size={11}
-                    color="#e0f2fe" />
-                  
-                  <Text style={styles.userTypeText}>{tipoUsuario}</Text>
-                </View>
               </View>
             </View>
 
-            {}
+            { }
             <TouchableOpacity
               onPress={onOpenAvisos}
               style={styles.notifyButton}
               activeOpacity={0.7}>
-              
-              <Ionicons name="megaphone-outline" size={22} color="#fff" />
+
+              <Ionicons name="notifications-outline" size={26} color="#ffffff" />
             </TouchableOpacity>
           </View>
         </View>
@@ -176,59 +169,57 @@ export const HomeScreen = ({ userData, darkMode, onOpenAvisos }) => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        
-        {}
+
         {esEmpleado &&
-        <View style={styles.infoBloques}>
-            {}
+          <View style={styles.infoBloques}>
+            { }
             <View style={styles.infoBloque}>
               <View style={[styles.infoBloqueIcon, { backgroundColor: darkMode ? 'rgba(59, 130, 246, 0.2)' : '#dbeafe' }]}>
                 <Ionicons name="calendar-outline" size={18} color={darkMode ? '#60a5fa' : '#2563eb'} />
               </View>
               <Text style={styles.infoBloqueLabel}>Hoy es</Text>
-              <Text style={styles.infoBloqueValue}>{getNombreDia()}</Text>
+              <Text style={styles.infoBloqueValue} numberOfLines={1} adjustsFontSizeToFit>{getNombreDia()}</Text>
             </View>
 
-            {}
+            { }
             <View style={styles.infoBloque}>
               <View style={[
-            styles.infoBloqueIcon,
-            { backgroundColor: isConnected ? darkMode ? 'rgba(16, 185, 129, 0.2)' : '#d1fae5' : darkMode ? 'rgba(156, 163, 175, 0.2)' : '#f3f4f6' }]
-            }>
+                styles.infoBloqueIcon,
+                { backgroundColor: isConnected ? darkMode ? 'rgba(16, 185, 129, 0.2)' : '#d1fae5' : darkMode ? 'rgba(156, 163, 175, 0.2)' : '#f3f4f6' }]
+              }>
                 <Ionicons
-                name={isConnected ? "wifi" : "cloud-offline-outline"}
-                size={18}
-                color={isConnected ? darkMode ? '#34d399' : '#059669' : darkMode ? '#9ca3af' : '#6b7280'} />
-              
+                  name={isConnected ? "wifi" : "cloud-offline-outline"}
+                  size={18}
+                  color={isConnected ? darkMode ? '#34d399' : '#059669' : darkMode ? '#9ca3af' : '#6b7280'} />
               </View>
               <Text style={styles.infoBloqueLabel}>Estado</Text>
               <Text style={[
-            styles.infoBloqueValue,
-            { color: isConnected ? darkMode ? '#34d399' : '#059669' : darkMode ? '#9ca3af' : '#6b7280' }]
-            }>
+                styles.infoBloqueValue,
+                { color: isConnected ? darkMode ? '#34d399' : '#059669' : darkMode ? '#9ca3af' : '#6b7280' }]
+              } numberOfLines={1} adjustsFontSizeToFit>
                 {isConnected ? 'Online' : 'Offline'}
               </Text>
             </View>
 
-            {}
+            { }
             <View style={styles.infoBloque}>
               <View style={[styles.infoBloqueIcon, { backgroundColor: darkMode ? 'rgba(245, 158, 11, 0.2)' : '#fef3c7' }]}>
                 <Ionicons name="layers-outline" size={18} color={darkMode ? '#fbbf24' : '#d97706'} />
               </View>
               <Text style={styles.infoBloqueLabel}>Turnos</Text>
-              <Text style={styles.infoBloqueValue}>
+              <Text style={styles.infoBloqueValue} numberOfLines={1} adjustsFontSizeToFit>
                 {loadingHorario ? '...' : infoHoy?.totalTurnos || 0}
               </Text>
             </View>
           </View>
         }
 
-        {}
+        { }
         {esEmpleado &&
-        <RegisterButton
-          userData={userData}
-          darkMode={darkMode}
-          onRegistroExitoso={handleRegistroExitoso} />
+          <RegisterButton
+            userData={userData}
+            darkMode={darkMode}
+            onRegistroExitoso={handleRegistroExitoso} />
 
         }
       </ScrollView>
@@ -301,11 +292,12 @@ const homeStyles = StyleSheet.create({
     fontWeight: '500'
   },
   headerName: {
-    fontSize: 19,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '800',
     color: '#ffffff',
     marginTop: 2,
-    marginBottom: 4
+    marginBottom: 4,
+    letterSpacing: -0.3
   },
   userTypeChip: {
     flexDirection: 'row',
@@ -323,12 +315,11 @@ const homeStyles = StyleSheet.create({
     fontWeight: '600'
   },
   notifyButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    width: 44,
+    height: 44,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'flex-end',
+    paddingRight: 4
   },
   scrollView: {
     flex: 1
@@ -346,37 +337,43 @@ const homeStyles = StyleSheet.create({
   },
   infoBloque: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    flexBasis: 0,
+    height: 115,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
     padding: 12,
     alignItems: 'center',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
-    minHeight: 90,
-    justifyContent: 'center'
+    shadowRadius: 8,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#f1f5f9'
   },
   infoBloqueIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 6
+    marginBottom: 10
   },
   infoBloqueLabel: {
-    fontSize: 10,
-    color: '#6b7280',
-    fontWeight: '500',
-    marginBottom: 2
+    fontSize: 11,
+    color: '#64748b',
+    fontWeight: '600',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5
   },
   infoBloqueValue: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#1f2937',
-    textAlign: 'center'
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0f172a',
+    textAlign: 'center',
+    letterSpacing: -0.2
   }
 });
 

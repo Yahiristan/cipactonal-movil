@@ -377,11 +377,13 @@ const securityStyles = StyleSheet.create({
     paddingBottom: 90
   },
   infoCard: {
-    backgroundColor: '#dbeafe',
+    backgroundColor: '#eff6ff',
     borderRadius: 16,
     padding: 18,
     alignItems: 'center',
-    marginBottom: 16
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#bfdbfe'
   },
   infoTitle: {
     fontSize: 16,
@@ -403,14 +405,9 @@ const securityStyles = StyleSheet.create({
   tarjetaMetodo: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
+    borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 5,
-    elevation: 3
   },
   botonIconContainer: {
     width: 44,
@@ -456,16 +453,11 @@ const securityStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 14,
+    borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 1.5,
-    borderColor: '#fca5a5',
-    shadowColor: '#dc2626',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 2
+    borderColor: '#ef4444',
   },
   eliminarIconContainer: {
     width: 40,
@@ -504,7 +496,8 @@ const securityStylesDark = StyleSheet.create({
   },
   infoCard: {
     ...securityStyles.infoCard,
-    backgroundColor: '#1e3a8a'
+    backgroundColor: '#1e3a8a',
+    borderColor: '#1e40af'
   },
   infoTitle: {
     ...securityStyles.infoTitle,
@@ -528,8 +521,8 @@ const securityStylesDark = StyleSheet.create({
   },
   eliminarBoton: {
     ...securityStyles.eliminarBoton,
-    backgroundColor: '#1e293b',
-    borderColor: '#7f1d1d'
+    backgroundColor: '#0f172a',
+    borderColor: '#ef4444'
   },
   eliminarIconContainer: {
     ...securityStyles.eliminarIconContainer,

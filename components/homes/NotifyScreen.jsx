@@ -8,20 +8,22 @@ import {
   ActivityIndicator,
   RefreshControl,
   Platform,
-  StatusBar } from
-'react-native';
+  StatusBar
+} from
+  'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import sqliteManager from '../../services/offline/sqliteManager.mjs';
 import syncManager from '../../services/offline/syncManager.mjs';
 import { detectarAvisosNuevos } from '../../services/localNotificationService';
+import { getAvisosGlobales, getAvisosDeEmpleado } from '../../services/avisosService';
 
 const PINNED_STORAGE_KEY = '@avisos_pinned';
 
 export const NotifyScreen = ({
   userData = null,
   darkMode = false,
-  onGoBack = () => {}
+  onGoBack = () => { }
 }) => {
   const [filtroActivo, setFiltroActivo] = useState('todos');
   const [avisoSeleccionado, setAvisoSeleccionado] = useState(null);
@@ -58,7 +60,7 @@ export const NotifyScreen = ({
       let datosEmpleado = [];
       try {
         if (syncManager.getIsBackendDown()) {
-            throw new Error('Backend is offline');
+          throw new Error('Backend is offline');
         }
         const globalRes = await getAvisosGlobales(token, isRefresh);
         if (globalRes.success && globalRes.data) {
@@ -67,7 +69,7 @@ export const NotifyScreen = ({
           cargoOnline = true;
 
           await sqliteManager.upsertAvisosGlobales(datosGlobales).catch((e) =>
-          function () {}('️ No se pudo cachear avisos globales:', e.message)
+            function () { }('️ No se pudo cachear avisos globales:', e.message)
           );
         }
 
@@ -78,12 +80,12 @@ export const NotifyScreen = ({
             setAvisosEmpleado(datosEmpleado);
 
             await sqliteManager.upsertAvisosEmpleado(empleadoId, datosEmpleado).catch((e) =>
-            function () {}('️ No se pudo cachear avisos empleado:', e.message)
+              function () { }('️ No se pudo cachear avisos empleado:', e.message)
             );
           }
         }
       } catch (onlineErr) {
-        (function () {})('️ No se pudieron cargar avisos online:', onlineErr.message);
+        (function () { })('️ No se pudieron cargar avisos online:', onlineErr.message);
       }
 
 
@@ -103,10 +105,10 @@ export const NotifyScreen = ({
           }
 
           if (globalesLocal && globalesLocal.length > 0) {
-            (function () {})(' [Offline] Avisos cargados desde caché local');
+            (function () { })(' [Offline] Avisos cargados desde caché local');
           }
         } catch (localErr) {
-          (function () {})('️ Error cargando avisos desde SQLite:', localErr.message);
+          (function () { })('️ Error cargando avisos desde SQLite:', localErr.message);
           setError('No se pudieron cargar los avisos');
         }
       }
@@ -134,7 +136,7 @@ export const NotifyScreen = ({
         if (stored) {
           setPinnedIds(new Set(JSON.parse(stored)));
         }
-      } catch (_) {}
+      } catch (_) { }
     };
     cargarPins();
   }, []);
@@ -159,8 +161,8 @@ export const NotifyScreen = ({
       lista = avisosEmpleado.map((a) => ({ ...a, _tipo: 'personal' }));
     } else {
       lista = [
-      ...avisosGlobales.map((a) => ({ ...a, _tipo: 'global' })),
-      ...avisosEmpleado.map((a) => ({ ...a, _tipo: 'personal' }))];
+        ...avisosGlobales.map((a) => ({ ...a, _tipo: 'global' })),
+        ...avisosEmpleado.map((a) => ({ ...a, _tipo: 'personal' }))];
 
     }
 
@@ -250,9 +252,9 @@ export const NotifyScreen = ({
         <StatusBar
           barStyle="light-content"
           backgroundColor={darkMode ? "#1e40af" : "#2563eb"} />
-        
 
-        {}
+
+        { }
         <View style={styles.header}>
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
@@ -266,12 +268,12 @@ export const NotifyScreen = ({
             <TouchableOpacity
               onPress={() => togglePin(avisoKey)}
               style={styles.headerPinButton}>
-              
+
               <Ionicons
                 name={isPinned ? "bookmark" : "bookmark-outline"}
                 size={22}
                 color={isPinned ? "#f59e0b" : "#fff"} />
-              
+
             </TouchableOpacity>
           </View>
         </View>
@@ -280,8 +282,8 @@ export const NotifyScreen = ({
           style={styles.avisosScrollView}
           contentContainerStyle={styles.detalleScrollContent}
           showsVerticalScrollIndicator={false}>
-          
-          {}
+
+          { }
           <View style={[styles.detalleBadge, { backgroundColor: info.bg, alignSelf: 'flex-start' }]}>
             <View style={styles.detalleBadgeInner}>
               <Ionicons name={info.icono} size={14} color={info.color} />
@@ -291,10 +293,10 @@ export const NotifyScreen = ({
             </View>
           </View>
 
-          {}
+          { }
           <Text style={styles.detalleTitulo}>{aviso.titulo}</Text>
 
-          {}
+          { }
           <View style={styles.detalleMeta}>
             <View style={styles.detalleFechaRow}>
               <Ionicons name="calendar-outline" size={15} color="#9ca3af" />
@@ -304,7 +306,7 @@ export const NotifyScreen = ({
             </View>
 
             {aviso.remitente_nombre &&
-            <View style={styles.detalleFechaRow}>
+              <View style={styles.detalleFechaRow}>
                 <Ionicons name="person-circle-outline" size={16} color="#64748b" />
                 <Text style={styles.detalleFechaText}>
                   Por: {aviso.remitente_nombre}
@@ -313,7 +315,7 @@ export const NotifyScreen = ({
             }
 
             {aviso.fecha_asignacion &&
-            <View style={styles.detalleFechaRow}>
+              <View style={styles.detalleFechaRow}>
                 <Ionicons name="person-add-outline" size={15} color="#8b5cf6" />
                 <Text style={styles.detalleFechaText}>
                   Asignado: {formatearFechaCompleta(aviso.fecha_asignacion)}
@@ -322,14 +324,14 @@ export const NotifyScreen = ({
             }
           </View>
 
-          {}
+          { }
           <View style={styles.detalleDivider} />
 
-          {}
+          { }
           {aviso.contenido ?
-          <Text style={styles.detalleContenidoText}>{aviso.contenido}</Text> :
+            <Text style={styles.detalleContenidoText}>{aviso.contenido}</Text> :
 
-          <View style={styles.detalleSinContenido}>
+            <View style={styles.detalleSinContenido}>
               <Ionicons name="document-text-outline" size={36} color={darkMode ? '#334155' : '#d1d5db'} />
               <Text style={styles.detalleSinContenidoText}>
                 Este aviso no tiene contenido adicional
@@ -353,10 +355,10 @@ export const NotifyScreen = ({
         style={styles.avisoCard}
         activeOpacity={0.7}
         onPress={() => setAvisoSeleccionado(aviso)}>
-        
+
         <View style={styles.avisoMainContent}>
-          <View style={[styles.avisoIconCircle, { backgroundColor: info.iconBg }]}>
-            <Ionicons name={info.icono} size={24} color="#fff" />
+          <View style={[styles.avisoIconCircle, { backgroundColor: info.bg }]}>
+            <Ionicons name={info.icono} size={22} color={info.color} />
           </View>
 
           <View style={styles.avisoTextContainer}>
@@ -371,7 +373,7 @@ export const NotifyScreen = ({
                   {formatearFecha(aviso.fecha_registro)}
                 </Text>
                 {aviso.remitente_nombre &&
-                <>
+                  <>
                     <Text style={styles.avisoFechaSeparator}>•</Text>
                     <Ionicons name="person-outline" size={14} color="#9ca3af" />
                     <Text style={styles.avisoFecha} numberOfLines={1}>
@@ -387,12 +389,12 @@ export const NotifyScreen = ({
                   togglePin(avisoKey);
                 }}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                
+
                 <Ionicons
                   name={isPinned ? "bookmark" : "bookmark-outline"}
                   size={18}
                   color={isPinned ? "#f59e0b" : "#9ca3af"} />
-                
+
               </TouchableOpacity>
             </View>
           </View>
@@ -422,7 +424,7 @@ export const NotifyScreen = ({
           <TouchableOpacity
             style={styles.retryButton}
             onPress={() => cargarAvisos()}>
-            
+
             <Ionicons name="refresh-outline" size={20} color="#fff" />
             <Text style={styles.retryButtonText}>Reintentar</Text>
           </TouchableOpacity>
@@ -434,15 +436,15 @@ export const NotifyScreen = ({
       return (
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconContainer}>
-            <Ionicons name="megaphone-outline" size={64} color="#d1d5db" />
+            <Ionicons name="notifications-outline" size={64} color="#d1d5db" />
           </View>
           <Text style={styles.emptyTitle}>Sin avisos</Text>
           <Text style={styles.emptySubtitle}>
             {filtroActivo === 'todos' ?
-            'No hay avisos disponibles en este momento' :
-            filtroActivo === 'globales' ?
-            'No hay avisos globales disponibles' :
-            'No tienes avisos personales asignados'}
+              'No hay avisos disponibles en este momento' :
+              filtroActivo === 'globales' ?
+                'No hay avisos globales disponibles' :
+                'No tienes avisos personales asignados'}
           </Text>
         </View>);
 
@@ -452,8 +454,8 @@ export const NotifyScreen = ({
   };
 
   const filtros = [
-  { key: 'todos', label: 'Todos', count: estadisticas.total },
-  { key: 'globales', label: 'Globales', count: estadisticas.globales }];
+    { key: 'todos', label: 'Todos', count: estadisticas.total },
+    { key: 'globales', label: 'Globales', count: estadisticas.globales }];
 
   if (esEmpleado) {
     filtros.push({ key: 'personales', label: 'Personales', count: estadisticas.personales });
@@ -464,9 +466,9 @@ export const NotifyScreen = ({
       <StatusBar
         barStyle="light-content"
         backgroundColor={darkMode ? "#1e40af" : "#2563eb"} />
-      
 
-      {}
+
+      { }
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.headerLeft}>
@@ -474,7 +476,7 @@ export const NotifyScreen = ({
               <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
             <View style={styles.headerIconContainer}>
-              <Ionicons name="megaphone" size={26} color="#fff" />
+              <Ionicons name="notifications" size={26} color="#fff" />
             </View>
             <View>
               <Text style={styles.headerTitle}>Avisos</Text>
@@ -486,60 +488,60 @@ export const NotifyScreen = ({
         </View>
       </View>
 
-      {}
+      { }
       <View style={styles.filtrosWrapper}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filtrosContainer}>
-          
+
           {filtros.map((filtro) =>
-          <TouchableOpacity
-            key={filtro.key}
-            style={[
-            styles.filtroChip,
-            filtroActivo === filtro.key && styles.filtroChipActive]
-            }
-            onPress={() => setFiltroActivo(filtro.key)}>
-            
+            <TouchableOpacity
+              key={filtro.key}
+              style={[
+                styles.filtroChip,
+                filtroActivo === filtro.key && styles.filtroChipActive]
+              }
+              onPress={() => setFiltroActivo(filtro.key)}>
+
               <Text style={[
-            styles.filtroChipText,
-            filtroActivo === filtro.key && styles.filtroChipTextActive]
-            }>
+                styles.filtroChipText,
+                filtroActivo === filtro.key && styles.filtroChipTextActive]
+              }>
                 {filtro.label}
               </Text>
               {filtro.count > 0 &&
-            <View style={[
-            styles.filtroBadge,
-            filtroActivo === filtro.key && styles.filtroBadgeActive]
-            }>
+                <View style={[
+                  styles.filtroBadge,
+                  filtroActivo === filtro.key && styles.filtroBadgeActive]
+                }>
                   <Text style={[
-              styles.filtroBadgeText,
-              filtroActivo === filtro.key && styles.filtroBadgeTextActive]
-              }>
+                    styles.filtroBadgeText,
+                    filtroActivo === filtro.key && styles.filtroBadgeTextActive]
+                  }>
                     {filtro.count}
                   </Text>
                 </View>
-            }
+              }
             </TouchableOpacity>
           )}
         </ScrollView>
       </View>
 
-      {}
+      { }
       <ScrollView
         style={styles.avisosScrollView}
         contentContainerStyle={styles.avisosContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => cargarAvisos(true)}
-          colors={['#2563eb']}
-          tintColor="#2563eb" />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => cargarAvisos(true)}
+            colors={['#2563eb']}
+            tintColor="#2563eb" />
 
         }>
-        
+
         {renderContent()}
       </ScrollView>
     </View>);
@@ -618,27 +620,29 @@ const stylesLight = StyleSheet.create({
   filtroChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 24,
     backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
     marginRight: 8,
     gap: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2
+    elevation: 0
   },
   filtroChipActive: {
     backgroundColor: '#2563eb',
+    borderColor: '#2563eb',
     elevation: 4,
-    shadowOpacity: 0.25
+    shadowColor: '#2563eb',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8
   },
   filtroChipText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#6b7280'
+    fontWeight: '700',
+    color: '#64748b'
   },
   filtroChipTextActive: {
     color: '#fff'
@@ -673,16 +677,16 @@ const stylesLight = StyleSheet.create({
 
   avisoCard: {
     backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 20,
+    padding: 18,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    marginBottom: 10,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2
+    borderColor: '#f8fafc',
+    marginBottom: 16,
+    elevation: 3,
+    shadowColor: '#64748b',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12
   },
   avisoMainContent: {
     flexDirection: 'row',
@@ -690,9 +694,9 @@ const stylesLight = StyleSheet.create({
     alignItems: 'center'
   },
   avisoIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center'
   },
@@ -700,11 +704,12 @@ const stylesLight = StyleSheet.create({
     flex: 1
   },
   avisoTitulo: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1f2937',
-    lineHeight: 20,
-    marginBottom: 6
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#072146',
+    lineHeight: 22,
+    marginBottom: 6,
+    letterSpacing: -0.3
   },
   avisoFooter: {
     flexDirection: 'row',

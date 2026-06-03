@@ -38,32 +38,29 @@ const EmpresaCard = ({ item, index, onSelect, darkMode }) => {
         activeOpacity={0.8}
         onPress={() => onSelect(item.empresa_id)}
       >
-        <View style={[styles.cardColorStrip, darkMode && styles.cardColorStripDark]} />
-
-        <View style={styles.cardContent}>
-          <View style={[styles.avatarWrap, darkMode && styles.avatarWrapDark]}>
-            {item.logo ? (
-              <Image
-                source={{ uri: obtenerUrlLogo(item.logo) }}
-                style={styles.avatarImg}
-                resizeMode="contain"
-              />
-            ) : (
-              <Text style={[styles.avatarInitials, darkMode && { color: '#60a5fa' }]}>
-                {item.nombre.substring(0, 2).toUpperCase()}
-              </Text>
-            )}
-          </View>
-
-          <View style={styles.infoCol}>
-            <Text style={[styles.companyName, darkMode && styles.companyNameDark]} numberOfLines={1}>
-              {item.nombre}
+        <View style={[styles.avatarWrap, darkMode && styles.avatarWrapDark]}>
+          {item.logo ? (
+            <Image
+              source={{ uri: obtenerUrlLogo(item.logo) }}
+              style={styles.avatarImg}
+              resizeMode="contain"
+            />
+          ) : (
+            <Text style={[styles.avatarInitials, darkMode && { color: '#60a5fa' }]}>
+              {item.nombre.substring(0, 2).toUpperCase()}
             </Text>
-            <View style={styles.actionRow}>
-              <Text style={[styles.actionText, darkMode && { color: '#93c5fd' }]}>Ingresar</Text>
-              <Ionicons name="arrow-forward" size={14} color={darkMode ? '#93c5fd' : '#072146'} />
-            </View>
-          </View>
+          )}
+        </View>
+
+        <View style={styles.infoCol}>
+          <Text style={[styles.companyName, darkMode && styles.companyNameDark]} numberOfLines={2}>
+            {item.nombre}
+          </Text>
+          <Text style={[styles.actionSubtitle, darkMode && { color: '#93c5fd' }]}>Toca para ingresar</Text>
+        </View>
+
+        <View style={styles.iconCol}>
+          <Ionicons name="chevron-forward" size={24} color={darkMode ? '#9ca3af' : '#cbd5e1'} />
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -114,8 +111,8 @@ export const SeleccionEmpresaScreen = ({ empresasList, onSelect, onCancel, darkM
               onPress={onCancel}
               activeOpacity={0.7}
             >
-              <Ionicons name="close-circle-outline" size={18} color={darkMode ? '#9ca3af' : '#64748b'} />
-              <Text style={[styles.footerCancelText, darkMode && styles.textMuted]}>Cancelar operación</Text>
+              <Ionicons name="close-circle" size={20} color={darkMode ? '#fb7185' : '#e11d48'} />
+              <Text style={[styles.footerCancelText, darkMode && { color: '#fb7185' }]}>Cancelar operación</Text>
             </TouchableOpacity>
           )}
         />
@@ -207,102 +204,97 @@ const styles = StyleSheet.create({
   /* Cards BBVA */
   cardBox: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
+    borderRadius: 20,
     flexDirection: 'row',
-    overflow: 'hidden',
-    elevation: 4,
-    shadowColor: '#64748b',
+    padding: 20,
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#0f172a',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    borderWidth: 1,
+    borderColor: '#f1f5f9'
   },
   cardBoxDark: {
     backgroundColor: '#1f2937',
+    borderColor: '#374151',
     shadowColor: '#000'
   },
-  cardColorStrip: {
-    width: 6,
-    backgroundColor: '#2563eb',
-    alignSelf: 'stretch'
-  },
-  cardColorStripDark: {
-    backgroundColor: '#3b82f6'
-  },
-  cardContent: {
-    flex: 1,
-    flexDirection: 'row',
-    padding: 20,
-    alignItems: 'center'
-  },
   avatarWrap: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#f8fafc',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: '#e2e8f0',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16
+    marginRight: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
   avatarWrapDark: {
     backgroundColor: '#111827',
     borderColor: '#374151'
   },
   avatarImg: {
-    width: '65%',
-    height: '65%'
+    width: '70%',
+    height: '70%'
   },
   avatarInitials: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '800',
-    color: '#072146'
+    color: '#2563eb'
   },
   infoCol: {
     flex: 1,
-    justifyContent: 'center'
+    justifyContent: 'center',
+    paddingRight: 10
   },
   companyName: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: 6,
-    letterSpacing: 0.2
+    color: '#0f172a',
+    marginBottom: 4,
+    letterSpacing: -0.3
   },
   companyNameDark: {
     color: '#f3f4f6'
   },
-  actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4
-  },
-  actionText: {
+  actionSubtitle: {
     fontSize: 13,
-    color: '#072146',
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5
+    color: '#64748b',
+    fontWeight: '500'
+  },
+  iconCol: {
+    justifyContent: 'center',
+    alignItems: 'center'
   },
 
   footerCancelBtn: {
-    marginTop: 24,
+    marginTop: 32,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    backgroundColor: '#e2e8f0',
-    gap: 6
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 30,
+    backgroundColor: '#fff1f2',
+    borderWidth: 1,
+    borderColor: '#ffe4e6',
+    gap: 8
   },
   footerCancelBtnDark: {
-    backgroundColor: '#374151'
+    backgroundColor: 'rgba(225, 29, 72, 0.1)',
+    borderColor: 'rgba(225, 29, 72, 0.2)'
   },
   footerCancelText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#475569'
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#e11d48'
   }
 });

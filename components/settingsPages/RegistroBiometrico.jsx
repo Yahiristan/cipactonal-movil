@@ -91,9 +91,7 @@ const BiometricRegistration = () => {
 
     try {
 
-      await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      await new Promise((resolve) => setTimeout(resolve, 1500));
 
 
       const huellaTemplate = btoa(JSON.stringify({
@@ -165,7 +163,7 @@ const BiometricRegistration = () => {
       });
 
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+
 
 
 
@@ -300,9 +298,9 @@ const BiometricRegistration = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+    <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-2xl mx-auto space-y-6">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white rounded-xl border-2 border-gray-200 p-8">
           <h2 className="text-3xl font-bold text-gray-800 mb-2">
             Credenciales Biométricas
           </h2>
@@ -325,7 +323,7 @@ const BiometricRegistration = () => {
 
           {}
           {empleadoId &&
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mb-6 border border-blue-200">
+          <div className="bg-blue-50 rounded-xl p-6 mb-6 border-2 border-blue-200">
               <h3 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-blue-600" />
                 Estado de tus credenciales
@@ -400,7 +398,7 @@ const BiometricRegistration = () => {
             <button
               onClick={registrarHuella}
               disabled={loading || !empleadoId}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg">
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-colors">
               
               {loading ?
               <>
@@ -418,7 +416,7 @@ const BiometricRegistration = () => {
             <button
               onClick={registrarFacial}
               disabled={loading || !empleadoId}
-              className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg">
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-colors">
               
               {loading ?
               <>
@@ -436,7 +434,7 @@ const BiometricRegistration = () => {
             <button
               onClick={registrarPIN}
               disabled={loading || !empleadoId}
-              className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg">
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-colors">
               
               {loading ?
               <>
@@ -461,7 +459,7 @@ const BiometricRegistration = () => {
         </div>
 
         {}
-        <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-blue-100">
+        <div className="bg-white rounded-xl p-6 border-2 border-gray-200">
           <p className="font-bold text-blue-800 mb-3 text-lg flex items-center gap-2">
             <AlertCircle className="w-5 h-5" />
             Información importante

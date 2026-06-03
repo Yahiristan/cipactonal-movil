@@ -475,17 +475,16 @@ const MapaZonasPermitidas = ({
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: darkMode ? '#1e40af' : '#2563eb' }]}>
       <StatusBar
-        barStyle={darkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={darkMode ? '#1f2937' : '#fff'} />
+        barStyle="light-content"
+        backgroundColor={darkMode ? '#1e40af' : '#2563eb'} />
       
 
-      {}
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.headerLeft}>
-            <Ionicons name="location" size={24} color="#3b82f6" />
+            <Ionicons name="location" size={24} color="#ffffff" />
             <View style={styles.headerTextContainer}>
               <Text style={styles.headerTitle}>
                 {listaDepartamentos.length === 1 ? 'Zona Permitida' : 'Zonas Permitidas'}
@@ -501,7 +500,7 @@ const MapaZonasPermitidas = ({
             onPress={onClose}
             activeOpacity={0.7}>
             
-            <Ionicons name="close" size={24} color="#6b7280" />
+            <Ionicons name="close" size={24} color="#ffffff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -696,9 +695,9 @@ const mapStyles = StyleSheet.create({
     textAlign: 'center'
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: '#2563eb',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: '#2563eb',
     paddingTop: 8
   },
   headerContent: {
@@ -721,18 +720,18 @@ const mapStyles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1f2937'
+    color: '#ffffff'
   },
   headerSubtitle: {
     fontSize: 13,
-    color: '#6b7280',
+    color: '#dbeafe',
     marginTop: 2
   },
   closeIconButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0
@@ -897,8 +896,8 @@ const mapStylesDark = StyleSheet.create({
   },
   header: {
     ...mapStyles.header,
-    backgroundColor: '#1f2937',
-    borderBottomColor: '#374151'
+    backgroundColor: '#1e40af',
+    borderBottomColor: '#1e40af'
   },
   headerTitle: {
     ...mapStyles.headerTitle,
@@ -906,7 +905,7 @@ const mapStylesDark = StyleSheet.create({
   },
   closeIconButton: {
     ...mapStyles.closeIconButton,
-    backgroundColor: '#374151'
+    backgroundColor: 'rgba(255, 255, 255, 0.15)'
   },
   departamentosContainer: {
     ...mapStyles.departamentosContainer,

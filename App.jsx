@@ -58,6 +58,7 @@ export default function App() {
   const [isOfflineSession, setIsOfflineSession] = useState(false);
   const [isMaintenance, setIsMaintenance] = useState(false);
   const [deviceDisabled, setDeviceDisabled] = useState(false);
+  const [settingsInitialSection, setSettingsInitialSection] = useState(null);
 
   const appState = useRef(AppState.currentState);
   const verificationInterval = useRef(null);
@@ -916,7 +917,7 @@ export default function App() {
         edges={['top']}>
 
         <View style={[styles.container, darkMode && styles.containerDark]}>
-          {currentScreen === 'home' && <HomeScreen userData={userData} darkMode={darkMode} onOpenAvisos={() => setCurrentScreen('avisos')} />}
+          {currentScreen === 'home' && <HomeScreen userData={userData} darkMode={darkMode} onOpenAvisos={() => setCurrentScreen('avisos')} onOpenProfile={() => { setSettingsInitialSection('personalinfo'); setCurrentScreen('settings'); }} />}
           {currentScreen === 'avisos' && <NotifyScreen userData={userData} darkMode={darkMode} onGoBack={() => setCurrentScreen('home')} />}
           {currentScreen === 'history' && <HistoryScreen darkMode={darkMode} userData={userData} />}
           {currentScreen === 'schedule' && <ScheduleScreen userData={userData} darkMode={darkMode} />}
@@ -927,17 +928,16 @@ export default function App() {
               email={userData.correo}
               darkMode={darkMode}
               onToggleDarkMode={handleToggleDarkMode}
-              onLogout={handleLogout} />
-
+              onLogout={handleLogout}
+              initialSection={settingsInitialSection} />
           }
 
           {currentScreen !== 'avisos' &&
             <BottomNavigation
               currentScreen={currentScreen}
-              onScreenChange={setCurrentScreen}
+              onScreenChange={(screen) => { setSettingsInitialSection(null); setCurrentScreen(screen); }}
               darkMode={darkMode}
               userData={userData} />
-
           }
         </View>
       </SafeAreaView>

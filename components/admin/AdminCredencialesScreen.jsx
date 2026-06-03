@@ -151,8 +151,8 @@ export const AdminCredencialesScreen = ({ empleado, userData, darkMode, onBack }
     return (
       <View style={styles.credCard}>
         <View style={styles.credHeader}>
-          <View style={[styles.credIconWrap, { backgroundColor: tiene ? '#dcfce7' : darkMode ? '#374151' : '#f3f4f6' }]}>
-            <Ionicons name={icono} size={24} color={tiene ? '#16a34a' : darkMode ? '#9ca3af' : '#6b7280'} />
+          <View style={styles.credIconWrap}>
+            <Ionicons name={icono} size={28} color={tiene ? '#16a34a' : darkMode ? '#9ca3af' : '#2563eb'} />
           </View>
           <View style={styles.credInfo}>
             <Text style={styles.credLabel}>{label}</Text>
@@ -298,7 +298,7 @@ const baseStyles = StyleSheet.create({
   },
   credHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 14, gap: 12 },
   credIconWrap: {
-    width: 46, height: 46, borderRadius: 13,
+    width: 46, height: 46,
     justifyContent: 'center', alignItems: 'center'
   },
   credInfo: { flex: 1 },
@@ -334,10 +334,10 @@ const lightStyles = StyleSheet.create({
   container: { ...baseStyles.container, backgroundColor: '#f8fafc' },
   header: { ...baseStyles.header, backgroundColor: '#2563eb' },
   sectionLabel: { ...baseStyles.sectionLabel, color: '#6b7280' },
-  credCard: { ...baseStyles.credCard, backgroundColor: '#fff' },
+  credCard: { ...baseStyles.credCard, backgroundColor: '#ffffff' },
   credLabel: { ...baseStyles.credLabel, color: '#111827' },
-  infoBox: { ...baseStyles.infoBox, backgroundColor: '#eff6ff', borderColor: '#bfdbfe' },
-  infoText: { ...baseStyles.infoText, color: '#1d4ed8' },
+  infoBox: { ...baseStyles.infoBox, backgroundColor: '#ffffff', borderColor: '#e5e7eb' },
+  infoText: { ...baseStyles.infoText, color: '#4b5563' },
   loadingText: { ...baseStyles.loadingText, color: '#6b7280' }
 });
 
@@ -349,7 +349,7 @@ const darkStyles = StyleSheet.create({
   credCard: { ...baseStyles.credCard, backgroundColor: '#1f2937' },
   credLabel: { ...baseStyles.credLabel, color: '#f9fafb' },
   actionBtnDanger: { ...baseStyles.actionBtnDanger, backgroundColor: '#3b1a1a' },
-  infoBox: { ...baseStyles.infoBox, backgroundColor: '#1e3a8a', borderColor: '#1d4ed8' },
-  infoText: { ...baseStyles.infoText, color: '#93c5fd' },
+  infoBox: { ...baseStyles.infoBox, backgroundColor: '#1e293b', borderColor: '#334155' },
+  infoText: { ...baseStyles.infoText, color: '#94a3b8' },
   loadingText: { ...baseStyles.loadingText, color: '#9ca3af' }
 });
