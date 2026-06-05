@@ -15,7 +15,7 @@ export const login = async (usuario, contraseña, empresaId = null) => {
       body.empresa_id = empresaId;
     }
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     let response;
     try {
@@ -29,7 +29,7 @@ export const login = async (usuario, contraseña, empresaId = null) => {
           signal: controller.signal
         }),
         new Promise((_, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Timeout de 5s')), 5000);
+          const timeout = setTimeout(() => reject(new Error('Timeout de 30s')), 30000);
           controller.signal.addEventListener('abort', () => clearTimeout(timeout));
         })
       ]);

@@ -1,4 +1,4 @@
-package com.yristan.FASITLAC
+package com.fasiltac.cipactonal
 
 import android.os.Build
 import android.os.Bundle

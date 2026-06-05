@@ -2,7 +2,7 @@
   "expo": {
     "name": "FASITLAC",
     "slug": "FASITLAC",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "web": {
       "favicon": "./assets/icon.png"
     },
@@ -51,14 +51,14 @@
         "NSCameraUsageDescription": "FASITLAC necesita acceso a la cámara para reconocimiento facial",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "bundleIdentifier": "com.yristan.FASITLAC"
+      "bundleIdentifier": "com.fasiltac.cipactonal"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.yristan.FASITLAC",
+      "package": "com.fasiltac.cipactonal",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.POST_NOTIFICATIONS",

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import getApiEndpoint from '../../config/api';
 import {
   View,
   Text,
@@ -28,7 +29,7 @@ const obtenerUrlFotoPerfil = (foto) => {
   if (foto.startsWith('http://') || foto.startsWith('https://')) {
     return foto;
   }
-  const BASE_URL = 'https://9dm7dqf9-3001.usw3.devtunnels.ms';
+  const BASE_URL = getApiEndpoint('');
   const url = `${BASE_URL}${foto.startsWith('/') ? '' : '/'}${foto}`;
 
   return url;

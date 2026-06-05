@@ -60,10 +60,10 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
-      setIsWifiConnected(state.isConnected && state.isInternetReachable);
+      setIsWifiConnected(state.isConnected && (state.isInternetReachable === true || state.isInternetReachable === null));
     });
     NetInfo.fetch().then((state) => {
-      setIsWifiConnected(state.isConnected && state.isInternetReachable);
+      setIsWifiConnected(state.isConnected && (state.isInternetReachable === true || state.isInternetReachable === null));
     });
 
     const checkServerStatus = setInterval(() => {
@@ -335,7 +335,7 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
             if (tokenSolicitud) {
               const { getSolicitudPorToken } = require('../../services/solicitudMovilService');
               const solicitud = await getSolicitudPorToken(tokenSolicitud);
-              const emailUsuario = datosCompletos.usuario.correo.trim().toLowerCase();
+              const emailUsuario = (datosCompletos.correo || datosCompletos.usuario || '').trim().toLowerCase();
               const emailDispositivo = solicitud.correo.trim().toLowerCase();
 
               if (emailUsuario !== emailDispositivo) {

@@ -4,6 +4,7 @@
 
 
 import React, { useState, useEffect, useMemo } from 'react';
+import getApiEndpoint from '../../config/api';
 import {
   View,
   Text,
@@ -22,7 +23,7 @@ import { getEmpleados } from '../../services/empleadoServices';
 import { AdminCredencialesScreen } from './AdminCredencialesScreen';
 import syncManager from '../../services/offline/syncManager.mjs';
 
-const BASE_URL = 'https://9dm7dqf9-3001.usw3.devtunnels.ms';
+const BASE_URL = getApiEndpoint('');
 
 const fotoUrl = (foto) => {
   if (!foto) return null;
