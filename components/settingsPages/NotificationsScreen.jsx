@@ -10,6 +10,7 @@ import {
 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Header } from '../ui/Header';
 
 const STORAGE_KEY = '@notificaciones_config';
 
@@ -113,73 +114,45 @@ export const NotificationsScreen = ({ darkMode, onBack }) => {
   return (
     <View style={styles.container}>
             {}
-            <View style={styles.header}>
-                <View style={styles.headerContent}>
-                    <TouchableOpacity
-            onPress={onBack}
-            style={styles.backButton}
-            activeOpacity={0.6}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            
-                        <Ionicons name="arrow-back" size={24} color="#fff" />
-                    </TouchableOpacity>
-                    <View style={styles.headerTextContainer}>
-                        <Text style={styles.headerTitle}>Notificaciones</Text>
-                        <Text style={styles.headerSubtitle}>Gestiona tus alertas</Text>
-                    </View>
-                    <View style={styles.headerPlaceholder} />
-                </View>
-            </View>
+            <Header
+              darkMode={darkMode}
+              title="Notificaciones"
+              leftComponent={
+                <TouchableOpacity onPress={onBack} style={{ padding: 8, marginLeft: -8 }} activeOpacity={0.6}>
+                  <Ionicons name="arrow-back" size={24} color={darkMode ? '#f8fafc' : '#0f172a'} />
+                </TouchableOpacity>
+              }
+            />
 
             <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
         
-                {}
-                <View style={styles.infoCard}>
-                    <Ionicons
-            name="notifications"
-            size={30}
-            color={darkMode ? '#93c5fd' : '#2563eb'} />
-          
-                    <Text style={styles.infoTitle}>Preferencias de notificaciones</Text>
-                    <Text style={styles.infoText}>
-                        Elige qué alertas quieres recibir. Puedes habilitarlas o deshabilitarlas en cualquier momento.
-                    </Text>
-                </View>
-
-                {}
-                {grupos.map((grupo, gi) =>
-        <View key={grupo.id} style={[styles.seccion, gi < grupos.length - 1 && { marginBottom: 14 }]}>
-                        {}
-                        <View style={styles.seccionHeader}>
-                            <View style={[styles.seccionIcono, { backgroundColor: grupo.bgIcono }]}>
-                                <Ionicons name={grupo.icono} size={18} color={grupo.colorIcono} />
-                            </View>
-                            <Text style={styles.seccionTitulo}>{grupo.titulo}</Text>
-                        </View>
-
-                        {}
-                        {grupo.opciones.map((op, oi) =>
-          <View key={op.key}>
-                                {oi > 0 && <View style={styles.divisor} />}
-                                <View style={styles.opcion}>
-                                    <View style={styles.opcionTexto}>
-                                        <Text style={styles.opcionTitulo}>{op.titulo}</Text>
-                                        <Text style={styles.opcionSubtitulo}>{op.subtitulo}</Text>
-                                    </View>
-                                    <Switch
-                value={config[op.key]}
-                onValueChange={() => toggle(op.key)}
-                trackColor={{ false: darkMode ? '#374151' : '#d1d5db', true: '#2563eb' }}
-                thumbColor={config[op.key] ? '#fff' : darkMode ? '#9ca3af' : '#f3f4f6'}
-                ios_backgroundColor={darkMode ? '#374151' : '#d1d5db'} />
-              
-                                </View>
-                            </View>
-          )}
+        {grupos.map((grupo) => (
+          <View key={grupo.id}>
+            <Text style={styles.sectionLabel}>{grupo.titulo}</Text>
+            <View style={styles.sectionContainer}>
+              {grupo.opciones.map((op, oi) => (
+                <View key={op.key}>
+                  <View style={styles.settingItem}>
+                    <View style={styles.settingTextContainer}>
+                      <Text style={styles.settingTitle}>{op.titulo}</Text>
+                      {op.subtitulo && <Text style={styles.settingSubtitle}>{op.subtitulo}</Text>}
                     </View>
-        )}
+                    <Switch
+                      value={config[op.key]}
+                      onValueChange={() => toggle(op.key)}
+                      trackColor={{ false: darkMode ? '#374151' : '#d1d5db', true: '#2563eb' }}
+                      thumbColor={config[op.key] ? '#fff' : darkMode ? '#9ca3af' : '#f3f4f6'}
+                      ios_backgroundColor={darkMode ? '#374151' : '#d1d5db'}
+                    />
+                  </View>
+                  {oi < grupo.opciones.length - 1 && <View style={styles.divider} />}
+                </View>
+              ))}
+            </View>
+          </View>
+        ))}
             </ScrollView>
         </View>);
 
@@ -191,121 +164,55 @@ const notifStyles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc'
   },
-  header: {
-    backgroundColor: '#2563eb',
-    paddingTop: Platform.OS === 'android' ? 14 : 46,
-    paddingBottom: 16,
-    paddingHorizontal: 16
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  headerTextContainer: {
-    flex: 1,
-    alignItems: 'center'
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#fff'
-  },
-  headerSubtitle: {
-    fontSize: 13,
-    color: '#bfdbfe',
-    marginTop: 2
-  },
-  headerPlaceholder: {
-    width: 40
-  },
   scrollContent: {
     paddingHorizontal: 18,
     paddingTop: 16,
     paddingBottom: 90
   },
-  infoCard: {
-    backgroundColor: '#eff6ff',
-    borderRadius: 16,
-    padding: 18,
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 1.5,
-    borderColor: '#bfdbfe'
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#94a3b8',
+    marginBottom: 8,
+    marginLeft: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    marginTop: 10
   },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginTop: 8,
-    marginBottom: 5
-  },
-  infoText: {
-    fontSize: 13,
-    color: '#4b5563',
-    textAlign: 'center',
-    lineHeight: 19
-  },
-  seccion: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
-    marginBottom: 0
-  },
-  seccionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 14
-  },
-  seccionIcono: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  seccionTitulo: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#1f2937'
-  },
-  divisor: {
-    height: 1,
+  sectionContainer: {
     backgroundColor: '#f1f5f9',
-    marginVertical: 2
+    borderRadius: 24,
+    paddingVertical: 8,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#e2e8f0'
   },
-  opcion: {
+  settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 10
+    paddingVertical: 14,
+    paddingHorizontal: 16
   },
-  opcionTexto: {
+  settingTextContainer: {
     flex: 1,
-    marginRight: 12,
-    gap: 2
+    paddingRight: 16
   },
-  opcionTitulo: {
-    fontSize: 14,
+  settingTitle: {
+    fontSize: 15,
     fontWeight: '600',
-    color: '#1f2937'
+    color: '#1f2937',
+    marginBottom: 2
   },
-  opcionSubtitulo: {
+  settingSubtitle: {
     fontSize: 12,
     color: '#6b7280',
-    lineHeight: 17
+    lineHeight: 18
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e2e8f0',
+    marginHorizontal: 16
   }
 });
 
@@ -316,42 +223,21 @@ const notifStylesDark = StyleSheet.create({
     ...notifStyles.container,
     backgroundColor: '#0f172a'
   },
-  header: {
-    ...notifStyles.header,
-    backgroundColor: '#1e40af'
-  },
-  infoCard: {
-    ...notifStyles.infoCard,
-    backgroundColor: '#1e3a8a',
-    borderColor: '#1e40af'
-  },
-  infoTitle: {
-    ...notifStyles.infoTitle,
-    color: '#f9fafb'
-  },
-  infoText: {
-    ...notifStyles.infoText,
-    color: '#cbd5e1'
-  },
-  seccion: {
-    ...notifStyles.seccion,
+  sectionContainer: {
+    ...notifStyles.sectionContainer,
     backgroundColor: '#1e293b',
-    borderColor: '#334155'
+    borderWidth: 0
   },
-  seccionTitulo: {
-    ...notifStyles.seccionTitulo,
+  settingTitle: {
+    ...notifStyles.settingTitle,
     color: '#f9fafb'
   },
-  divisor: {
-    ...notifStyles.divisor,
+  settingSubtitle: {
+    ...notifStyles.settingSubtitle,
+    color: '#9ca3af'
+  },
+  divider: {
+    ...notifStyles.divider,
     backgroundColor: '#334155'
-  },
-  opcionTitulo: {
-    ...notifStyles.opcionTitulo,
-    color: '#f1f5f9'
-  },
-  opcionSubtitulo: {
-    ...notifStyles.opcionSubtitulo,
-    color: '#94a3b8'
   }
 });

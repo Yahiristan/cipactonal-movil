@@ -5,36 +5,53 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  StatusBar,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Alert,
   Keyboard,
-  TouchableWithoutFeedback } from
-'react-native';
+  TouchableWithoutFeedback
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { verificarEmpresa } from '../../services/solicitudMovilService';
-import * as Network from 'expo-network';
+import { getEmpresaPublicaById } from '../../services/empresaService';
+import NetInfo from '@react-native-community/netinfo';
 import syncManager from '../../services/offline/syncManager.mjs';
+import { Modal, Linking, Image } from 'react-native';
+import { StepIndicator } from './StepIndicator';
+import getApiEndpoint from '../../config/api';
+
+const obtenerUrlLogo = (logo) => {
+  if (!logo) return null;
+  if (logo.startsWith('data:image/') || logo.startsWith('http://') || logo.startsWith('https://')) return logo;
+  const cleanPath = logo.startsWith('/') ? logo.substring(1) : logo;
+  return `${getApiEndpoint()}/${cleanPath}`;
+};
 
 const AFFILIATION_CONFIG = {
   title: "Afiliación a la Empresa",
-  subtitle: "Paso 1 de 3",
   icon: "business",
-  helpText: "¿No tienes el código?",
-  supportText: "Contacta a tu administrador"
+  helpText: "¿Problemas con el registro?",
+  supportText: "Opciones de contacto"
 };
 
-export const CompanyAffiliationScreen = ({ onNext, onPrevious, initialEmpresaIdentificador }) => {
+export const CompanyAffiliationScreen = ({ onNext, onPrevious, initialEmpresaId, initialEmpresaIdentificador, initialEmpresaLogo }) => {
   const insets = useSafeAreaInsets();
   const affiliation = AFFILIATION_CONFIG;
   const [companyCode, setCompanyCode] = useState(initialEmpresaIdentificador || '');
   const [isLoading, setIsLoading] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [verifiedCompanyName, setVerifiedCompanyName] = useState('');
-  const isPreFilled = !!(initialEmpresaIdentificador && companyCode === initialEmpresaIdentificador);
+  const [verifiedCompanyLogo, setVerifiedCompanyLogo] = useState(initialEmpresaLogo || null);
+
+  const handleSupportPress = () => {
+    Alert.alert(
+      "Contacto Administrativo",
+      "Comunícate con el administrador de tu empresa para obtener tu código de afiliación o recibir asistencia técnica con tu dispositivo."
+    );
+  };
+
 
   const handleNext = async () => {
     const trimmedCode = companyCode.trim();
@@ -47,21 +64,15 @@ export const CompanyAffiliationScreen = ({ onNext, onPrevious, initialEmpresaIde
     setIsLoading(true);
 
     try {
-      (function () {})(' Verificando empresa:', trimmedCode);
-
       let currentIp = '127.0.0.1';
       try {
-        currentIp = await Network.getIpAddressAsync();
+        const netState = await NetInfo.fetch();
+        currentIp = netState?.details?.ipAddress || '127.0.0.1';
       } catch (e) {
-        (function () {})('No se pudo obtener la IP local', e);
+        console.log('No se pudo obtener la IP local', e);
       }
 
       const empresaInfo = await verificarEmpresa(trimmedCode, currentIp);
-
-      (function () {})(' Resultado verificación:', {
-        ...empresaInfo,
-        ipDetectada: currentIp
-      });
 
       if (!empresaInfo.existe) {
         Alert.alert(
@@ -82,11 +93,6 @@ export const CompanyAffiliationScreen = ({ onNext, onPrevious, initialEmpresaIde
       }
 
       if (empresaInfo.fueraDeRed) {
-        (function () {})('️ Dispositivo bloqueado: IP fuera de red permitida', {
-          ipLocal: currentIp,
-          alertasRed: empresaInfo.alertasRed
-        });
-
         Alert.alert(
           'Fuera de Red',
           'Tu dispositivo no se encuentra en una red permitida por la empresa. Conéctate a la red Wi-Fi autorizada e inténtalo de nuevo.'
@@ -95,28 +101,35 @@ export const CompanyAffiliationScreen = ({ onNext, onPrevious, initialEmpresaIde
         return;
       }
 
-      (function () {})(' Empresa y red válidas, continuando...');
-
       if (empresaInfo.token) {
-        console.log('Token movil configurado en syncManager:', empresaInfo.token.substring(0, 15) + '...');
         syncManager.setAuthToken(empresaInfo.token);
+      }
+
+      let fetchedLogo = empresaInfo.logo;
+      try {
+        const publicData = await getEmpresaPublicaById(empresaInfo.id);
+        if (publicData?.data?.logo) {
+          fetchedLogo = publicData.data.logo;
+        }
+      } catch (e) {
+        console.log("No se pudo obtener logo", e);
       }
 
       setIsVerified(true);
       setVerifiedCompanyName(empresaInfo.nombre);
+      setVerifiedCompanyLogo(fetchedLogo);
       setIsLoading(false);
 
       setTimeout(() => {
         onNext({
           empresaId: empresaInfo.id,
           empresaCodigo: trimmedCode,
-          empresaNombre: empresaInfo.nombre
+          empresaNombre: empresaInfo.nombre,
+          empresaLogo: fetchedLogo
         });
       }, 1500);
 
     } catch (error) {
-      (function () {})(' Error al verificar empresa:', error);
-
       Alert.alert(
         'Error de Conexión',
         error.message || 'No se pudo verificar el código de empresa. Por favor intenta nuevamente.'
@@ -125,89 +138,109 @@ export const CompanyAffiliationScreen = ({ onNext, onPrevious, initialEmpresaIde
     }
   };
 
+  const codeLength = companyCode ? companyCode.length : 0;
+  let dynamicFontSize = 28;
+  let dynamicLetterSpacing = 4;
+  
+  if (codeLength > 15) {
+    dynamicFontSize = 16;
+    dynamicLetterSpacing = 1;
+  } else if (codeLength > 10) {
+    dynamicFontSize = 20;
+    dynamicLetterSpacing = 2;
+  } else if (codeLength > 7) {
+    dynamicFontSize = 24;
+    dynamicLetterSpacing = 3;
+  }
+
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#2563eb" />
-
-      {}
       <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? insets.top + 16 : insets.top + 8 }]}>
-        <Text style={styles.headerTitle}>{affiliation.title}</Text>
-        <Text style={styles.headerSubtitle}>{affiliation.subtitle}</Text>
-
-        {}
-        <View style={styles.stepperContainer}>
-          <View style={styles.stepActive}>
-            <Text style={styles.stepActiveText}>1</Text>
+        <StepIndicator currentStep={1} />
+        <View style={styles.profileCard}>
+          <View style={[styles.avatarPlaceholder, (verifiedCompanyLogo || initialEmpresaLogo) && { backgroundColor: '#ffffff' }]}>
+            {verifiedCompanyLogo || initialEmpresaLogo ? (
+              <Image source={{ uri: obtenerUrlLogo(verifiedCompanyLogo || initialEmpresaLogo) }} style={{ width: 46, height: 46, borderRadius: 23, resizeMode: 'contain' }} />
+            ) : (
+              <Ionicons name="business" size={24} color="#64748b" />
+            )}
           </View>
-          <View style={styles.stepLineInactive} />
-          <View style={styles.stepInactive}>
-            <Text style={styles.stepInactiveText}>2</Text>
-          </View>
-          <View style={styles.stepLineInactive} />
-          <View style={styles.stepInactive}>
-            <Text style={styles.stepInactiveText}>3</Text>
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName} numberOfLines={2}>{affiliation.title}</Text>
           </View>
         </View>
       </View>
 
-      {}
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <View style={styles.content}>
-            {}
-            <View style={styles.iconContainer}>
-              <Ionicons name={affiliation.icon} size={44} color="#2563eb" />
-            </View>
-
-            {}
-            <View style={styles.inputCard}>
-              <Text style={styles.inputLabel}>Identificador de la Empresa</Text>
-              <Text style={styles.formatHint}>Ingresa el código único proporcionado por tu empresa.</Text>
-
-              <TextInput
-                style={[styles.input, isVerified && styles.inputVerified]}
-                placeholder="Identificador"
-                placeholderTextColor="#9ca3af"
-                value={companyCode}
-                onChangeText={(text) => {
-                  setCompanyCode(text.replace(/\s/g, ''));
-                  setIsVerified(false);
-                }}
-                autoCapitalize="none"
-                editable={!isLoading && !isVerified && !initialEmpresaIdentificador} />
-              
-              {isVerified &&
-              <View style={styles.verifiedContainer}>
-                  <Ionicons name="checkmark-circle" size={20} color="#10b981" />
-                  <Text style={styles.verifiedText}>{verifiedCompanyName}</Text>
+            <Text style={styles.sectionLabel}>Identificador</Text>
+            <View style={[styles.sectionContainer, { paddingVertical: 20 }]}>
+              <View style={[styles.settingItem, { flexDirection: 'column', alignItems: 'stretch', paddingHorizontal: 24 }]}>
+                
+                <View style={{ alignItems: 'center', marginBottom: 20 }}>
+                  <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: isVerified ? '#d1fae5' : '#f1f5f9', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+                    <Ionicons name="business" size={32} color={isVerified ? '#10b981' : '#64748b'} />
+                  </View>
+                  <Text style={{ fontSize: 15, color: '#4b5563', textAlign: 'center', fontWeight: '500' }}>
+                    Ingresa el código único proporcionado por tu empresa
+                  </Text>
                 </View>
-              }
+
+                <TextInput
+                  style={[
+                    styles.input, 
+                    { fontSize: dynamicFontSize, letterSpacing: dynamicLetterSpacing, paddingVertical: 20, borderRadius: 20 },
+                    isVerified && styles.inputVerified
+                  ]}
+                  placeholder="CÓDIGO"
+                  placeholderTextColor="#cbd5e1"
+                  value={companyCode}
+                  onChangeText={(text) => {
+                    setCompanyCode(text.replace(/\s/g, '').toUpperCase());
+                    setIsVerified(false);
+                  }}
+                  autoCapitalize="characters"
+                  editable={!isLoading && !isVerified && !initialEmpresaIdentificador} 
+                />
+                
+                {isVerified &&
+                  <View style={styles.verifiedContainer}>
+                    <Ionicons name="checkmark-circle" size={18} color="#10b981" />
+                    <Text style={[styles.verifiedText, { fontSize: 16 }]}>{verifiedCompanyName}</Text>
+                  </View>
+                }
+              </View>
             </View>
 
-            {}
-            <View style={styles.helpContainer}>
-              <Text style={styles.helpText}>{affiliation.helpText}</Text>
-              <TouchableOpacity disabled={isLoading}>
-                <Text style={styles.supportText}>{affiliation.supportText}</Text>
+            <Text style={styles.sectionLabel}>Ayuda</Text>
+            <View style={styles.sectionContainer}>
+              <TouchableOpacity style={styles.settingItem} onPress={handleSupportPress} activeOpacity={0.7}>
+                <View style={styles.settingLeft}>
+                  <Ionicons name="help-circle-outline" size={20} color="#4b5563" style={styles.settingIcon} />
+                  <View style={{ flex: 1, paddingRight: 10 }}>
+                    <Text style={styles.settingTitle}>{affiliation.helpText}</Text>
+                    <Text style={[styles.settingValue, { color: '#2563eb' }]}>{affiliation.supportText}</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
               </TouchableOpacity>
             </View>
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
 
-      {}
-      <View style={[styles.footer, { paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 20) : insets.bottom + 12 }]}>
+
+      <View style={[styles.footer, { paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 20) : insets.bottom + 16 }]}>
         <View style={styles.buttonRow}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={onPrevious}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
             disabled={isLoading}>
-            
-            <Ionicons name="arrow-back" size={18} color="#6b7280" />
+            <Ionicons name="arrow-back" size={20} color="#4b5563" />
             <Text style={styles.backButtonText}>Anterior</Text>
           </TouchableOpacity>
 
@@ -215,167 +248,132 @@ export const CompanyAffiliationScreen = ({ onNext, onPrevious, initialEmpresaIde
             style={[styles.nextButton, (!companyCode || isLoading || isVerified) && styles.nextButtonDisabled]}
             onPress={handleNext}
             disabled={!companyCode || isLoading || isVerified}
-            activeOpacity={0.8}>
-            
-            {isLoading ?
-            <>
+            activeOpacity={0.7}>
+            {isLoading ? (
+              <>
                 <ActivityIndicator color="#fff" size="small" />
                 <Text style={[styles.nextButtonText, { marginLeft: 8 }]}>Verificando...</Text>
-              </> :
-            isVerified ?
-            <>
-                <Text style={styles.nextButtonText}>Ingresando</Text>
-                <Ionicons name="checkmark" size={18} color="#fff" />
-              </> :
-
-            <>
-                <Text style={styles.nextButtonText}>Verificar</Text>
-                <Ionicons name="arrow-forward" size={18} color="#fff" />
               </>
-            }
+            ) : isVerified ? (
+              <>
+                <Text style={styles.nextButtonText}>Ingresando</Text>
+                <Ionicons name="checkmark" size={20} color="#fff" />
+              </>
+            ) : (
+              <>
+                <Text style={styles.nextButtonText}>Verificar</Text>
+                <Ionicons name="arrow-forward" size={20} color="#fff" />
+              </>
+            )}
           </TouchableOpacity>
         </View>
       </View>
-    </View>);
-
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb'
+    backgroundColor: '#ffffff'
   },
   header: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#ffffff',
     paddingHorizontal: 20,
-    paddingBottom: 16
+    paddingBottom: 10
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 2
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: '#dbeafe',
-    marginBottom: 14
-  },
-  stepperContainer: {
+  profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    borderRadius: 24,
+    padding: 20,
+  },
+  avatarPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#e2e8f0',
     justifyContent: 'center',
-    paddingVertical: 4
+    alignItems: 'center',
+    marginRight: 16
   },
-  stepComplete: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#10b981',
-    justifyContent: 'center',
-    alignItems: 'center'
+  profileInfo: {
+    flex: 1
   },
-  stepActive: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center'
+  profileName: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1f2937',
+    marginBottom: 4,
+    letterSpacing: -0.5
   },
-  stepActiveText: {
-    color: '#2563eb',
-    fontSize: 12,
-    fontWeight: 'bold'
-  },
-  stepInactive: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  stepInactiveText: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 12,
-    fontWeight: 'bold'
-  },
-  stepLine: {
-    flex: 1,
-    height: 3,
-    backgroundColor: '#10b981',
-    marginHorizontal: 8,
-    maxWidth: 80,
-    borderRadius: 2
-  },
-  stepLineInactive: {
-    flex: 1,
-    height: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    marginHorizontal: 8,
-    maxWidth: 80,
-    borderRadius: 2
+  profileEmail: {
+    fontSize: 13,
+    color: '#64748b',
+    fontWeight: '500'
   },
   keyboardAvoid: {
     flex: 1
   },
   content: {
     flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-    alignItems: 'center'
+    paddingHorizontal: 20,
+    paddingTop: 10
   },
-  iconContainer: {
-    width: 76,
-    height: 76,
-    backgroundColor: '#eff6ff',
-    borderRadius: 22,
-    justifyContent: 'center',
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#94a3b8',
+    marginBottom: 8,
+    marginLeft: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2
+  },
+  sectionContainer: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 24,
+    paddingVertical: 8,
+    marginBottom: 24
+  },
+  settingItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 28,
-    borderWidth: 1,
-    borderColor: '#dbeafe'
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16
   },
-  inputCard: {
-    width: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: '#f0f0f4'
+  settingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1
   },
-  inputLabel: {
+  settingIcon: {
+    marginRight: 14
+  },
+  settingTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#374151',
-    marginBottom: 6,
-    textAlign: 'center'
+    color: '#1f2937',
+    letterSpacing: -0.2,
+    marginBottom: 2
   },
-  formatHint: {
-    fontSize: 12,
-    color: '#6b7280',
-    textAlign: 'center',
-    marginBottom: 14,
-    fontStyle: 'italic'
+  settingValue: {
+    fontSize: 13,
+    color: '#9ca3af'
   },
   input: {
-    backgroundColor: '#f9fafb',
-    borderRadius: 14,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#e5e7eb',
+    borderColor: '#e2e8f0',
     padding: 16,
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
     letterSpacing: 1,
-    color: '#1f2937'
+    color: '#1f2937',
+    width: '100%'
   },
   inputVerified: {
     borderColor: '#10b981',
@@ -393,25 +391,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14
   },
-  helpContainer: {
-    alignItems: 'center'
-  },
-  helpText: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 4
-  },
-  supportText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#2563eb'
-  },
   footer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     paddingHorizontal: 20,
-    paddingTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb'
+    paddingTop: 10
   },
   buttonRow: {
     flexDirection: 'row',
@@ -419,62 +402,93 @@ const styles = StyleSheet.create({
   },
   backButton: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: '#e5e7eb',
-    borderRadius: 14,
-    padding: 14,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 24,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6
   },
   backButtonText: {
-    color: '#6b7280',
-    fontSize: 14,
-    fontWeight: '600'
+    color: '#4b5563',
+    fontSize: 15,
+    fontWeight: '700'
   },
   nextButton: {
     flex: 2,
     backgroundColor: '#2563eb',
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 24,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    shadowColor: '#2563eb',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 4
+    gap: 8
   },
   nextButtonDisabled: {
-    backgroundColor: '#9ca3af',
-    shadowOpacity: 0,
-    elevation: 0
+    backgroundColor: '#94a3b8',
   },
   nextButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: 'bold'
   },
-  autoFilledBadge: {
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end'
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    maxHeight: '80%'
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f2937'
+  },
+  closeButton: {
+    padding: 4
+  },
+  modalOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#eff6ff',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
-    gap: 6
+    paddingVertical: 16
   },
-  autoFilledText: {
-    fontSize: 11,
-    color: '#1d4ed8',
+  modalIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16
+  },
+  modalTextContainer: {
+    flex: 1
+  },
+  modalOptionTitle: {
+    fontSize: 16,
     fontWeight: '600',
-    flexShrink: 1
+    color: '#1f2937',
+    marginBottom: 2
+  },
+  modalOptionSubtitle: {
+    fontSize: 14,
+    color: '#64748b'
+  },
+  modalDivider: {
+    height: 1,
+    backgroundColor: '#f1f5f9',
+    marginLeft: 64
   }
 });

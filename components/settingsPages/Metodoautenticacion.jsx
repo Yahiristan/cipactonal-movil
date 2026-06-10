@@ -606,10 +606,10 @@ export const MetodoAutenticacionModal = ({
       { }
       <PinInputModal
         visible={showPinModal}
-        onClose={useCallback(() => {
+        onClose={() => {
           setShowPinModal(false);
           setProcesando(false);
-        }, [])}
+        }}
         onConfirm={handleConfirmarPIN}
         title={credenciales.tiene_pin ? 'Cambiar PIN' : 'Configurar PIN'}
         subtitle="Ingresa un PIN de 6 dígitos"

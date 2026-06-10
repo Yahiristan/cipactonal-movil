@@ -4,11 +4,11 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  StatusBar,
   ActivityIndicator,
   ScrollView,
-  Dimensions } from
-'react-native';
+  Dimensions
+} from
+  'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
@@ -63,6 +63,11 @@ const MapaZonasPermitidas = ({
   // El GPS puede seguir actualizando via postMessage sin recrear el WebView.
   const ubicacionInicialRef = useRef(ubicacionActual);
 
+  // Ref mutable que siempre apunta a la ubicación más reciente sin ser
+  // dependencia del useMemo (evita recargar el WebView en cada tick de GPS).
+  const ubicacionActualRef = useRef(ubicacionActual);
+  useEffect(() => { ubicacionActualRef.current = ubicacionActual; }, [ubicacionActual]);
+
   useNavigationBarColor(darkMode);
 
 
@@ -108,7 +113,7 @@ const MapaZonasPermitidas = ({
 
         let coordsFormateadas;
         const isMultiPolygon = Array.isArray(coords[0]);
-        
+
         if (isMultiPolygon) {
           coordsFormateadas = coords.map(poly => poly.map(coord => {
             const lat = coord.lat || coord[0];
@@ -444,9 +449,12 @@ const MapaZonasPermitidas = ({
   // las actualizaciones de GPS se propagan via postMessage sin recargar el WebView.
   const htmlContent = useMemo(() => {
     if (zonasData.length === 0) return '';
+    // Leer del ref para obtener la ubicación más reciente sin hacer que
+    // ubicacionActual sea dependencia (lo que recargaría el WebView cada 5s).
+    const ubicacionParaHTML = ubicacionActualRef.current ?? ubicacionInicialRef.current;
     return generarHTMLLeaflet(
       zonasData,
-      ubicacionInicialRef.current,
+      ubicacionParaHTML,
       departamentoSeleccionado?.id
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -475,37 +483,36 @@ const MapaZonasPermitidas = ({
 
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: darkMode ? '#1e40af' : '#2563eb' }]}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={darkMode ? '#1e40af' : '#2563eb'} />
-      
+    <View style={styles.container}>
 
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.headerLeft}>
-            <Ionicons name="location" size={24} color="#ffffff" />
-            <View style={styles.headerTextContainer}>
-              <Text style={styles.headerTitle}>
+      {/* Header estilo settings */}
+      <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
+        <View style={styles.topBar}>
+          <View style={styles.topBarLeft}>
+            <View style={styles.topBarIconWrapper}>
+              <Ionicons name="map-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} />
+            </View>
+            <View>
+              <Text style={styles.topBarTitle}>
                 {listaDepartamentos.length === 1 ? 'Zona Permitida' : 'Zonas Permitidas'}
               </Text>
-              <Text style={styles.headerSubtitle} numberOfLines={1}>
+              <Text style={styles.topBarSubtitle} numberOfLines={1}>
                 {departamentoSeleccionado?.nombre || `${listaDepartamentos.length} departamentos`}
               </Text>
             </View>
           </View>
-
           <TouchableOpacity
-            style={styles.closeIconButton}
+            style={styles.topBarClose}
             onPress={onClose}
             activeOpacity={0.7}>
-            
-            <Ionicons name="close" size={24} color="#ffffff" />
+            <Ionicons name="close" size={20} color={darkMode ? '#9ca3af' : '#64748b'} />
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
 
-      {}
+      <SafeAreaView edges={['left', 'right', 'bottom']} style={styles.contentSafeArea}>
+
+      {/* Mapa */}
       <View style={styles.mapContainer}>
         <WebView
           ref={webViewRef}
@@ -514,151 +521,103 @@ const MapaZonasPermitidas = ({
           javaScriptEnabled={true}
           domStorageEnabled={true}
           startInLoadingState={true}
+          onLoadEnd={() => {
+            if (webViewRef.current && ubicacionActual) {
+              webViewRef.current.postMessage(JSON.stringify({
+                action: 'updateUserLocation',
+                location: [ubicacionActual.lat, ubicacionActual.lng]
+              }));
+            }
+          }}
           renderLoading={() =>
-          <View style={styles.webviewLoading}>
+            <View style={styles.webviewLoading}>
               <ActivityIndicator size="large" color="#3b82f6" />
             </View>
           } />
-        
       </View>
 
-      {}
+      {/* Selector de departamentos */}
       {listaDepartamentos.length > 1 &&
-      <View style={styles.departamentosContainer}>
-          <Text style={styles.departamentosTitle}>Selecciona departamento</Text>
+        <View style={styles.departamentosContainer}>
+          <Text style={styles.departamentosTitle}>DEPARTAMENTO</Text>
           <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.departamentosScroll}
-          contentContainerStyle={styles.departamentosContent}>
-          
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.departamentosContent}>
+
             {ubicacionActual &&
-          <TouchableOpacity
-            style={[
-            styles.departamentoChip,
-            mostrandoMiUbicacion && styles.departamentoChipActivo]
-            }
-            onPress={handleFocusUserLocation}
-            activeOpacity={0.7}>
-            
-                <Ionicons
-              name={mostrandoMiUbicacion ? "navigate" : "navigate"}
-              size={16}
-              color={mostrandoMiUbicacion ? '#10b981' : '#6b7280'}
-              style={styles.chipIcon} />
-            
-                <Text
-              style={[
-              styles.departamentoChipText,
-              mostrandoMiUbicacion && styles.departamentoChipTextActivo]
-              }
-              numberOfLines={1}>
-              
+              <TouchableOpacity
+                style={[styles.departamentoChip, mostrandoMiUbicacion && styles.departamentoChipActivo]}
+                onPress={handleFocusUserLocation}
+                activeOpacity={0.7}>
+                <Ionicons name="navigate" size={14} color={mostrandoMiUbicacion ? '#10b981' : (darkMode ? '#9ca3af' : '#6b7280')} />
+                <Text style={[styles.departamentoChipText, mostrandoMiUbicacion && styles.departamentoChipTextActivo]} numberOfLines={1}>
                   Mi ubicación
                 </Text>
-                {mostrandoMiUbicacion &&
-            <View style={styles.activeDot} />
-            }
+                {mostrandoMiUbicacion && <View style={styles.activeDot} />}
               </TouchableOpacity>
-          }
+            }
 
             {listaDepartamentos.map((depto, index) => {
-            const esSeleccionado = departamentoSeleccionado?.id === depto.id && !mostrandoMiUbicacion;
-
-            return (
-              <TouchableOpacity
-                key={depto.id || index}
-                style={[
-                styles.departamentoChip,
-                esSeleccionado && styles.departamentoChipActivo]
-                }
-                onPress={() => handleDepartamentoClick(depto)}
-                activeOpacity={0.7}>
-                
-                  <Ionicons
-                  name={esSeleccionado ? 'location' : 'location-outline'}
-                  size={16}
-                  color={esSeleccionado ? '#10b981' : '#6b7280'}
-                  style={styles.chipIcon} />
-                
-                  <Text
-                  style={[
-                  styles.departamentoChipText,
-                  esSeleccionado && styles.departamentoChipTextActivo]
-                  }
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  
+              const esSeleccionado = departamentoSeleccionado?.id === depto.id && !mostrandoMiUbicacion;
+              return (
+                <TouchableOpacity
+                  key={depto.id || index}
+                  style={[styles.departamentoChip, esSeleccionado && styles.departamentoChipActivo]}
+                  onPress={() => handleDepartamentoClick(depto)}
+                  activeOpacity={0.7}>
+                  <Ionicons name={esSeleccionado ? 'location' : 'location-outline'} size={14} color={esSeleccionado ? '#10b981' : (darkMode ? '#9ca3af' : '#6b7280')} />
+                  <Text style={[styles.departamentoChipText, esSeleccionado && styles.departamentoChipTextActivo]} numberOfLines={1} ellipsizeMode="tail">
                     {depto.nombre}
                   </Text>
-                  {esSeleccionado &&
-                <View style={styles.activeDot} />
-                }
-                </TouchableOpacity>);
-
-          })}
+                  {esSeleccionado && <View style={styles.activeDot} />}
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </View>
       }
 
-      {}
+      {/* Botón mi ubicación (1 solo depto) */}
       {listaDepartamentos.length === 1 && ubicacionActual &&
-      <View style={styles.singleLocationContainer}>
+        <View style={styles.singleLocationContainer}>
           <TouchableOpacity
-          style={[
-          styles.departamentoChip,
-          mostrandoMiUbicacion && styles.departamentoChipActivo]
-          }
-          onPress={handleFocusUserLocation}
-          activeOpacity={0.7}>
-          
-            <Ionicons
-            name={mostrandoMiUbicacion ? "navigate" : "navigate"}
-            size={16}
-            color={mostrandoMiUbicacion ? '#10b981' : '#6b7280'}
-            style={styles.chipIcon} />
-          
-            <Text
-            style={[
-            styles.departamentoChipText,
-            mostrandoMiUbicacion && styles.departamentoChipTextActivo]
-            }>
-            
+            style={[styles.departamentoChip, mostrandoMiUbicacion && styles.departamentoChipActivo]}
+            onPress={handleFocusUserLocation}
+            activeOpacity={0.7}>
+            <Ionicons name="navigate" size={14} color={mostrandoMiUbicacion ? '#10b981' : (darkMode ? '#9ca3af' : '#6b7280')} />
+            <Text style={[styles.departamentoChipText, mostrandoMiUbicacion && styles.departamentoChipTextActivo]}>
               Mi ubicación
             </Text>
-            {mostrandoMiUbicacion &&
-          <View style={styles.activeDot} />
-          }
+            {mostrandoMiUbicacion && <View style={styles.activeDot} />}
           </TouchableOpacity>
         </View>
       }
 
-      {}
+      {/* Leyenda */}
       <View style={styles.legend}>
         {!mostrandoMiUbicacion && departamentoSeleccionado &&
-        <View style={styles.legendItem}>
+          <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: '#10b981' }]} />
-            <Text style={styles.legendText} numberOfLines={1}>
-              {departamentoSeleccionado.nombre}
-            </Text>
+            <Text style={styles.legendText} numberOfLines={1}>{departamentoSeleccionado.nombre}</Text>
           </View>
         }
-
         {listaDepartamentos.length > 1 && !mostrandoMiUbicacion &&
-        <View style={styles.legendItem}>
+          <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: '#3b82f6' }]} />
             <Text style={styles.legendText}>Otras zonas disponibles</Text>
           </View>
         }
-
         {ubicacionActual &&
-        <View style={styles.legendItem}>
+          <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: '#ef4444' }]} />
             <Text style={styles.legendText}>Tu ubicación</Text>
           </View>
         }
       </View>
-    </SafeAreaView>);
+      </SafeAreaView>
+    </View>
+  );
 
 };
 
@@ -666,11 +625,68 @@ const MapaZonasPermitidas = ({
 const mapStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff'
+    backgroundColor: '#ffffff'
   },
+
+  // TOP BAR (header estilo settings)
+  headerSafeArea: {
+    backgroundColor: '#ffffff'
+  },
+  contentSafeArea: {
+    flex: 1,
+    backgroundColor: '#ffffff'
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9'
+  },
+  topBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+    marginRight: 8
+  },
+  topBarIconWrapper: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  topBarTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1f2937',
+    letterSpacing: -0.2
+  },
+  topBarSubtitle: {
+    fontSize: 13,
+    color: '#64748b',
+    fontWeight: '500',
+    marginTop: 1
+  },
+  topBarClose: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0
+  },
+
+  // LOADING / ERROR
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 16
@@ -682,7 +698,7 @@ const mapStyles = StyleSheet.create({
   },
   errorContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 16,
@@ -694,105 +710,69 @@ const mapStyles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center'
   },
-  header: {
-    backgroundColor: '#2563eb',
-    borderBottomWidth: 1,
-    borderBottomColor: '#2563eb',
-    paddingTop: 8
+  closeButton: {
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 14,
+    marginTop: 16
   },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600'
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-    marginRight: 8
-  },
-  headerTextContainer: {
-    flex: 1
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#ffffff'
-  },
-  headerSubtitle: {
-    fontSize: 13,
-    color: '#dbeafe',
-    marginTop: 2
-  },
-  closeIconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexShrink: 0
-  },
-  mapContainer: {
-    flex: 1
-  },
-  webview: {
-    flex: 1
-  },
+
+  // MAP
+  mapContainer: { flex: 1 },
+  webview: { flex: 1 },
   webviewLoading: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: 0, left: 0, right: 0, bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff'
+    backgroundColor: '#ffffff'
   },
+
+  // DEPARTMENT CHIPS
   departamentosContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#f9fafb',
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    paddingVertical: 12
+    borderTopColor: '#f1f5f9',
+    paddingTop: 12,
+    paddingBottom: 10
   },
   departamentosTitle: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6b7280',
+    color: '#94a3b8',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    paddingHorizontal: 16,
+    letterSpacing: 1.2,
+    paddingHorizontal: 20,
     marginBottom: 8
-  },
-  departamentosScroll: {
-    paddingHorizontal: 16
   },
   departamentosContent: {
     gap: 8,
-    paddingRight: 16
+    paddingHorizontal: 20,
+    paddingRight: 20
   },
   departamentoChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    backgroundColor: '#ffffff',
     borderRadius: 20,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    maxWidth: SCREEN_WIDTH * 0.7
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
+    maxWidth: SCREEN_WIDTH * 0.65
   },
   departamentoChipActivo: {
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#ecfdf5',
     borderColor: '#10b981'
   },
-  chipIcon: {
-    flexShrink: 0
-  },
+  chipIcon: { flexShrink: 0 },
   departamentoChipText: {
     fontSize: 13,
     fontWeight: '500',
@@ -804,157 +784,97 @@ const mapStyles = StyleSheet.create({
     fontWeight: '600'
   },
   activeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#10b981',
-    flexShrink: 0
+    width: 6, height: 6, borderRadius: 3,
+    backgroundColor: '#10b981', flexShrink: 0
   },
+
   singleLocationContainer: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    backgroundColor: '#f9fafb',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    alignItems: 'center'
+    borderTopColor: '#f1f5f9',
+    alignItems: 'flex-start'
   },
+
+  // LEGEND
   legend: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
+    backgroundColor: '#f9fafb',
+    paddingHorizontal: 20,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    gap: 8
+    borderTopColor: '#f1f5f9',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10
+    gap: 8
   },
   legendColor: {
-    width: 24,
-    height: 24,
-    borderRadius: 4,
-    borderWidth: 2,
-    flexShrink: 0
+    width: 10, height: 10, borderRadius: 5, flexShrink: 0
   },
   legendText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#6b7280',
-    flex: 1
-  },
-  infoCard: {
-    backgroundColor: '#eff6ff',
-    marginHorizontal: 16,
-    marginVertical: 12,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#bfdbfe'
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10
-  },
-  infoIcon: {
-    flexShrink: 0
-  },
-  infoText: {
-    fontSize: 13,
-    color: '#1e40af',
-    flex: 1,
-    lineHeight: 18
-  },
-  closeButton: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 16
-  },
-  closeButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600'
+    fontWeight: '500'
   }
 });
 
 const mapStylesDark = StyleSheet.create({
   ...mapStyles,
-  container: {
-    ...mapStyles.container,
-    backgroundColor: '#1f2937'
+  container: { ...mapStyles.container, backgroundColor: '#0f172a' },
+  loadingContainer: { ...mapStyles.loadingContainer, backgroundColor: '#0f172a' },
+  errorContainer: { ...mapStyles.errorContainer, backgroundColor: '#0f172a' },
+  topBar: {
+    ...mapStyles.topBar,
+    backgroundColor: '#0f172a',
+    borderBottomColor: '#1e293b'
   },
-  loadingContainer: {
-    ...mapStyles.loadingContainer,
-    backgroundColor: '#1f2937'
+  headerSafeArea: {
+    ...mapStyles.headerSafeArea,
+    backgroundColor: '#0f172a'
   },
-  errorContainer: {
-    ...mapStyles.errorContainer,
-    backgroundColor: '#1f2937'
+  contentSafeArea: {
+    ...mapStyles.contentSafeArea,
+    backgroundColor: '#0f172a'
   },
-  header: {
-    ...mapStyles.header,
-    backgroundColor: '#1e40af',
-    borderBottomColor: '#1e40af'
-  },
-  headerTitle: {
-    ...mapStyles.headerTitle,
-    color: '#fff'
-  },
-  closeIconButton: {
-    ...mapStyles.closeIconButton,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)'
-  },
+  topBarIconWrapper: { ...mapStyles.topBarIconWrapper, backgroundColor: '#1e293b' },
+  topBarTitle: { ...mapStyles.topBarTitle, color: '#f9fafb' },
+  topBarSubtitle: { ...mapStyles.topBarSubtitle, color: '#9ca3af' },
+  topBarClose: { ...mapStyles.topBarClose, backgroundColor: '#1e293b' },
+  webviewLoading: { ...mapStyles.webviewLoading, backgroundColor: '#0f172a' },
   departamentosContainer: {
     ...mapStyles.departamentosContainer,
-    backgroundColor: '#1f2937',
-    borderTopColor: '#374151'
+    backgroundColor: '#1e293b',
+    borderTopColor: '#334155'
   },
-  departamentosTitle: {
-    ...mapStyles.departamentosTitle,
-    color: '#9ca3af'
-  },
+  departamentosTitle: { ...mapStyles.departamentosTitle, color: '#64748b' },
   departamentoChip: {
     ...mapStyles.departamentoChip,
-    backgroundColor: '#374151'
+    backgroundColor: '#0f172a',
+    borderColor: '#334155'
   },
   departamentoChipActivo: {
     ...mapStyles.departamentoChipActivo,
-    backgroundColor: '#1e3a2f'
+    backgroundColor: '#064e3b',
+    borderColor: '#10b981'
   },
-  departamentoChipText: {
-    ...mapStyles.departamentoChipText,
-    color: '#d1d5db'
-  },
+  departamentoChipText: { ...mapStyles.departamentoChipText, color: '#d1d5db' },
   singleLocationContainer: {
     ...mapStyles.singleLocationContainer,
-    backgroundColor: '#1f2937',
-    borderTopColor: '#374151'
+    backgroundColor: '#1e293b',
+    borderTopColor: '#334155'
   },
   legend: {
     ...mapStyles.legend,
-    backgroundColor: '#1f2937',
-    borderTopColor: '#374151'
+    backgroundColor: '#1e293b',
+    borderTopColor: '#334155'
   },
-  legendText: {
-    ...mapStyles.legendText,
-    color: '#d1d5db'
-  },
-  infoCard: {
-    ...mapStyles.infoCard,
-    backgroundColor: '#1e3a5f',
-    borderColor: '#3b82f6'
-  },
-  infoText: {
-    ...mapStyles.infoText,
-    color: '#93c5fd'
-  },
-  webviewLoading: {
-    ...mapStyles.webviewLoading,
-    backgroundColor: '#1f2937'
-  }
+  legendText: { ...mapStyles.legendText, color: '#94a3b8' }
 });
+
 
 export default MapaZonasPermitidas;

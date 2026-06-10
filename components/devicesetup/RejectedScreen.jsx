@@ -4,9 +4,8 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  StatusBar,
-  Platform } from
-'react-native';
+  Platform
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,193 +14,175 @@ export const RejectedScreen = ({ motivoRechazo, onRetry, onCancel }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#2563eb" />
-
-      {}
       <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? insets.top + 16 : insets.top + 8 }]}>
-        <Text style={styles.headerTitle}>Solicitud Rechazada</Text>
-        <Text style={styles.headerSubtitle}>Tu solicitud no fue aprobada</Text>
+        <View style={styles.profileCard}>
+          <View style={[styles.avatarPlaceholder, { backgroundColor: '#fee2e2' }]}>
+            <Ionicons name="close-circle" size={32} color="#ef4444" />
+          </View>
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName} numberOfLines={1}>Solicitud Rechazada</Text>
+            <Text style={styles.profileEmail} numberOfLines={1}>Tu solicitud no fue aprobada</Text>
+          </View>
+        </View>
       </View>
 
-      {}
       <View style={styles.content}>
-        {}
-        <View style={styles.errorIcon}>
-          <Ionicons name="close-circle" size={56} color="#ef4444" />
+        <Text style={styles.sectionLabel}>Motivo del rechazo</Text>
+        <View style={styles.sectionContainer}>
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="information-circle-outline" size={20} color="#ef4444" style={styles.settingIcon} />
+              <View style={{ flex: 1, paddingRight: 10 }}>
+                <Text style={styles.settingTitle}>Detalles</Text>
+                <Text style={[styles.settingValue, { color: '#ef4444', lineHeight: 18 }]}>{motivoRechazo || 'No se especificó un motivo'}</Text>
+              </View>
+            </View>
+          </View>
         </View>
 
-        {}
-        <Text style={styles.mainMessage}>Lo sentimos</Text>
-        <Text style={styles.description}>
-          Tu solicitud de registro de dispositivo ha sido rechazada por el administrador.
-        </Text>
-
-        {}
-        <View style={styles.reasonCard}>
-          <View style={styles.reasonHeader}>
-            <Ionicons name="information-circle" size={18} color="#dc2626" />
-            <Text style={styles.reasonTitle}>Motivo del Rechazo</Text>
+        <Text style={styles.sectionLabel}>Verifica lo siguiente</Text>
+        <View style={styles.sectionContainer}>
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="business-outline" size={20} color="#4b5563" style={styles.settingIcon} />
+              <View style={{ flex: 1, paddingRight: 10 }}>
+                <Text style={styles.settingTitle}>Código de empresa</Text>
+                <Text style={styles.settingValue}>Asegúrate de que sea correcto.</Text>
+              </View>
+            </View>
           </View>
-          <Text style={styles.reasonText}>
-            {motivoRechazo || 'No se especificó un motivo'}
-          </Text>
-        </View>
-
-        {}
-        <View style={styles.tipsCard}>
-          <Text style={styles.tipsTitle}>Verifica lo siguiente:</Text>
-          <View style={styles.tipItem}>
-            <Ionicons name="checkmark-circle-outline" size={16} color="#6b7280" />
-            <Text style={styles.tipText}>Código de empresa correcto</Text>
-          </View>
-          <View style={styles.tipItem}>
-            <Ionicons name="checkmark-circle-outline" size={16} color="#6b7280" />
-            <Text style={styles.tipText}>Correo electrónico corporativo válido</Text>
-          </View>
-          <View style={styles.tipItem}>
-            <Ionicons name="checkmark-circle-outline" size={16} color="#6b7280" />
-            <Text style={styles.tipText}>Permisos de tu administrador</Text>
+          
+          <View style={styles.divider} />
+          
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="mail-outline" size={20} color="#4b5563" style={styles.settingIcon} />
+              <View style={{ flex: 1, paddingRight: 10 }}>
+                <Text style={styles.settingTitle}>Correo electrónico</Text>
+                <Text style={styles.settingValue}>Debe ser tu correo corporativo válido.</Text>
+              </View>
+            </View>
           </View>
         </View>
       </View>
 
-      {}
-      <View style={[styles.footer, { paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 20) : insets.bottom + 12 }]}>
+      <View style={[styles.footer, { paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 20) : insets.bottom + 16 }]}>
         <View style={styles.buttonRow}>
           <TouchableOpacity
             style={styles.cancelButton}
             onPress={onCancel}
-            activeOpacity={0.8}>
-            
+            activeOpacity={0.7}>
             <Text style={styles.cancelButtonText}>Salir</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.retryButton}
             onPress={onRetry}
-            activeOpacity={0.8}>
-            
+            activeOpacity={0.7}>
+            <Text style={styles.retryButtonText}>Reintentar</Text>
             <Ionicons name="refresh" size={18} color="#fff" />
-            <Text style={styles.retryButtonText}>Intentar Nuevamente</Text>
           </TouchableOpacity>
         </View>
       </View>
-    </View>);
-
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb'
+    backgroundColor: '#ffffff'
   },
   header: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#ffffff',
     paddingHorizontal: 20,
-    paddingBottom: 20
+    paddingBottom: 10
   },
-  headerTitle: {
+  profileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    borderRadius: 24,
+    padding: 20,
+  },
+  avatarPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16
+  },
+  profileInfo: {
+    flex: 1
+  },
+  profileName: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 2
+    fontWeight: '800',
+    color: '#1f2937',
+    marginBottom: 4,
+    letterSpacing: -0.5
   },
-  headerSubtitle: {
-    fontSize: 12,
-    color: '#dbeafe'
+  profileEmail: {
+    fontSize: 13,
+    color: '#64748b',
+    fontWeight: '500'
   },
   content: {
     flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-    alignItems: 'center'
+    paddingHorizontal: 20,
+    paddingTop: 10
   },
-  errorIcon: {
-    width: 80,
-    height: 80,
-    backgroundColor: '#fee2e2',
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#fecaca'
-  },
-  mainMessage: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#1f2937',
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#94a3b8',
     marginBottom: 8,
-    textAlign: 'center'
+    marginLeft: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2
   },
-  description: {
-    fontSize: 13,
-    color: '#6b7280',
-    textAlign: 'center',
-    lineHeight: 19,
-    marginBottom: 20,
-    paddingHorizontal: 10
+  sectionContainer: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 24,
+    paddingVertical: 8,
+    marginBottom: 24
   },
-  reasonCard: {
-    width: '100%',
-    backgroundColor: '#fef2f2',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#fecaca'
-  },
-  reasonHeader: {
+  settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
-    gap: 8
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16
   },
-  reasonTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#dc2626'
+  settingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1
   },
-  reasonText: {
-    fontSize: 13,
-    color: '#991b1b',
-    lineHeight: 19
+  settingIcon: {
+    marginRight: 14
   },
-  tipsCard: {
-    width: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#f0f0f4',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1
-  },
-  tipsTitle: {
-    fontSize: 13,
+  settingTitle: {
+    fontSize: 15,
     fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 10
+    letterSpacing: -0.2,
+    marginBottom: 2
   },
-  tipItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 8
+  settingValue: {
+    fontSize: 13,
+    color: '#9ca3af'
   },
-  tipText: {
-    fontSize: 12,
-    color: '#4b5563'
+  divider: {
+    height: 1,
+    backgroundColor: '#f1f5f9',
+    marginHorizontal: 16
   },
   footer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     paddingHorizontal: 20,
-    paddingTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb'
+    paddingTop: 10
   },
   buttonRow: {
     flexDirection: 'row',
@@ -209,33 +190,26 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: '#e5e7eb',
-    borderRadius: 14,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 24,
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center'
   },
   cancelButtonText: {
-    color: '#6b7280',
+    color: '#4b5563',
     fontSize: 15,
-    fontWeight: '600'
+    fontWeight: '700'
   },
   retryButton: {
     flex: 2,
-    backgroundColor: '#2563eb',
-    borderRadius: 14,
+    backgroundColor: '#ef4444',
+    borderRadius: 24,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    shadowColor: '#2563eb',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 4
+    gap: 8
   },
   retryButtonText: {
     color: '#fff',

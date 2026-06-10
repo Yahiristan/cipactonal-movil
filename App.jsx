@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, ActivityIndicator, View, Alert, AppState, StatusBar } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SystemUI from 'expo-system-ui';
@@ -13,9 +13,9 @@ import { HomeScreen } from './components/homes/home';
 import { HistoryScreen } from './components/homes/history';
 import { ScheduleScreen } from './components/homes/schedule';
 import { SettingsScreen } from './components/settingsPages/settings';
-import { BottomNavigation } from './components/homes/nav';
 import { AdminScreen } from './components/admin/AdminScreen';
 import { NotifyScreen } from './components/homes/NotifyScreen';
+import { MainLayout } from './components/MainLayout';
 import { OnboardingNavigator } from './components/devicesetup/onBoardNavigator';
 import { getSolicitudPorToken, verificarDispositivoPorEmpleado } from './services/solicitudMovilService';
 import { getUsuarioCompleto } from './services/empleadoServices';
@@ -59,6 +59,7 @@ export default function App() {
   const [isMaintenance, setIsMaintenance] = useState(false);
   const [deviceDisabled, setDeviceDisabled] = useState(false);
   const [settingsInitialSection, setSettingsInitialSection] = useState(null);
+  const [navVisible, setNavVisible] = useState(true);
 
   const appState = useRef(AppState.currentState);
   const verificationInterval = useRef(null);
@@ -831,6 +832,7 @@ export default function App() {
     setIsLoggedIn(false);
     setCurrentScreen('home');
     setUserData(null);
+    setDeviceDisabled(false);
   };
 
   if (isLoading) {
@@ -845,8 +847,10 @@ export default function App() {
   if (isMaintenance) {
     return (
       <SafeAreaProvider>
+        <StatusBar barStyle={darkMode ? "light-content" : "dark-content"} backgroundColor={darkMode ? "#111827" : "#f3f4f6"} />
         <MaintenanceScreen
           darkMode={darkMode}
+          onLogout={handleLogout}
           onRetry={async () => {
             try {
               const online = await syncManager.isOnline();
@@ -867,7 +871,7 @@ export default function App() {
   if (!isLoggedIn) {
     return (
       <SafeAreaProvider>
-        <StatusBar barStyle="light-content" backgroundColor={darkMode ? "#1e40af" : "#2563eb"} />
+        <StatusBar barStyle={darkMode ? "light-content" : "dark-content"} backgroundColor={darkMode ? "#0f172a" : "#ffffff"} />
         <LoginScreen onLoginSuccess={handleLoginSuccess} darkMode={darkMode} />
       </SafeAreaProvider>);
 
@@ -884,8 +888,10 @@ export default function App() {
   if (isLoggedIn && deviceDisabled) {
     return (
       <SafeAreaProvider>
+        <StatusBar barStyle={darkMode ? "light-content" : "dark-content"} backgroundColor={darkMode ? "#111827" : "#f3f4f6"} />
         <DeviceDisabledScreen
           darkMode={darkMode}
+          onLogout={handleLogout}
           onReRequest={handleReRequest}
           onReEnabled={handleDeviceReEnabled} />
 
@@ -896,7 +902,7 @@ export default function App() {
   if (isLoggedIn && !deviceRegistered && userData) {
     return (
       <SafeAreaProvider>
-        <StatusBar barStyle="light-content" backgroundColor="#2563eb" />
+        <StatusBar barStyle={darkMode ? "light-content" : "dark-content"} backgroundColor={darkMode ? "#0f172a" : "#ffffff"} />
         <OnboardingNavigator
           onComplete={handleOnboardingComplete}
           userData={userData}
@@ -907,59 +913,34 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={darkMode ? "#1e40af" : "#2563eb"} />
-
-      <SafeAreaView
-        style={[styles.safeArea, darkMode && styles.safeAreaDark]}
-        edges={['top']}>
-
-        <View style={[styles.container, darkMode && styles.containerDark]}>
-          {currentScreen === 'home' && <HomeScreen userData={userData} darkMode={darkMode} onOpenAvisos={() => setCurrentScreen('avisos')} onOpenProfile={() => { setSettingsInitialSection('personalinfo'); setCurrentScreen('settings'); }} />}
-          {currentScreen === 'avisos' && <NotifyScreen userData={userData} darkMode={darkMode} onGoBack={() => setCurrentScreen('home')} />}
-          {currentScreen === 'history' && <HistoryScreen darkMode={darkMode} userData={userData} />}
-          {currentScreen === 'schedule' && <ScheduleScreen userData={userData} darkMode={darkMode} />}
-          {currentScreen === 'admin' && userData?.esAdmin && <AdminScreen userData={userData} darkMode={darkMode} />}
-          {currentScreen === 'settings' &&
-            <SettingsScreen
-              userData={userData}
-              email={userData.correo}
-              darkMode={darkMode}
-              onToggleDarkMode={handleToggleDarkMode}
-              onLogout={handleLogout}
-              initialSection={settingsInitialSection} />
-          }
-
-          {currentScreen !== 'avisos' &&
-            <BottomNavigation
-              currentScreen={currentScreen}
-              onScreenChange={(screen) => { setSettingsInitialSection(null); setCurrentScreen(screen); }}
-              darkMode={darkMode}
-              userData={userData} />
-          }
-        </View>
-      </SafeAreaView>
-    </SafeAreaProvider>);
+    <MainLayout
+      darkMode={darkMode}
+      currentScreen={currentScreen}
+      onScreenChange={(screen) => { setNavVisible(true); setSettingsInitialSection(null); setCurrentScreen(screen); }}
+      userData={userData}
+      navVisible={navVisible}
+    >
+      {currentScreen === 'home' && <HomeScreen userData={userData} darkMode={darkMode} onOpenAvisos={() => setCurrentScreen('avisos')} onOpenProfile={() => { setSettingsInitialSection('personalinfo'); setCurrentScreen('settings'); }} />}
+      {currentScreen === 'avisos' && <NotifyScreen userData={userData} darkMode={darkMode} onGoBack={() => setCurrentScreen('home')} />}
+      {currentScreen === 'history' && <HistoryScreen darkMode={darkMode} userData={userData} />}
+      {currentScreen === 'schedule' && <ScheduleScreen userData={userData} darkMode={darkMode} />}
+      {currentScreen === 'admin' && userData?.esAdmin && <AdminScreen userData={userData} darkMode={darkMode} />}
+      {currentScreen === 'settings' &&
+        <SettingsScreen
+          userData={userData}
+          email={userData.correo}
+          darkMode={darkMode}
+          onToggleDarkMode={handleToggleDarkMode}
+          onLogout={handleLogout}
+          initialSection={settingsInitialSection}
+          setNavVisible={setNavVisible} />
+      }
+    </MainLayout>
+  );
 
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#2563eb'
-  },
-  safeAreaDark: {
-    backgroundColor: '#1e40af'
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#f3f4f6'
-  },
-  containerDark: {
-    backgroundColor: '#111827'
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

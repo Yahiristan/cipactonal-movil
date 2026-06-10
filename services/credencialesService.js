@@ -1,8 +1,9 @@
 
 import getApiEndpoint from '../config/api.js';
+import fetchTimeout from './fetchTimeout.js';
 export const getCredencialesByEmpleado = async (empleadoId, token) => {
   try {
-    const response = await fetch(
+    const response = await fetchTimeout(
       getApiEndpoint(`/api/credenciales/empleado/${empleadoId}`),
       {
         method: 'GET',
@@ -37,7 +38,7 @@ export const getCredencialesByEmpleado = async (empleadoId, token) => {
 
 export const guardarDactilar = async (empleadoId, dactilarBase64, token) => {
   try {
-    const response = await fetch(
+    const response = await fetchTimeout(
       getApiEndpoint('/api/credenciales/dactilar'),
       {
         method: 'POST',
@@ -63,7 +64,7 @@ export const guardarDactilar = async (empleadoId, dactilarBase64, token) => {
 
 export const guardarFacial = async (empleadoId, facialBase64, token) => {
   try {
-    const response = await fetch(
+    const response = await fetchTimeout(
       getApiEndpoint('/api/credenciales/facial'),
       {
         method: 'POST',
@@ -92,7 +93,7 @@ export const guardarPin = async (empleadoId, pin, token) => {
     if (pin.length !== 6 || !/^\d{6}$/.test(pin)) {
       throw new Error('El PIN debe ser de exactamente 6 dígitos');
     }
-    const response = await fetch(
+    const response = await fetchTimeout(
       getApiEndpoint('/api/credenciales/pin'),
       {
         method: 'POST',
@@ -119,8 +120,8 @@ export const guardarPin = async (empleadoId, pin, token) => {
 export const verificarPin = async (empleadoId, pin, token) => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-    const response = await fetch(
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    const response = await fetchTimeout(
       getApiEndpoint('/api/credenciales/verificar-pin'),
       {
         method: 'POST',
@@ -154,7 +155,7 @@ export const verificarPin = async (empleadoId, pin, token) => {
 
 export const eliminarCredencial = async (empleadoId, tipo, token) => {
   try {
-    const response = await fetch(
+    const response = await fetchTimeout(
       getApiEndpoint(`/api/credenciales/empleado/${empleadoId}?tipo=${tipo}`),
       {
         method: 'DELETE',

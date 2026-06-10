@@ -1,12 +1,13 @@
-
 import getApiEndpoint from '../config/api.js';
+import fetchTimeout from './fetchTimeout.js';
+
 export const getEmpresas = async (token, esActivo = null) => {
   try {
     let url = '/api/empresas';
     if (esActivo !== null) {
       url += `?es_activo=${esActivo}`;
     }
-    const response = await fetch(
+    const response = await fetchTimeout(
       getApiEndpoint(url),
       {
         method: 'GET',
@@ -28,7 +29,7 @@ export const getEmpresas = async (token, esActivo = null) => {
 
 export const getMiEmpresa = async (token) => {
   try {
-    const response = await fetch(
+    const response = await fetchTimeout(
       getApiEndpoint('/api/empresas/mi-empresa'),
       {
         method: 'GET',
@@ -50,7 +51,7 @@ export const getMiEmpresa = async (token) => {
 
 export const getEmpresaById = async (empresaId, token) => {
   try {
-    const response = await fetch(
+    const response = await fetchTimeout(
       getApiEndpoint(`/api/empresas/${empresaId}`),
       {
         method: 'GET',
@@ -73,7 +74,7 @@ export const getEmpresaById = async (empresaId, token) => {
 
 export const createEmpresa = async (empresaData, token) => {
   try {
-    const response = await fetch(
+    const response = await fetchTimeout(
       getApiEndpoint('/api/empresas'),
       {
         method: 'POST',
@@ -96,7 +97,7 @@ export const createEmpresa = async (empresaData, token) => {
 
 export const updateEmpresa = async (empresaId, empresaData, token) => {
   try {
-    const response = await fetch(
+    const response = await fetchTimeout(
       getApiEndpoint(`/api/empresas/${empresaId}`),
       {
         method: 'PUT',
@@ -120,7 +121,7 @@ export const updateEmpresa = async (empresaId, empresaData, token) => {
 
 export const deleteEmpresa = async (empresaId, token) => {
   try {
-    const response = await fetch(
+    const response = await fetchTimeout(
       getApiEndpoint(`/api/empresas/${empresaId}`),
       {
         method: 'DELETE',
@@ -144,7 +145,7 @@ export const deleteEmpresa = async (empresaId, token) => {
 export const getEmpresaPublicaById = async (empresaId) => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
     let response;
     try {
       response = await Promise.race([
@@ -159,7 +160,7 @@ export const getEmpresaPublicaById = async (empresaId) => {
           }
         ),
         new Promise((_, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Timeout de 5s')), 5000);
+          const timeout = setTimeout(() => reject(new Error('Timeout de 20s')), 20000);
           controller.signal.addEventListener('abort', () => clearTimeout(timeout));
         })
       ]);

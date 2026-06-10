@@ -3,14 +3,14 @@ import {
   View,
   Text,
   StyleSheet,
-  StatusBar,
   Alert,
   ActivityIndicator,
-  Platform } from
-'react-native';
+  Platform
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getSolicitudPorToken } from '../../services/solicitudMovilService';
+import { StepIndicator } from './StepIndicator';
 
 export const PendingApprovalScreen = ({ tokenSolicitud, idSolicitud, onApproved, onRejected }) => {
   const insets = useSafeAreaInsets();
@@ -32,7 +32,6 @@ export const PendingApprovalScreen = ({ tokenSolicitud, idSolicitud, onApproved,
         const estadoLower = response.estado?.toLowerCase();
         setSolicitudStatus(estadoLower);
 
-
         if (estadoLower === 'aceptado') {
           if (intervalRef.current) {
             clearInterval(intervalRef.current);
@@ -45,7 +44,6 @@ export const PendingApprovalScreen = ({ tokenSolicitud, idSolicitud, onApproved,
             });
           }, 500);
         }
-
 
         if (estadoLower === 'rechazado') {
           if (intervalRef.current) {
@@ -71,201 +69,170 @@ export const PendingApprovalScreen = ({ tokenSolicitud, idSolicitud, onApproved,
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#2563eb" />
-
-      {}
       <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? insets.top + 16 : insets.top + 8 }]}>
-        <Text style={styles.headerTitle}>Solicitud Enviada</Text>
-        <Text style={styles.headerSubtitle}>Esperando aprobación del administrador</Text>
-
-        <View style={styles.stepperContainer}>
-          <View style={styles.stepComplete}>
-            <Ionicons name="checkmark" size={12} color="#fff" />
+        <StepIndicator currentStep={3} />
+        <View style={styles.profileCard}>
+          <View style={styles.avatarPlaceholder}>
+            <Ionicons name="time" size={32} color="#64748b" />
           </View>
-          <View style={styles.stepLine} />
-          <View style={styles.stepComplete}>
-            <Ionicons name="checkmark" size={12} color="#fff" />
-          </View>
-          <View style={styles.stepLine} />
-          <View style={styles.stepPending}>
-            <ActivityIndicator size="small" color="#2563eb" />
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName} numberOfLines={1}>Solicitud Enviada</Text>
+            <Text style={styles.profileEmail} numberOfLines={1}>Esperando aprobación</Text>
           </View>
         </View>
       </View>
 
-      {}
       <View style={styles.content}>
-        <View style={styles.waitingCard}>
-          <View style={styles.spinnerContainer}>
-            <ActivityIndicator size="large" color="#2563eb" />
-          </View>
-
-          <Text style={styles.mainMessage}>
-            Esperando Aprobación
-          </Text>
-
-          <Text style={styles.description}>
-            Tu solicitud ha sido enviada correctamente. Un administrador la revisará pronto.
-          </Text>
-
-          <View style={styles.infoBox}>
-            <Ionicons name="time-outline" size={18} color="#2563eb" />
-            <View style={styles.infoContent}>
-              <Text style={styles.infoTitle}>¿Qué sigue?</Text>
-              <Text style={styles.infoText}>
-                • El administrador revisará tu solicitud{'\n'}
-                • Recibirás una notificación cuando sea aprobada{'\n'}
-                • No cierres esta pantalla
-              </Text>
+        <Text style={styles.sectionLabel}>Estado Actual</Text>
+        <View style={styles.sectionContainer}>
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <View style={[styles.iconCircle, { backgroundColor: '#eff6ff' }]}>
+                <Ionicons name="sync-outline" size={20} color="#2563eb" />
+              </View>
+              <View style={styles.stepContent}>
+                <Text style={styles.settingTitle}>En Revisión</Text>
+                <Text style={styles.settingValue}>El administrador revisará pronto.</Text>
+              </View>
+            </View>
+            <View style={{ paddingRight: 8 }}>
+              <ActivityIndicator size="small" color="#2563eb" />
             </View>
           </View>
+        </View>
 
-          <View style={styles.warningBox}>
-            <Ionicons name="information-circle" size={16} color="#f59e0b" />
-            <Text style={styles.warningText}>
-              Esta pantalla se actualizará automáticamente cuando tu solicitud sea procesada.
-            </Text>
+        <Text style={styles.sectionLabel}>¿Qué sigue?</Text>
+        <View style={styles.sectionContainer}>
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="notifications-outline" size={20} color="#4b5563" style={styles.settingIcon} />
+              <View style={{ flex: 1, paddingRight: 10 }}>
+                <Text style={styles.settingTitle}>Notificación</Text>
+                <Text style={[styles.settingValue, { lineHeight: 18 }]}>Recibirás una respuesta cuando sea procesada.</Text>
+              </View>
+            </View>
+          </View>
+          
+          <View style={styles.divider} />
+          
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="hand-left-outline" size={20} color="#4b5563" style={styles.settingIcon} />
+              <View style={{ flex: 1, paddingRight: 10 }}>
+                <Text style={styles.settingTitle}>No cierres</Text>
+                <Text style={[styles.settingValue, { lineHeight: 18 }]}>Esta pantalla se actualizará automáticamente.</Text>
+              </View>
+            </View>
           </View>
         </View>
       </View>
-    </View>);
-
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb'
+    backgroundColor: '#ffffff'
   },
   header: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#ffffff',
     paddingHorizontal: 20,
-    paddingBottom: 16
+    paddingBottom: 10
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 2
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: '#dbeafe',
-    marginBottom: 14
-  },
-  stepperContainer: {
+  profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 4
+    backgroundColor: '#f9fafb',
+    borderRadius: 24,
+    padding: 20,
   },
-  stepComplete: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#10b981',
+  avatarPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#e2e8f0',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    marginRight: 16
   },
-  stepPending: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center'
+  profileInfo: {
+    flex: 1
   },
-  stepLine: {
-    flex: 1,
-    height: 3,
-    backgroundColor: '#10b981',
-    marginHorizontal: 8,
-    maxWidth: 80,
-    borderRadius: 2
+  profileName: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1f2937',
+    marginBottom: 4,
+    letterSpacing: -0.5
+  },
+  profileEmail: {
+    fontSize: 13,
+    color: '#64748b',
+    fontWeight: '500'
   },
   content: {
     flex: 1,
-    padding: 20,
-    justifyContent: 'center'
+    paddingHorizontal: 20,
+    paddingTop: 10
   },
-  waitingCard: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 24,
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#94a3b8',
+    marginBottom: 8,
+    marginLeft: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2
+  },
+  sectionContainer: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 24,
+    paddingVertical: 8,
+    marginBottom: 24
+  },
+  settingItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#f0f0f4'
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16
   },
-  spinnerContainer: {
-    width: 72,
-    height: 72,
-    backgroundColor: '#eff6ff',
-    borderRadius: 36,
+  settingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1
+  },
+  settingIcon: {
+    marginRight: 14
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#e2e8f0',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#dbeafe'
+    marginRight: 14
   },
-  mainMessage: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  stepContent: {
+    flex: 1,
+    paddingRight: 10
+  },
+  settingTitle: {
+    fontSize: 15,
+    fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 10,
-    textAlign: 'center'
+    letterSpacing: -0.2,
+    marginBottom: 2
   },
-  description: {
+  settingValue: {
     fontSize: 13,
-    color: '#6b7280',
-    textAlign: 'center',
-    lineHeight: 19,
-    marginBottom: 20
+    color: '#9ca3af'
   },
-  infoBox: {
-    flexDirection: 'row',
-    backgroundColor: '#eff6ff',
-    borderRadius: 14,
-    padding: 14,
-    width: '100%',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#dbeafe'
-  },
-  infoContent: {
-    flex: 1,
-    marginLeft: 10
-  },
-  infoTitle: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: '#1e40af',
-    marginBottom: 6
-  },
-  infoText: {
-    fontSize: 11,
-    color: '#3b82f6',
-    lineHeight: 17
-  },
-  warningBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fef3c7',
-    borderRadius: 10,
-    padding: 12,
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#fde68a',
-    gap: 8
-  },
-  warningText: {
-    flex: 1,
-    fontSize: 11,
-    color: '#92400e',
-    lineHeight: 16
+  divider: {
+    height: 1,
+    backgroundColor: '#f1f5f9',
+    marginHorizontal: 16
   }
 });

@@ -1,11 +1,12 @@
 import { getApiEndpoint } from '../config/api.js';
+import fetchTimeout from './fetchTimeout.js';
 const API_URL = getApiEndpoint('/api');
 export const getEmpleados = async (token, params = {}) => {
   try {
     const queryParams = new URLSearchParams(params).toString();
     const url = queryParams ? `${API_URL}/empleados?${queryParams}` : `${API_URL}/empleados`;
 
-    const response = await fetch(url, {
+    const response = await fetchTimeout(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -20,7 +21,7 @@ export const getEmpleados = async (token, params = {}) => {
 };
 export const getEmpleado = async (id, token) => {
   try {
-    const response = await fetch(`${API_URL}/empleados/${id}`, {
+    const response = await fetchTimeout(`${API_URL}/empleados/${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -44,7 +45,7 @@ export const getEmpleadoById = async (empleadoId, token) => {
       throw new Error('Token de autenticación no disponible');
     }
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
     let response;
     try {
       response = await Promise.race([
@@ -57,7 +58,7 @@ export const getEmpleadoById = async (empleadoId, token) => {
           signal: controller.signal
         }),
         new Promise((_, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Timeout de 5s')), 5000);
+          const timeout = setTimeout(() => reject(new Error('Timeout de 20s')), 20000);
           controller.signal.addEventListener('abort', () => clearTimeout(timeout));
         })
       ]);
@@ -96,7 +97,7 @@ export const getUsuarioCompleto = async (usuarioId, token) => {
     if (!token) {
       throw new Error('Token de autenticación no disponible');
     }
-    const response = await fetch(`${API_URL}/usuarios/${usuarioId}`, {
+    const response = await fetchTimeout(`${API_URL}/usuarios/${usuarioId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -124,7 +125,7 @@ export const getUsuarioCompleto = async (usuarioId, token) => {
 
 export const getEmpleadoPorUsuario = async (idUsuario, token) => {
   try {
-    const response = await fetch(`${API_URL}/empleados/usuario/${idUsuario}`, {
+    const response = await fetchTimeout(`${API_URL}/empleados/usuario/${idUsuario}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -158,7 +159,7 @@ export const crearEmpleado = async (empleado, token) => {
       rfc: empleado.rfc.toUpperCase(),
       pin: empleado.pin
     };
-    const response = await fetch(`${API_URL}/empleados`, {
+    const response = await fetchTimeout(`${API_URL}/empleados`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -193,7 +194,7 @@ export const actualizarEmpleado = async (id, empleado, token) => {
       pin: empleado.pin,
       horario_id: empleado.horario_id
     };
-    const response = await fetch(`${API_URL}/empleados/${id}`, {
+    const response = await fetchTimeout(`${API_URL}/empleados/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -214,7 +215,7 @@ export const actualizarEmpleado = async (id, empleado, token) => {
 
 export const eliminarEmpleado = async (id, token) => {
   try {
-    const response = await fetch(`${API_URL}/empleados/${id}`, {
+    const response = await fetchTimeout(`${API_URL}/empleados/${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -233,7 +234,7 @@ export const validarPinEmpleado = async (idEmpleado, pin, token) => {
     if (!pin || pin.length !== 4) {
       throw new Error('El PIN debe tener 4 dígitos');
     }
-    const response = await fetch(`${API_URL}/empleados/${idEmpleado}/validar-pin`, {
+    const response = await fetchTimeout(`${API_URL}/empleados/${idEmpleado}/validar-pin`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -253,7 +254,7 @@ export const validarPinEmpleado = async (idEmpleado, pin, token) => {
 
 export const getDepartamentosDeEmpleado = async (empleadoId, token) => {
   try {
-    const response = await fetch(`${API_URL}/empleados/${empleadoId}/departamentos`, {
+    const response = await fetchTimeout(`${API_URL}/empleados/${empleadoId}/departamentos`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -269,7 +270,7 @@ export const getDepartamentosDeEmpleado = async (empleadoId, token) => {
 
 export const asignarDepartamento = async (empleadoId, departamentoId, token) => {
   try {
-    const response = await fetch(`${API_URL}/empleados/${empleadoId}/departamentos`, {
+    const response = await fetchTimeout(`${API_URL}/empleados/${empleadoId}/departamentos`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -290,7 +291,7 @@ export const asignarDepartamento = async (empleadoId, departamentoId, token) => 
 
 export const removerDepartamento = async (empleadoId, departamentoId, token) => {
   try {
-    const response = await fetch(`${API_URL}/empleados/${empleadoId}/departamentos/${departamentoId}`, {
+    const response = await fetchTimeout(`${API_URL}/empleados/${empleadoId}/departamentos/${departamentoId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -310,7 +311,7 @@ export const removerDepartamento = async (empleadoId, departamentoId, token) => 
 
 export const getHorarioDeEmpleado = async (empleadoId, token) => {
   try {
-    const response = await fetch(`${API_URL}/empleados/${empleadoId}/horario`, {
+    const response = await fetchTimeout(`${API_URL}/empleados/${empleadoId}/horario`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -327,7 +328,7 @@ export const getHorarioDeEmpleado = async (empleadoId, token) => {
 
 export const buscarPorNSS = async (nss, token) => {
   try {
-    const response = await fetch(`${API_URL}/empleados/buscar/nss/${nss}`, {
+    const response = await fetchTimeout(`${API_URL}/empleados/buscar/nss/${nss}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -347,7 +348,7 @@ export const buscarPorNSS = async (nss, token) => {
 
 export const buscarPorRFC = async (rfc, token) => {
   try {
-    const response = await fetch(`${API_URL}/empleados/buscar/rfc/${rfc}`, {
+    const response = await fetchTimeout(`${API_URL}/empleados/buscar/rfc/${rfc}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

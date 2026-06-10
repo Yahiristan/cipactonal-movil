@@ -5,7 +5,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  StatusBar,
   Platform,
   Image,
   ActivityIndicator
@@ -15,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TouchableOpacity } from 'react-native';
 import { RegisterButton } from '../map/RegisterButton';
+import { Header } from '../ui/Header';
 import NetInfo from '@react-native-community/netinfo';
 import sqliteManager from '../../services/offline/sqliteManager.mjs';
 import { parsearHorario } from '../../services/horariosService';
@@ -123,48 +123,37 @@ export const HomeScreen = ({ userData, darkMode, onOpenAvisos, onOpenProfile }) 
 
   return (
     <View style={styles.mainContainer}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={darkMode ? "#1e40af" : "#2563eb"} />
 
-      <View style={styles.headerWrapper}>
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <View style={[styles.headerLeft, { marginRight: 24 }]}>
-              <TouchableOpacity style={styles.avatarContainer} onPress={onOpenProfile} activeOpacity={0.8}>
-                {fotoUrl ?
-                  <Image
-                    source={{ uri: fotoUrl }}
-                    style={styles.avatarImage} /> :
+      <Header
+        darkMode={darkMode}
+        title={userData.nombre}
+        subtitle={obtenerSaludo()}
+        leftComponent={
+          <TouchableOpacity style={styles.avatarContainer} onPress={onOpenProfile} activeOpacity={0.8}>
+            {fotoUrl ?
+              <Image
+                source={{ uri: fotoUrl }}
+                style={styles.avatarImage} /> :
 
-
-                  <View style={styles.avatarPlaceholder}>
-                    <Ionicons name="person" size={26} color="#FFFF" />
-                  </View>
-                }
-                <View style={[
-                  styles.statusDot,
-                  { backgroundColor: isConnected ? '#10b981' : '#9ca3af' }]
-                } />
-              </TouchableOpacity>
-
-              <View style={[styles.headerInfo, { flexShrink: 1, overflow: 'hidden' }]}>
-                <Text style={styles.headerGreeting} numberOfLines={1} ellipsizeMode="tail">{obtenerSaludo()}</Text>
-                <Text style={styles.headerName} numberOfLines={1} ellipsizeMode="tail">{userData.nombre}</Text>
+              <View style={[styles.avatarPlaceholder, { borderColor: darkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.1)' }]}>
+                <Ionicons name="person" size={26} color={darkMode ? '#f8fafc' : '#64748b'} />
               </View>
-            </View>
-
-            { }
-            <TouchableOpacity
-              onPress={onOpenAvisos}
-              style={styles.notifyButton}
-              activeOpacity={0.7}>
-
-              <Ionicons name="notifications-outline" size={26} color="#ffffff" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
+            }
+            <View style={[
+              styles.statusDot,
+              { backgroundColor: isConnected ? '#10b981' : '#9ca3af', borderColor: darkMode ? '#ffffff' : '#000000' }]
+            } />
+          </TouchableOpacity>
+        }
+        rightComponent={
+          <TouchableOpacity
+            onPress={onOpenAvisos}
+            style={styles.notifyButton}
+            activeOpacity={0.7}>
+            <Ionicons name="notifications-outline" size={26} color={darkMode ? '#f8fafc' : '#0f172a'} />
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView
         style={styles.scrollView}
@@ -231,7 +220,7 @@ export const HomeScreen = ({ userData, darkMode, onOpenAvisos, onOpenProfile }) 
 const homeStyles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#f8fafc'
+    backgroundColor: '#ffffff'
   },
   headerWrapper: {
     backgroundColor: '#2563eb'
@@ -281,8 +270,7 @@ const homeStyles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    borderWidth: 3,
-    borderColor: '#2563eb'
+    borderWidth: 2
   },
   headerInfo: {
     flex: 1
@@ -398,7 +386,9 @@ const homeStylesDark = StyleSheet.create({
   },
   infoBloque: {
     ...homeStyles.infoBloque,
-    backgroundColor: '#1f2937'
+    backgroundColor: '#1f2937',
+    borderColor: 'transparent',
+    shadowColor: '#000000'
   },
   infoBloqueValue: {
     ...homeStyles.infoBloqueValue,

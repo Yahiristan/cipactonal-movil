@@ -1,4 +1,5 @@
 import { getApiEndpoint } from '../config/api.js';
+import fetchTimeout from './fetchTimeout.js';
 const API_URL = getApiEndpoint('/api');
 
 export const registrarAsistencia = async (empleadoId, ubicacion, token, departamentoId = null, tipo = null) => {
@@ -12,7 +13,7 @@ export const registrarAsistencia = async (empleadoId, ubicacion, token, departam
       ...(tipo ? { tipo } : {})
     };
 
-    const response = await fetch(`${API_URL}/asistencias/registrar`, {
+    const response = await fetchTimeout(`${API_URL}/asistencias/registrar`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -47,7 +48,7 @@ export const getAsistenciasEmpleado = async (empleadoId, token, filtros = {}) =>
     if (filtros.fecha_fin) params.append('fecha_fin', filtros.fecha_fin);
     const url = `${API_URL}/asistencias/empleado/${empleadoId}${params.toString() ? `?${params}` : ''}`;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
 
     let response;
     try {
@@ -60,7 +61,7 @@ export const getAsistenciasEmpleado = async (empleadoId, token, filtros = {}) =>
           signal: controller.signal
         }),
         new Promise((_, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Timeout de 5s')), 5000);
+          const timeout = setTimeout(() => reject(new Error('Timeout de 20s')), 20000);
           controller.signal.addEventListener('abort', () => clearTimeout(timeout));
         })
       ]);
@@ -124,7 +125,7 @@ export const getAsistencias = async (token, filtros = {}) => {
     if (filtros.offset) params.append('offset', filtros.offset);
 
     const url = `${API_URL}/asistencias${params.toString() ? `?${params}` : ''}`;
-    const response = await fetch(url, {
+    const response = await fetchTimeout(url, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -148,7 +149,7 @@ export const getAsistenciasHoy = async (token, departamentoId = null) => {
     const params = departamentoId ? `?departamento_id=${departamentoId}` : '';
     const url = `${API_URL}/asistencias/hoy${params}`;
 
-    const response = await fetch(url, {
+    const response = await fetchTimeout(url, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'

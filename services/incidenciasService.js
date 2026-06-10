@@ -1,4 +1,5 @@
 import { getApiEndpoint } from '../config/api.js';
+import fetchTimeout from './fetchTimeout.js';
 
 const API_URL = getApiEndpoint('/api');
 
@@ -19,7 +20,7 @@ export const getIncidencias = async (token, filtros = {}) => {
 
     const url = `${API_URL}/incidencias${params.toString() ? `?${params}` : ''}`;
 
-    const response = await fetch(url, {
+    const response = await fetchTimeout(url, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -53,7 +54,7 @@ export const getIncidenciasEmpleado = async (empleadoId, token, filtros = {}) =>
 
 export const getIncidenciaById = async (incidenciaId, token) => {
   try {
-    const response = await fetch(`${API_URL}/incidencias/${incidenciaId}`, {
+    const response = await fetchTimeout(`${API_URL}/incidencias/${incidenciaId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -77,7 +78,7 @@ export const getIncidenciaById = async (incidenciaId, token) => {
 export const createIncidencia = async (incidenciaData, token) => {
   try {
 
-    const response = await fetch(`${API_URL}/incidencias`, {
+    const response = await fetchTimeout(`${API_URL}/incidencias`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -110,7 +111,7 @@ export const createIncidencia = async (incidenciaData, token) => {
 
 export const updateIncidencia = async (incidenciaId, incidenciaData, token) => {
   try {
-    const response = await fetch(`${API_URL}/incidencias/${incidenciaId}`, {
+    const response = await fetchTimeout(`${API_URL}/incidencias/${incidenciaId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -136,7 +137,7 @@ export const updateIncidencia = async (incidenciaId, incidenciaData, token) => {
 
 export const aprobarIncidencia = async (incidenciaId, observaciones, token) => {
   try {
-    const response = await fetch(`${API_URL}/incidencias/${incidenciaId}/aprobar`, {
+    const response = await fetchTimeout(`${API_URL}/incidencias/${incidenciaId}/aprobar`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -162,7 +163,7 @@ export const aprobarIncidencia = async (incidenciaId, observaciones, token) => {
 
 export const rechazarIncidencia = async (incidenciaId, observaciones, token) => {
   try {
-    const response = await fetch(`${API_URL}/incidencias/${incidenciaId}/rechazar`, {
+    const response = await fetchTimeout(`${API_URL}/incidencias/${incidenciaId}/rechazar`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -188,7 +189,7 @@ export const rechazarIncidencia = async (incidenciaId, observaciones, token) => 
 
 export const getIncidenciasPendientes = async (token) => {
   try {
-    const response = await fetch(`${API_URL}/incidencias/pendientes`, {
+    const response = await fetchTimeout(`${API_URL}/incidencias/pendientes`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'

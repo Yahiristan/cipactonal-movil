@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, Animated,
-  StatusBar, TouchableOpacity, ActivityIndicator
+  TouchableOpacity, ActivityIndicator
 } from
   'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { verificarDispositivoPorEmpleado } from '../../services/solicitudMovilService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const DeviceDisabledScreen = ({ onReRequest, onReEnabled, darkMode = false }) => {
+const DeviceDisabledScreen = ({ onReRequest, onReEnabled, onLogout, darkMode = false }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const [confirming, setConfirming] = useState(false);
@@ -109,9 +109,7 @@ const DeviceDisabledScreen = ({ onReRequest, onReEnabled, darkMode = false }) =>
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      <StatusBar
-        barStyle={dm ? 'light-content' : 'dark-content'}
-        backgroundColor={colors.bg} />
+      
 
 
       <Animated.View style={[
@@ -201,6 +199,20 @@ const DeviceDisabledScreen = ({ onReRequest, onReEnabled, darkMode = false }) =>
               {confirming ? 'Redirigiendo...' : 'Re-solicitar Acceso'}
             </Text>
           </TouchableOpacity>
+
+          {/* Return Home Button */}
+          {onLogout && (
+            <TouchableOpacity
+              style={[styles.homeBtn, { marginTop: 12, borderColor: colors.cardBorder }]}
+              onPress={onLogout}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="log-out-outline" size={16} color={colors.subtitle} />
+              <Text style={[styles.homeText, { color: colors.subtitle }]}>
+                Regresar al inicio
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </Animated.View>
 
@@ -341,6 +353,22 @@ const styles = StyleSheet.create({
   retryText: {
     fontSize: 15,
     fontWeight: '700'
+  },
+  homeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    width: '100%',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    backgroundColor: 'transparent'
+  },
+  homeText: {
+    fontSize: 15,
+    fontWeight: '600'
   },
   footer: {
     position: 'absolute',

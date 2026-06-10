@@ -199,7 +199,7 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
 
     setIsLoading(true);
 
-    if (syncManager.getIsBackendDown()) {
+    if (!isWifiConnected) {
       try {
         setIsOfflineLogin(true);
         const offlineResult = await validateOffline(usuario, password);
@@ -241,15 +241,34 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
       }
     }
 
+    const loginWithRetry = async (user, pass, empId, retries = 3, delayMs = 3000) => {
+      let lastErr;
+      for (let i = 0; i < retries; i++) {
+        try {
+          return await login(user, pass, empId);
+        } catch (err) {
+          lastErr = err;
+          const msg = err.message || '';
+          const isSleepError = msg.includes('Network') || msg.includes('Failed to fetch') || msg.includes('connection') || msg.includes('timeout') || msg.includes('500') || msg.includes('502') || msg.includes('503') || msg.includes('504');
+          if (isSleepError && i < retries - 1) {
+            await new Promise(res => setTimeout(res, delayMs));
+          } else {
+            throw err;
+          }
+        }
+      }
+      throw lastErr;
+    };
+
     try {
-      const response = await login(usuario, password, empresaId);
+      const response = await loginWithRetry(usuario, password, empresaId);
 
       if (response && response.isMultiCompany) {
         // Validar credenciales con la primera empresa antes de mostrar el selector
         const primeraEmpresaId = response.empresas[0]?.empresa_id;
         if (primeraEmpresaId) {
           try {
-            await login(usuario, password, primeraEmpresaId);
+            await loginWithRetry(usuario, password, primeraEmpresaId);
           } catch (credError) {
             const msg = credError.message || '';
             if (

@@ -14,8 +14,7 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
-  Platform,
-  StatusBar } from
+  Platform } from
 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -114,9 +113,7 @@ export const UsuariosCredencialesScreen = ({ userData, darkMode, onBack }) => {
 
   return (
     <View style={styles.container}>
-            <StatusBar
-        barStyle="light-content"
-        backgroundColor={darkMode ? '#1e40af' : '#2563eb'} />
+            
       
 
             {}

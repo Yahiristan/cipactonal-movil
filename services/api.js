@@ -1,4 +1,5 @@
 import { getApiEndpoint } from '../config/api.js';
+import fetchTimeout from './fetchTimeout.js';
 export * as empleadoService from './empleadoServices.js';
 export * as authService from './authService.js';
 
@@ -6,7 +7,7 @@ const API_URL = getApiEndpoint('/api');
 
 export const getUsuarios = async (token) => {
   try {
-    const response = await fetch(`${API_URL}/usuarios`, {
+    const response = await fetchTimeout(`${API_URL}/usuarios`, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
@@ -21,7 +22,7 @@ export const getUsuarios = async (token) => {
 
 export const getUsuario = async (id, token) => {
   try {
-    const response = await fetch(`${API_URL}/usuarios/${id}`, {
+    const response = await fetchTimeout(`${API_URL}/usuarios/${id}`, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
@@ -48,7 +49,7 @@ export const crearUsuario = async (usuario, token) => {
       estado: usuario.estado || 'DESCONECTADO'
     };
 
-    const response = await fetch(`${API_URL}/usuarios`, {
+    const response = await fetchTimeout(`${API_URL}/usuarios`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -84,7 +85,7 @@ export const actualizarUsuario = async (id, usuario, token) => {
       usuarioDB.password = usuario.password;
     }
 
-    const response = await fetch(`${API_URL}/usuarios/${id}`, {
+    const response = await fetchTimeout(`${API_URL}/usuarios/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -106,7 +107,7 @@ export const actualizarUsuario = async (id, usuario, token) => {
 
 export const eliminarUsuario = async (id, token) => {
   try {
-    const response = await fetch(`${API_URL}/usuarios/${id}`, {
+    const response = await fetchTimeout(`${API_URL}/usuarios/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`

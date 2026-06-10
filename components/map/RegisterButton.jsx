@@ -15,7 +15,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
-import * as Network from 'expo-network';
 import NetInfo from '@react-native-community/netinfo';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { isPointInPolygon, extraerCoordenadas } from '../../services/ubicacionService';
@@ -573,7 +572,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       if (estadoHorario === 'bloque_completo') setEstadoHorario('activo');
       setJornadaCompletada(false);
 
-      const msSinceUltimaSalida = horaActual.getTime() - new Date(ultimoRegistroHoy.fecha_registro).getTime();
+      const msSinceUltimaSalida = Math.abs(Date.now() - new Date(ultimoRegistroHoy.fecha_registro).getTime());
       if (msSinceUltimaSalida < 60 * 1000) {
         setPuedeRegistrar(false);
         setTipoSiguienteRegistro('entrada');
@@ -611,7 +610,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
     }
 
     // ── Validar ventana de SALIDA ──
-    const msSinceUltimaEntrada = horaActual.getTime() - new Date(ultimoRegistroHoy.fecha_registro).getTime();
+    const msSinceUltimaEntrada = Math.abs(Date.now() - new Date(ultimoRegistroHoy.fecha_registro).getTime());
     if (msSinceUltimaEntrada < 60 * 1000) {
       setPuedeRegistrar(false);
       setTipoSiguienteRegistro('salida');
@@ -705,7 +704,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       if (online) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          const timeoutId = setTimeout(() => controller.abort(), 20000);
           const response = await fetch(
             `${API_URL}/asistencias/empleado/${empleadoId}`,
             {
@@ -807,7 +806,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       if (online) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          const timeoutId = setTimeout(() => controller.abort(), 20000);
           const response = await fetch(
             `${API_URL}/empleados/${empleadoId}/horario`,
             {
@@ -835,7 +834,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       if (online) {
         try {
           const tolCtrl = new AbortController();
-          const tolTimer = setTimeout(() => tolCtrl.abort(), 5000);
+          const tolTimer = setTimeout(() => tolCtrl.abort(), 20000);
           const tolRes = await fetch(`${API_URL}/movil/sync/mis-datos?empleado_id=${empleadoId}`, {
             headers: { 'Authorization': `Bearer ${userData.token}`, 'Content-Type': 'application/json' },
             signal: tolCtrl.signal
@@ -947,7 +946,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
           const online = await syncManager.isOnline() && !syncManager.getIsBackendDown();
           if (online) {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
             const response = await fetch(
               `${API_URL}/departamentos/${depto.id}`,
               {
@@ -999,7 +998,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         let onlineNow = false;
         let reachable = false;
         try {
-          const state = await Network.getNetworkStateAsync();
+          const state = await NetInfo.fetch();
           onlineNow = state.isConnected;
           reachable = state.isInternetReachable;
         } catch (e) { }
@@ -1016,7 +1015,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
           try {
             const yearActual = new Date().getFullYear();
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
             const festivoResp = await fetch(
               `${API_URL}/dias-festivos?year=${yearActual}`,
               {
@@ -1121,7 +1120,8 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
           if (lastKnown) {
             setUbicacionActual({
               lat: lastKnown.coords.latitude,
-              lng: lastKnown.coords.longitude
+              lng: lastKnown.coords.longitude,
+              mocked: lastKnown.mocked || false
             });
           }
         } catch (e) { }
@@ -1135,7 +1135,8 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
           (newLocation) => {
             setUbicacionActual({
               lat: newLocation.coords.latitude,
-              lng: newLocation.coords.longitude
+              lng: newLocation.coords.longitude,
+              mocked: newLocation.mocked || false
             });
           }
         );
@@ -1421,9 +1422,15 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         );
         ubicacionFinal = {
           lat: location.coords.latitude,
-          lng: location.coords.longitude
+          lng: location.coords.longitude,
+          mocked: location.mocked || false
         };
       } catch (locationError) { (function () { })('Location real-time failed, using last known'); }
+
+      if (ubicacionFinal?.mocked) {
+        setRegistrando(false);
+        throw new Error('Se ha detectado el uso de una aplicación para simular la ubicación (GPS Fake). Por políticas de la empresa, el registro ha sido bloqueado.');
+      }
 
       if (!ubicacionFinal || !ubicacionFinal.lat || !ubicacionFinal.lng) {
         throw new Error('No se pudo obtener la ubicación');
@@ -1460,21 +1467,10 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       let networkIp = null;
       let networkWifi = null;
       try {
-        const netState = await Network.getNetworkStateAsync();
+        const netState = await NetInfo.fetch();
+        networkIp = netState.details?.ipAddress || null;
 
-        // Intentar primero con NetInfo (más confiable nativamente para IPs locales en Wi-Fi)
-        const netInfoObj = await NetInfo.fetch();
-        networkIp = netInfoObj.details?.ipAddress || null;
-
-        // Fallback a expo-network si NetInfo no la trajo
-        if (!networkIp) {
-          networkIp = await Promise.race([
-            Network.getIpAddressAsync(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
-          ]);
-        }
-
-        if (netState.type === Network.NetworkStateType.WIFI) {
+        if (netState.type === 'wifi') {
           networkWifi = { tipo: netState.type, isConnected: netState.isConnected };
         }
       } catch (netErr) {
@@ -1525,10 +1521,16 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         if (!response.ok) {
           const errorMsg = data.message || data.error || `Error del servidor (${response.status})`;
 
+          if (data.noPuedeRegistrar === true && data.estadoHorario === 'espera') {
+            data.noPuedeRegistrar = false;
+            data.estadoHorario = 'activo';
+          }
 
           if (data.noPuedeRegistrar === true) {
             setPuedeRegistrar(false);
             if (data.estadoHorario) setEstadoHorario(data.estadoHorario);
+            setMensajeEspera(data.mensaje || '');
+            return;
           }
           throw new Error(errorMsg);
         }
@@ -1567,10 +1569,6 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
 
       if (!success) {
         (function () { })('Saving offline attendance...');
-
-
-
-
         await sqliteManager.saveOfflineAsistencia({
           ...payload,
           tipo: tipoActual,
@@ -1582,9 +1580,6 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
           wifi: networkWifi || null,
           payload_biometrico: datosRegistroRef.current.payloadBiometrico
         });
-
-
-
         data = {
           data: {
             tipo: tipoActual,
@@ -1642,7 +1637,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       if (esOffline) {
         Alert.alert(
           'Pendiente a revisar',
-          `Departamento: ${departamento.nombre}\nHora: ${horaStr}\n\nUna vez que haya conexión a internet, el sistema analizará y clasificará tu asistencia automáticamente.`,
+          `Departamento: ${departamento.nombre}\n\nHora: ${horaStr}\n\nUna vez que haya conexión a internet, el sistema analizará y clasificará tu asistencia automáticamente.`,
           [{ text: 'Entendido' }]
         );
         notificarRegistro(tipoRegistrado, 'pendiente');
@@ -1660,7 +1655,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         }
         Alert.alert(
           'Registro Exitoso',
-          `${tipoMayuscula}: ${estadoTexto}\n\nDepartamento: ${departamento.nombre}\nHora: ${horaStr}`,
+          `${tipoMayuscula}: ${estadoTexto}\n\nDepartamento: ${departamento.nombre}\n\nHora: ${horaStr}`,
           [{ text: 'OK' }]
         );
         notificarRegistro(tipoRegistrado, estadoRegistrado);
@@ -1747,6 +1742,15 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         return;
       }
 
+      if (ubicacionActual.mocked) {
+        Alert.alert(
+          'Bloqueo de Seguridad',
+          'Se ha detectado el uso de una aplicación para simular la ubicación (GPS Fake). Por políticas de seguridad, no podras registrar tu asistencia.',
+          [{ text: 'Entendido' }]
+        );
+        return;
+      }
+
       if (!credencialesUsuario?.tiene_pin && !credencialesUsuario?.tiene_dactilar) {
         Alert.alert(
           'Configuración Requerida',
@@ -1807,7 +1811,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       if (departamentoSeleccionado) return departamentoSeleccionado.nombre;
       return 'Zona permitida';
     }
-    
+
     return 'Zona permitida';
   };
 
@@ -1936,9 +1940,9 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
                   }
                 </TouchableOpacity> :
 
-                <View style={[styles.locationInfo, { borderColor: '#ef4444' }]}>
-                  <Ionicons name="location-outline" size={14} color="#ef4444" />
-                  <Text style={[styles.locationText, { color: '#ef4444' }]} numberOfLines={1}>
+                <View style={[styles.locationInfo, { backgroundColor: darkMode ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2' }]}>
+                  <Ionicons name="location-outline" size={16} color={darkMode ? "#f87171" : "#dc2626"} />
+                  <Text style={[styles.locationText, { color: darkMode ? "#f87171" : "#dc2626" }]} numberOfLines={1}>
                     Fuera de zona
                   </Text>
                 </View>
@@ -1946,7 +1950,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
 
               {internetReachable ?
                 <TouchableOpacity
-                  style={styles.viewMapButton}
+                  style={[styles.viewMapButton, !usandoEstadoBackend && { backgroundColor: darkMode ? 'rgba(245, 158, 11, 0.15)' : '#fffbeb' }]}
                   onPress={() => {
                     setMostrarMapa(true);
                     setForzarUbicacion(true);
@@ -1956,16 +1960,16 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
                   <Ionicons
                     name={usandoEstadoBackend ? "map-outline" : "cloud-offline-outline"}
                     size={16}
-                    color={usandoEstadoBackend ? "#3b82f6" : "#f59e0b"}
+                    color={usandoEstadoBackend ? (darkMode ? "#60a5fa" : "#2563eb") : (darkMode ? "#fbbf24" : "#d97706")}
                   />
-                  <Text style={[styles.viewMapText, !usandoEstadoBackend && { color: '#f59e0b' }]}>
+                  <Text style={[styles.viewMapText, !usandoEstadoBackend && { color: darkMode ? "#fbbf24" : "#d97706" }]}>
                     {usandoEstadoBackend ? "Ver mapa" : "Mapa (Servidor Caído)"}
                   </Text>
                 </TouchableOpacity> :
 
-                <View style={[styles.viewMapButton, { opacity: 0.5 }]}>
-                  <Ionicons name="cloud-offline-outline" size={14} color="#9ca3af" />
-                  <Text style={[styles.viewMapText, { color: '#9ca3af', fontSize: 11 }]}>Sin conexión</Text>
+                <View style={[styles.viewMapButton, { backgroundColor: darkMode ? 'rgba(156, 163, 175, 0.1)' : '#f3f4f6' }]}>
+                  <Ionicons name="cloud-offline-outline" size={16} color="#9ca3af" />
+                  <Text style={[styles.viewMapText, { color: '#9ca3af' }]}>Sin conexión</Text>
                 </View>
               }
             </>

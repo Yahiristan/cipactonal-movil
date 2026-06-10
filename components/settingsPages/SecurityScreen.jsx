@@ -11,6 +11,7 @@ import {
 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Header } from '../ui/Header';
 
 
 import { checkBiometricSupport } from '../../services/biometricservice';
@@ -23,25 +24,16 @@ import syncManager from '../../services/offline/syncManager.mjs';
 
 const ESTADOS = {
   activo: {
-    bg: '#16a34a',
-    texto: '#fff',
-    icono: '#fff',
-    etiqueta: 'Habilitada',
-    iconoEstado: 'checkmark-circle'
+    colorValor: '#16a34a',
+    etiqueta: 'Habilitada'
   },
   inactivo: {
-    bg: '#6b7280',
-    texto: '#fff',
-    icono: '#fff',
-    etiqueta: 'Sin registrar',
-    iconoEstado: 'ellipse-outline'
+    colorValor: '#9ca3af',
+    etiqueta: 'Sin registrar'
   },
   noDisponible: {
-    bg: '#dc2626',
-    texto: '#fff',
-    icono: '#fff',
-    etiqueta: 'No disponible',
-    iconoEstado: 'ban'
+    colorValor: '#dc2626',
+    etiqueta: 'No disponible'
   }
 };
 
@@ -160,18 +152,15 @@ export const SecurityScreen = ({ darkMode, onBack, userData }) => {
   if (isLoadingCredentials) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <TouchableOpacity onPress={onBack} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+        <Header
+          darkMode={darkMode}
+          title="Seguridad"
+          leftComponent={
+            <TouchableOpacity onPress={onBack} style={{ padding: 8, marginLeft: -8 }}>
+              <Ionicons name="arrow-back" size={24} color={darkMode ? '#f8fafc' : '#0f172a'} />
             </TouchableOpacity>
-            <View style={styles.headerTextContainer}>
-              <Text style={styles.headerTitle}>Seguridad</Text>
-              <Text style={styles.headerSubtitle}>Cargando...</Text>
-            </View>
-            <View style={styles.headerPlaceholder} />
-          </View>
-        </View>
+          }
+        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#2563eb" />
           <Text style={styles.loadingText}>
@@ -208,112 +197,58 @@ export const SecurityScreen = ({ darkMode, onBack, userData }) => {
   return (
     <View style={styles.container}>
       {}
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <TouchableOpacity
-            onPress={onBack}
-            style={styles.backButton}
-            activeOpacity={0.6}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+      <Header
+        darkMode={darkMode}
+        title="Seguridad"
+        leftComponent={
+          <TouchableOpacity onPress={onBack} style={{ padding: 8, marginLeft: -8 }}>
+            <Ionicons name="arrow-back" size={24} color={darkMode ? '#f8fafc' : '#0f172a'} />
           </TouchableOpacity>
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.headerTitle}>Seguridad</Text>
-            <Text style={styles.headerSubtitle}>
-              {isOffline ? 'Sin conexión' : 'Estado de credenciales'}
-            </Text>
-          </View>
-          <View style={styles.headerPlaceholder} />
-        </View>
-      </View>
+        }
+      />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
         
-        {}
-        <View style={styles.infoCard}>
-          <Ionicons
-            name={isOffline ? 'cloud-offline' : 'shield-checkmark'}
-            size={32}
-            color={isOffline ? '#f59e0b' : darkMode ? '#93c5fd' : '#2563eb'} />
-          
-          <Text style={styles.infoTitle}>
-            {isOffline ? 'Modo sin conexión' : 'Mis credenciales'}
-          </Text>
-          <Text style={styles.infoText}>
-            {isOffline ?
-            'Mostrando estado local. Conéctate al servidor para ver información actualizada.' :
-            'Aquí puedes ver qué métodos de autenticación tienes registrados en el sistema.'
-            }
-          </Text>
-        </View>
-
-        {}
-        <View style={styles.metodosContainer}>
-          {metodos.map((metodo) => {
+        <Text style={styles.sectionLabel}>Mis Credenciales</Text>
+        <View style={styles.sectionContainer}>
+          {metodos.map((metodo, idx) => {
             const cfg = ESTADOS[metodo.estado];
 
             return (
-              <View
-                key={metodo.id}
-                style={[styles.tarjetaMetodo, { backgroundColor: cfg.bg }]}>
-                
-                {}
-                <View style={styles.botonIconContainer}>
-                  <Ionicons name={metodo.icono} size={30} color={cfg.icono} />
+              <View key={metodo.id}>
+                <View style={styles.settingItem}>
+                  <View style={styles.settingLeft}>
+                    <Ionicons name={metodo.icono} size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+                    <Text style={styles.settingTitle}>{metodo.nombre}</Text>
+                  </View>
+                  <View style={styles.settingRight}>
+                    <Text style={[styles.settingValue, { color: cfg.colorValor }]}>{cfg.etiqueta}</Text>
+                  </View>
                 </View>
-
-                {}
-                <View style={styles.textoContainer}>
-                  <Text style={[styles.botonNombre, { color: cfg.texto }]}>
-                    {metodo.nombre}
-                  </Text>
-                  <Text style={[styles.etiquetaEstado, { color: cfg.texto }]}>
-                    {cfg.etiqueta}
-                  </Text>
-                </View>
-
-                {}
-                <View style={styles.botonIndicador}>
-                  <Ionicons
-                    name={cfg.iconoEstado}
-                    size={28}
-                    color={
-                    metodo.estado === 'activo' ?
-                    '#fff' :
-                    'rgba(255,255,255,0.55)'
-                    } />
-                  
-                </View>
-              </View>);
-
+                {idx < metodos.length - 1 && <View style={styles.divider} />}
+              </View>
+            );
           })}
         </View>
 
-        {}
-        <View style={styles.separador}>
-          <View style={styles.separadorLinea} />
-          <Text style={styles.separadorTexto}>Privacidad</Text>
-          <View style={styles.separadorLinea} />
+        <Text style={[styles.sectionLabel, { marginTop: 10 }]}>Privacidad</Text>
+        <View style={styles.sectionContainer}>
+          <TouchableOpacity
+            style={styles.settingItem}
+            onPress={handleEliminarDatos}
+            activeOpacity={0.75}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="trash-outline" size={20} color="#ef4444" style={styles.settingIcon} />
+              <View style={styles.settingTextContainer}>
+                <Text style={[styles.settingTitle, { color: '#ef4444' }]}>Eliminación de datos biométricos</Text>
+                <Text style={styles.settingSubtitle}>Conoce tus derechos · Ley ARCO</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
+          </TouchableOpacity>
         </View>
-
-        {}
-        <TouchableOpacity
-          style={styles.eliminarBoton}
-          onPress={handleEliminarDatos}
-          activeOpacity={0.75}>
-          
-          <View style={styles.eliminarIconContainer}>
-            <Ionicons name="trash-outline" size={22} color="#dc2626" />
-          </View>
-          <View style={styles.eliminarTextoContainer}>
-            <Text style={styles.eliminarTitulo}>Eliminación de datos biométricos</Text>
-            <Text style={styles.eliminarSubtitulo}>Conoce tus derechos · Ley ARCO</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={darkMode ? '#6b7280' : '#9ca3af'} />
-        </TouchableOpacity>
       </ScrollView>
     </View>);
 
@@ -324,42 +259,6 @@ const securityStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc'
-  },
-  header: {
-    backgroundColor: '#2563eb',
-    paddingTop: Platform.OS === 'android' ? 14 : 46,
-    paddingBottom: 16,
-    paddingHorizontal: 16
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  headerTextContainer: {
-    flex: 1,
-    alignItems: 'center'
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#fff'
-  },
-  headerSubtitle: {
-    fontSize: 13,
-    color: '#bfdbfe',
-    marginTop: 2
-  },
-  headerPlaceholder: {
-    width: 40
   },
   loadingContainer: {
     flex: 1,
@@ -376,110 +275,65 @@ const securityStyles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 90
   },
-  infoCard: {
-    backgroundColor: '#eff6ff',
-    borderRadius: 16,
-    padding: 18,
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 1.5,
-    borderColor: '#bfdbfe'
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginTop: 8,
-    marginBottom: 5
-  },
-  infoText: {
-    fontSize: 13,
-    color: '#4b5563',
-    textAlign: 'center',
-    lineHeight: 19
-  },
-  metodosContainer: {
-    gap: 10,
-    marginBottom: 16
-  },
-  tarjetaMetodo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  botonIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 14
-  },
-  textoContainer: {
-    flex: 1,
-    gap: 2
-  },
-  botonNombre: {
-    fontSize: 15,
-    fontWeight: '600'
-  },
-  etiquetaEstado: {
-    fontSize: 12,
-    opacity: 0.85
-  },
-  botonIndicador: {},
-  separador: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14,
-    gap: 10
-  },
-  separadorLinea: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#e2e8f0'
-  },
-  separadorTexto: {
+  sectionLabel: {
     fontSize: 12,
     fontWeight: '600',
     color: '#94a3b8',
+    marginBottom: 8,
+    marginLeft: 12,
     textTransform: 'uppercase',
-    letterSpacing: 1
+    letterSpacing: 1.2
   },
-  eliminarBoton: {
+  sectionContainer: {
+    backgroundColor: '#f1f5f9',
+    borderRadius: 24,
+    paddingVertical: 8,
+    marginBottom: 28,
+    borderWidth: 1,
+    borderColor: '#e2e8f0'
+  },
+  settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    paddingHorizontal: 16,
+    justifyContent: 'space-between',
     paddingVertical: 14,
-    borderWidth: 1.5,
-    borderColor: '#ef4444',
+    paddingHorizontal: 16
   },
-  eliminarIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#fee2e2',
-    justifyContent: 'center',
+  settingLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 12
+    flex: 1
   },
-  eliminarTextoContainer: {
+  settingIcon: {
+    marginRight: 14
+  },
+  settingTextContainer: {
     flex: 1,
-    gap: 2
+    paddingRight: 16
   },
-  eliminarTitulo: {
-    fontSize: 14,
+  settingTitle: {
+    fontSize: 15,
     fontWeight: '600',
-    color: '#dc2626'
+    color: '#1f2937'
   },
-  eliminarSubtitulo: {
-    fontSize: 11,
-    color: '#9ca3af'
+  settingSubtitle: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 2,
+    lineHeight: 18
+  },
+  settingRight: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  settingValue: {
+    fontSize: 14,
+    fontWeight: '500'
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e2e8f0',
+    marginHorizontal: 16
   }
 });
 
@@ -490,50 +344,21 @@ const securityStylesDark = StyleSheet.create({
     ...securityStyles.container,
     backgroundColor: '#0f172a'
   },
-  header: {
-    ...securityStyles.header,
-    backgroundColor: '#1e40af'
+  sectionContainer: {
+    ...securityStyles.sectionContainer,
+    backgroundColor: '#1e293b',
+    borderWidth: 0
   },
-  infoCard: {
-    ...securityStyles.infoCard,
-    backgroundColor: '#1e3a8a',
-    borderColor: '#1e40af'
-  },
-  infoTitle: {
-    ...securityStyles.infoTitle,
+  settingTitle: {
+    ...securityStyles.settingTitle,
     color: '#f9fafb'
   },
-  infoText: {
-    ...securityStyles.infoText,
-    color: '#cbd5e1'
-  },
-  loadingText: {
-    ...securityStyles.loadingText,
+  settingSubtitle: {
+    ...securityStyles.settingSubtitle,
     color: '#9ca3af'
   },
-  separadorLinea: {
-    ...securityStyles.separadorLinea,
+  divider: {
+    ...securityStyles.divider,
     backgroundColor: '#334155'
-  },
-  separadorTexto: {
-    ...securityStyles.separadorTexto,
-    color: '#64748b'
-  },
-  eliminarBoton: {
-    ...securityStyles.eliminarBoton,
-    backgroundColor: '#0f172a',
-    borderColor: '#ef4444'
-  },
-  eliminarIconContainer: {
-    ...securityStyles.eliminarIconContainer,
-    backgroundColor: '#450a0a'
-  },
-  eliminarTitulo: {
-    ...securityStyles.eliminarTitulo,
-    color: '#f87171'
-  },
-  eliminarSubtitulo: {
-    ...securityStyles.eliminarSubtitulo,
-    color: '#6b7280'
   }
 });

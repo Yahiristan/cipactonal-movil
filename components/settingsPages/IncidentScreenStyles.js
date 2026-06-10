@@ -3,7 +3,7 @@ import { StyleSheet, Platform } from 'react-native';
 const baseStyles = {
     container: {
         flex: 1,
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#ffffff',
     },
     header: {
         backgroundColor: '#2563eb',
@@ -45,18 +45,16 @@ const baseStyles = {
         justifyContent: 'center',
         alignItems: 'center',
     },
+
+    // Filtros
     viewToggle: {
         flexDirection: 'row',
-        margin: 16,
+        marginHorizontal: 16,
+        marginTop: 16,
         marginBottom: 12,
-        backgroundColor: '#fff',
+        backgroundColor: '#f1f5f9',
         borderRadius: 12,
         padding: 4,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
     },
     viewButton: {
         flex: 1,
@@ -68,45 +66,45 @@ const baseStyles = {
         gap: 6,
     },
     viewButtonActive: {
-        backgroundColor: '#eff6ff',
+        backgroundColor: '#ffffff',
+        elevation: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 1,
     },
     viewButtonText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#6b7280',
+        color: '#64748b',
     },
     viewButtonTextActive: {
-        color: '#2563eb',
+        color: '#1f2937',
     },
     filtrosContainer: {
         flexDirection: 'row',
         marginHorizontal: 16,
-        marginBottom: 16,
+        marginBottom: 20,
         gap: 8,
     },
     filtroChip: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: '#f8fafc',
         borderRadius: 12,
         paddingHorizontal: 12,
         paddingVertical: 10,
         gap: 6,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
     },
     filtroChipText: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#1f2937',
+        color: '#475569',
         flex: 1,
     },
     filtroChipBadge: {
-        backgroundColor: '#eff6ff',
+        backgroundColor: '#e2e8f0',
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 8,
@@ -116,19 +114,16 @@ const baseStyles = {
     filtroChipBadgeText: {
         fontSize: 11,
         fontWeight: '700',
-        color: '#2563eb',
+        color: '#475569',
     },
+
+    // Calendario (opcional en vista)
     calendarSection: {
-        backgroundColor: '#fff',
+        backgroundColor: '#f9fafb',
         marginHorizontal: 16,
-        marginBottom: 16,
-        borderRadius: 16,
+        marginBottom: 20,
+        borderRadius: 24,
         padding: 16,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
     },
     monthSelector: {
         flexDirection: 'row',
@@ -142,9 +137,10 @@ const baseStyles = {
         borderRadius: 18,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: '#f1f5f9',
     },
     monthButtonText: {
-        color: '#2563eb',
+        color: '#1f2937',
     },
     monthText: {
         fontSize: 16,
@@ -163,7 +159,7 @@ const baseStyles = {
     weekDayText: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#6b7280',
+        color: '#64748b',
     },
     daysGrid: {
         flexDirection: 'row',
@@ -222,73 +218,73 @@ const baseStyles = {
         borderRadius: 2.5,
         backgroundColor: '#3b82f6',
     },
-    sectionHeader: {
-        paddingHorizontal: 20,
-        paddingBottom: 12,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#1f2937',
-        marginBottom: 4,
-    },
-    sectionCount: {
-        fontSize: 13,
-        color: '#6b7280',
-    },
-    sectionListHeader: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: '#1f2937',
-        marginHorizontal: 16,
-        marginTop: 16,
-        marginBottom: 8,
-    },
-    // Nuevo header de sección estilo history.jsx
+
+    // Headers de Sección tipo settings
     sectionDayHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        marginTop: 4,
-    },
-    sectionDayDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        marginRight: 8,
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        marginBottom: 8,
+        marginTop: 12,
     },
     sectionDayTitle: {
-        flex: 1,
-        fontSize: 14,
-        fontWeight: '700',
-        color: '#374151',
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#94a3b8',
+        textTransform: 'uppercase',
+        letterSpacing: 1.2,
     },
     sectionDayCount: {
         fontSize: 12,
-        color: '#9ca3af',
+        color: '#94a3b8',
+        fontWeight: '500',
     },
+    
+    // Header principal de incidencias
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        marginBottom: 12,
+        marginTop: 16,
+    },
+    sectionTitle: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#64748b',
+        textTransform: 'uppercase',
+        letterSpacing: 1.1,
+    },
+    sectionCount: {
+        fontSize: 12,
+        color: '#94a3b8',
+        fontWeight: '500',
+    },
+
+    // Contenedor principal de lista (igual a sectionContainer)
     incidenciasList: {
         paddingHorizontal: 16,
-        gap: 12,
+    },
+    sectionContainer: {
+        backgroundColor: '#f9fafb',
+        borderRadius: 24,
+        marginBottom: 28,
+        overflow: 'hidden',
     },
     incidenciaCard: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 12,
-        marginHorizontal: 16,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+    },
+    incidenciaCardBorder: {
+        borderBottomWidth: 1,
+        borderBottomColor: '#f3f4f6',
     },
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: 12,
     },
     tipoContainer: {
         flexDirection: 'row',
@@ -299,7 +295,7 @@ const baseStyles = {
     tipoIcon: {
         width: 40,
         height: 40,
-        borderRadius: 10,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -314,14 +310,15 @@ const baseStyles = {
         flex: 1,
     },
     tipoText: {
-        fontSize: 15,
+        fontSize: 16,
         fontWeight: '600',
         color: '#1f2937',
+        letterSpacing: -0.2,
         marginBottom: 2,
     },
     fechaText: {
-        fontSize: 12,
-        color: '#6b7280',
+        fontSize: 13,
+        color: '#64748b',
     },
     estadoBadge: {
         width: 32,
@@ -329,49 +326,50 @@ const baseStyles = {
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: '#ffffff',
+    },
+    expandedContent: {
+        marginTop: 14,
+        paddingTop: 14,
+        borderTopWidth: 1,
+        borderTopColor: '#f3f4f6',
     },
     motivoText: {
         fontSize: 14,
         color: '#475569',
         lineHeight: 20,
-        marginBottom: 8,
+        marginBottom: 12,
     },
     diasBadge: {
         flexDirection: 'row',
         alignItems: 'center',
         alignSelf: 'flex-start',
-        backgroundColor: '#f3f4f6',
+        backgroundColor: '#ffffff',
         paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
-        gap: 4,
+        paddingVertical: 6,
+        borderRadius: 8,
+        gap: 6,
     },
     diasText: {
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: '600',
-        color: '#6b7280',
-    },
-    expandedContent: {
-        marginTop: 12,
-    },
-    divider: {
-        height: 1,
-        backgroundColor: '#e5e7eb',
-        marginBottom: 12,
+        color: '#64748b',
     },
     detailRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'center',
         marginBottom: 8,
     },
     detailLabel: {
         fontSize: 13,
-        fontWeight: '600',
-        color: '#6b7280',
+        fontWeight: '500',
+        color: '#64748b',
         flex: 1,
     },
     detailValue: {
-        fontSize: 13,
+        fontSize: 14,
+        fontWeight: '600',
         color: '#1f2937',
         flex: 2,
         textAlign: 'right',
@@ -380,17 +378,18 @@ const baseStyles = {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 12,
-        paddingVertical: 10,
-        borderRadius: 10,
+        marginTop: 16,
+        paddingVertical: 12,
+        borderRadius: 12,
         backgroundColor: '#fef2f2',
         gap: 6,
     },
     cancelButtonText: {
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: '600',
         color: '#ef4444',
     },
+
     emptyContainer: {
         alignItems: 'center',
         paddingVertical: 60,
@@ -405,7 +404,7 @@ const baseStyles = {
     },
     emptyText: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#64748b',
         textAlign: 'center',
     },
     modalOverlayBottomSheet: {
@@ -421,7 +420,7 @@ const baseStyles = {
         bottom: 0,
     },
     modalSheetContent: {
-        backgroundColor: '#fff',
+        backgroundColor: '#ffffff',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         paddingBottom: Platform.OS === 'ios' ? 34 : 20,
@@ -430,7 +429,7 @@ const baseStyles = {
     modalSheetHandle: {
         width: 40,
         height: 4,
-        backgroundColor: '#d1d5db',
+        backgroundColor: '#e2e8f0',
         borderRadius: 2,
         alignSelf: 'center',
         marginTop: 12,
@@ -458,7 +457,7 @@ const baseStyles = {
         borderBottomColor: '#f3f4f6',
     },
     modalListItemActive: {
-        backgroundColor: '#eff6ff',
+        backgroundColor: '#f9fafb',
     },
     modalListItemLeft: {
         flexDirection: 'row',
@@ -475,7 +474,7 @@ const baseStyles = {
         fontWeight: '600',
     },
     modalListItemBadge: {
-        backgroundColor: '#f3f4f6',
+        backgroundColor: '#f1f5f9',
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 12,
@@ -502,7 +501,16 @@ export const incidenciasStylesDark = StyleSheet.create({
     },
     viewButtonActive: {
         ...baseStyles.viewButtonActive,
-        backgroundColor: '#334155',
+        backgroundColor: '#0f172a',
+        shadowOpacity: 0.2,
+    },
+    viewButtonText: {
+        ...baseStyles.viewButtonText,
+        color: '#94a3b8',
+    },
+    viewButtonTextActive: {
+        ...baseStyles.viewButtonTextActive,
+        color: '#f1f5f9',
     },
     filtroChip: {
         ...baseStyles.filtroChip,
@@ -510,19 +518,27 @@ export const incidenciasStylesDark = StyleSheet.create({
     },
     filtroChipText: {
         ...baseStyles.filtroChipText,
-        color: '#f1f5f9',
+        color: '#cbd5e1',
     },
     filtroChipBadge: {
         ...baseStyles.filtroChipBadge,
         backgroundColor: '#334155',
     },
+    filtroChipBadgeText: {
+        ...baseStyles.filtroChipBadgeText,
+        color: '#cbd5e1',
+    },
     calendarSection: {
         ...baseStyles.calendarSection,
         backgroundColor: '#1e293b',
     },
+    monthButton: {
+        ...baseStyles.monthButton,
+        backgroundColor: '#0f172a',
+    },
     monthButtonText: {
         ...baseStyles.monthButtonText,
-        color: '#60a5fa',
+        color: '#f1f5f9',
     },
     monthText: {
         ...baseStyles.monthText,
@@ -534,23 +550,43 @@ export const incidenciasStylesDark = StyleSheet.create({
     },
     dayText: {
         ...baseStyles.dayText,
-        color: '#e2e8f0',
+        color: '#f1f5f9',
     },
-    dayTextToday: {
-        ...baseStyles.dayTextToday,
-        color: '#60a5fa',
+    sectionDayTitle: {
+        ...baseStyles.sectionDayTitle,
+        color: '#94a3b8',
     },
     sectionTitle: {
         ...baseStyles.sectionTitle,
-        color: '#f1f5f9',
+        color: '#94a3b8',
     },
-    incidenciaCard: {
-        ...baseStyles.incidenciaCard,
+    sectionCount: {
+        ...baseStyles.sectionCount,
+        color: '#64748b',
+    },
+    sectionContainer: {
+        ...baseStyles.sectionContainer,
         backgroundColor: '#1e293b',
+    },
+    incidenciaCardBorder: {
+        ...baseStyles.incidenciaCardBorder,
+        borderBottomColor: '#334155',
     },
     tipoText: {
         ...baseStyles.tipoText,
         color: '#f1f5f9',
+    },
+    fechaText: {
+        ...baseStyles.fechaText,
+        color: '#94a3b8',
+    },
+    estadoBadge: {
+        ...baseStyles.estadoBadge,
+        backgroundColor: '#0f172a',
+    },
+    expandedContent: {
+        ...baseStyles.expandedContent,
+        borderTopColor: '#334155',
     },
     motivoText: {
         ...baseStyles.motivoText,
@@ -558,19 +594,27 @@ export const incidenciasStylesDark = StyleSheet.create({
     },
     diasBadge: {
         ...baseStyles.diasBadge,
-        backgroundColor: '#334155',
+        backgroundColor: '#0f172a',
     },
-    divider: {
-        ...baseStyles.divider,
-        backgroundColor: '#334155',
+    diasText: {
+        ...baseStyles.diasText,
+        color: '#94a3b8',
+    },
+    detailLabel: {
+        ...baseStyles.detailLabel,
+        color: '#94a3b8',
     },
     detailValue: {
         ...baseStyles.detailValue,
-        color: '#e2e8f0',
+        color: '#f1f5f9',
     },
     cancelButton: {
         ...baseStyles.cancelButton,
-        backgroundColor: '#4c1d1d',
+        backgroundColor: '#450a0a',
+    },
+    cancelButtonText: {
+        ...baseStyles.cancelButtonText,
+        color: '#fca5a5',
     },
     emptyTitle: {
         ...baseStyles.emptyTitle,
@@ -578,11 +622,11 @@ export const incidenciasStylesDark = StyleSheet.create({
     },
     modalSheetContent: {
         ...baseStyles.modalSheetContent,
-        backgroundColor: '#1e293b',
+        backgroundColor: '#0f172a',
     },
     modalSheetHandle: {
         ...baseStyles.modalSheetHandle,
-        backgroundColor: '#475569',
+        backgroundColor: '#334155',
     },
     modalListHeader: {
         ...baseStyles.modalListHeader,
@@ -598,7 +642,7 @@ export const incidenciasStylesDark = StyleSheet.create({
     },
     modalListItemActive: {
         ...baseStyles.modalListItemActive,
-        backgroundColor: '#334155',
+        backgroundColor: '#1e293b',
     },
     modalListItemText: {
         ...baseStyles.modalListItemText,
@@ -606,21 +650,6 @@ export const incidenciasStylesDark = StyleSheet.create({
     },
     modalListItemBadge: {
         ...baseStyles.modalListItemBadge,
-        backgroundColor: '#475569',
-    },
-    modalListItemBadgeText: {
-        ...baseStyles.modalListItemBadgeText,
-        color: '#e2e8f0',
-    },
-    sectionListHeader: {
-        color: '#e2e8f0',
-    },
-    sectionDayTitle: {
-        ...baseStyles.sectionDayTitle,
-        color: '#cbd5e1',
-    },
-    sectionDayCount: {
-        ...baseStyles.sectionDayCount,
-        color: '#64748b',
+        backgroundColor: '#1e293b',
     },
 });

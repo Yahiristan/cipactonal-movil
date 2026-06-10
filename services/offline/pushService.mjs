@@ -1,6 +1,6 @@
-import * as Network from 'expo-network';
 import NetInfo from '@react-native-community/netinfo';
 import sqliteManager from './sqliteManager.mjs';
+import fetchTimeout from '../fetchTimeout.js';
 let apiBaseUrl = '';
 let authToken = '';
 let isPushing = false;
@@ -29,20 +29,21 @@ export async function postEvent(titulo, tipo, descripcion, empleadoId, prioridad
       });
       return;
     }
-    const response = await fetch(`${apiBaseUrl}/eventos`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
+    const payload = {
         titulo,
         tipo_evento: tipo,
         descripcion,
         empleado_id: empleadoId,
         prioridad,
         detalles: { origen: 'movil_sync_offline' }
-      })
+      };
+    const response = await fetchTimeout(`${apiBaseUrl}/eventos`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
     });
     if (!response.ok) {
       await sqliteManager.saveOfflineEvent({
@@ -82,15 +83,10 @@ async function pushBatch(records) {
   let currentIp = null;
   let currentWifi = null;
   try {
-    const netState = await Network.getNetworkStateAsync();
-    const netInfoObj = await NetInfo.fetch();
-    currentIp = netInfoObj.details?.ipAddress || null;
+    const netState = await NetInfo.fetch();
+    currentIp = netState.details?.ipAddress || null;
 
-    if (!currentIp) {
-      currentIp = await Network.getIpAddressAsync();
-    }
-
-    if (netState.type === Network.NetworkStateType.WIFI) {
+    if (netState.type === 'wifi') {
       currentWifi = { tipo: netState.type, isConnected: netState.isConnected };
     }
   } catch (err) {
@@ -263,20 +259,21 @@ export async function pushEvents() {
       if (processedIds.has(evt.local_id)) continue;
       processedIds.add(evt.local_id);
       try {
-        const response = await fetch(`${apiBaseUrl}/eventos`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
+        const payload = {
             titulo: evt.titulo,
             tipo_evento: evt.tipo_evento,
             descripcion: evt.descripcion,
             empleado_id: evt.empleado_id,
             prioridad: evt.prioridad,
             detalles: evt.detalles ? JSON.parse(evt.detalles) : { origen: 'movil_sync_offline' }
-          })
+          };
+        const response = await fetchTimeout(`${apiBaseUrl}/eventos`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify(payload)
         });
         if (response.ok) {
           await sqliteManager.markEventSynced(evt.local_id);

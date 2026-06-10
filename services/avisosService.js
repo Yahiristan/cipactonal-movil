@@ -1,4 +1,6 @@
 import { getApiEndpoint } from '../config/api.js';
+import fetchTimeout from './fetchTimeout.js';
+
 const API_URL = getApiEndpoint('/api');
 let cacheGlobal = {
   data: null,
@@ -19,19 +21,12 @@ export const getAvisosGlobales = async (token, forzarRecarga = false) => {
   if (!forzarRecarga && cacheEsValido()) {
     return { success: true, data: cacheGlobal.data, fromCache: true };
   }
-  const fetchPromise = fetch(`${API_URL}/avisos/globales`, {
-    method: 'GET',
+  const response = await fetchTimeout(`${API_URL}/avisos/globales`, {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     }
   });
-  const response = await Promise.race([
-    fetchPromise,
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Tiempo de espera agotado')), 5000)
-    )
-  ]);
 
   if (!response.ok) {
     throw new Error('Error al obtener avisos globales');
@@ -47,19 +42,12 @@ export const getAvisosGlobales = async (token, forzarRecarga = false) => {
 };
 
 export const getAvisosDeEmpleado = async (token, empleadoId) => {
-  const fetchPromise = fetch(`${API_URL}/empleados/${empleadoId}/avisos`, {
-    method: 'GET',
+  const response = await fetchTimeout(`${API_URL}/empleados/${empleadoId}/avisos`, {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     }
   });
-  const response = await Promise.race([
-    fetchPromise,
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Tiempo de espera agotado')), 5000)
-    )
-  ]);
   if (!response.ok) {
     throw new Error('Error al obtener avisos del empleado');
   }

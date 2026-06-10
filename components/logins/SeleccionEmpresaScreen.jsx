@@ -22,46 +22,46 @@ const obtenerUrlLogo = (logo) => {
 
 const EmpresaCard = ({ item, index, onSelect, darkMode }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
+  const slideAnim = useRef(new Animated.Value(10)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 450, delay: index * 90, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 450, delay: index * 90, useNativeDriver: true })
+      Animated.timing(fadeAnim, { toValue: 1, duration: 350, delay: index * 60, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 350, delay: index * 60, useNativeDriver: true })
     ]).start();
   }, []);
 
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
       <TouchableOpacity
-        style={[styles.cardBox, darkMode && styles.cardBoxDark]}
-        activeOpacity={0.8}
+        style={styles.settingItem}
+        activeOpacity={0.7}
         onPress={() => onSelect(item.empresa_id)}
       >
-        <View style={[styles.avatarWrap, darkMode && styles.avatarWrapDark]}>
-          {item.logo ? (
-            <Image
-              source={{ uri: obtenerUrlLogo(item.logo) }}
-              style={styles.avatarImg}
-              resizeMode="contain"
-            />
-          ) : (
-            <Text style={[styles.avatarInitials, darkMode && { color: '#60a5fa' }]}>
-              {item.nombre.substring(0, 2).toUpperCase()}
+        <View style={styles.settingLeft}>
+          <View style={[styles.avatarWrap, darkMode && styles.avatarWrapDark]}>
+            {item.logo ? (
+              <Image
+                source={{ uri: obtenerUrlLogo(item.logo) }}
+                style={styles.avatarImg}
+                resizeMode="contain"
+              />
+            ) : (
+              <Text style={[styles.avatarInitials, darkMode && { color: '#f9fafb' }]}>
+                {item.nombre.substring(0, 2).toUpperCase()}
+              </Text>
+            )}
+          </View>
+
+          <View style={styles.infoCol}>
+            <Text style={[styles.companyName, darkMode && styles.textWhite]} numberOfLines={2}>
+              {item.nombre}
             </Text>
-          )}
+            <Text style={[styles.actionSubtitle, darkMode && styles.textMuted]}>Toca para ingresar</Text>
+          </View>
         </View>
 
-        <View style={styles.infoCol}>
-          <Text style={[styles.companyName, darkMode && styles.companyNameDark]} numberOfLines={2}>
-            {item.nombre}
-          </Text>
-          <Text style={[styles.actionSubtitle, darkMode && { color: '#93c5fd' }]}>Toca para ingresar</Text>
-        </View>
-
-        <View style={styles.iconCol}>
-          <Ionicons name="chevron-forward" size={24} color={darkMode ? '#9ca3af' : '#cbd5e1'} />
-        </View>
+        <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
       </TouchableOpacity>
     </Animated.View>
   );
@@ -73,228 +73,177 @@ export const SeleccionEmpresaScreen = ({ empresasList, onSelect, onCancel, darkM
   );
 
   return (
-    <View style={[styles.mainWrapper, darkMode && styles.mainWrapperDark]}>
-      {/* Header */}
-      <View style={[styles.headerBlock, darkMode && styles.headerBlockDark]}>
-        <SafeAreaView edges={['top']} style={{ flex: 0 }}>
-          <View style={styles.headerNav}>
-            <TouchableOpacity onPress={onCancel} style={styles.backBtnWrapper} activeOpacity={0.7}>
-              <Ionicons name="chevron-back" size={28} color="#ffffff" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Múltiples empresas</Text>
-          </View>
-        </SafeAreaView>
-      </View>
-
-      {/* Body */}
-      <View style={[styles.bodySection, darkMode && styles.bodySectionDark]}>
-        <View style={styles.titleSection}>
-          <Text style={[styles.welcomeText, darkMode && styles.textWhite]}>¡Hola!</Text>
-          <Text style={[styles.instructionText, darkMode && styles.textMuted]}>
-            Por favor, elige el perfil empresarial con el que deseas acceder.
-          </Text>
+    <View style={[styles.container, darkMode && styles.containerDark]}>
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+        
+        {/* Header */}
+        <View style={styles.headerNav}>
+          <TouchableOpacity onPress={onCancel} style={[styles.backBtnWrapper, darkMode && styles.backBtnWrapperDark]} activeOpacity={0.7}>
+            <Ionicons name="chevron-back" size={24} color={darkMode ? '#f9fafb' : '#1f2937'} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, darkMode && styles.textWhite]}>Empresas</Text>
         </View>
 
-        <FlatList
-          data={empresasOrdenadas}
-          keyExtractor={(item) => item.empresa_id.toString()}
-          showsVerticalScrollIndicator={false}
-          style={styles.flatListArea}
-          contentContainerStyle={styles.listPadding}
-          ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
-          renderItem={({ item, index }) => (
-            <EmpresaCard item={item} index={index} onSelect={onSelect} darkMode={darkMode} />
-          )}
-          ListFooterComponent={() => (
-            <TouchableOpacity
-              style={[styles.footerCancelBtn, darkMode && styles.footerCancelBtnDark]}
-              onPress={onCancel}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="close-circle" size={20} color={darkMode ? '#fb7185' : '#e11d48'} />
-              <Text style={[styles.footerCancelText, darkMode && { color: '#fb7185' }]}>Cancelar operación</Text>
+        {/* Body */}
+        <View style={styles.bodySection}>
+          <Text style={[styles.welcomeText, darkMode && styles.textWhite]}>¡Hola!</Text>
+          <Text style={[styles.instructionText, darkMode && styles.textMuted]}>
+            Selecciona el perfil empresarial con el que deseas acceder.
+          </Text>
+
+          <View style={[styles.sectionContainer, darkMode && styles.sectionContainerDark]}>
+            <FlatList
+              data={empresasOrdenadas}
+              keyExtractor={(item) => item.empresa_id.toString()}
+              showsVerticalScrollIndicator={false}
+              ItemSeparatorComponent={() => <View style={[styles.divider, darkMode && styles.dividerDark]} />}
+              renderItem={({ item, index }) => (
+                <EmpresaCard item={item} index={index} onSelect={onSelect} darkMode={darkMode} />
+              )}
+            />
+          </View>
+
+          {/* Footer cancel button independent section like settings logout */}
+          <View style={[styles.sectionContainer, darkMode && styles.sectionContainerDark, { marginTop: 10 }]}>
+            <TouchableOpacity style={styles.settingItem} onPress={onCancel} activeOpacity={0.7}>
+              <View style={styles.settingLeft}>
+                <Ionicons name="close-circle-outline" size={22} color="#ef4444" style={{ marginRight: 14 }} />
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#ef4444', letterSpacing: -0.2 }}>Cancelar operación</Text>
+              </View>
             </TouchableOpacity>
-          )}
-        />
-      </View>
+          </View>
+
+        </View>
+      </SafeAreaView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  mainWrapper: {
+  container: {
     flex: 1,
-    backgroundColor: '#f1f5f9'
+    backgroundColor: '#ffffff'
   },
-  mainWrapperDark: {
-    backgroundColor: '#111827'
-  },
-  headerBlock: {
-    backgroundColor: '#2563eb',
-    paddingBottom: 20,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    zIndex: 10
-  },
-  headerBlockDark: {
-    backgroundColor: '#1e40af'
+  containerDark: {
+    backgroundColor: '#0f172a'
   },
   headerNav: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: Platform.OS === 'android' ? 16 : 8,
+    paddingBottom: 16,
     flexDirection: 'row',
     alignItems: 'center'
   },
   backBtnWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)'
+    backgroundColor: '#f1f5f9'
+  },
+  backBtnWrapperDark: {
+    backgroundColor: '#1e293b'
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#ffffff',
-    marginLeft: 12,
-    letterSpacing: 0.5
+    color: '#1f2937',
+    marginLeft: 16,
+    letterSpacing: -0.3
   },
-
   bodySection: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 24
-  },
-  bodySectionDark: {
-    backgroundColor: '#111827'
-  },
-  titleSection: {
-    marginBottom: 20,
-    paddingHorizontal: 4
+    paddingTop: 10
   },
   welcomeText: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '800',
-    color: '#0f172a',
-    marginBottom: 4,
+    color: '#1f2937',
+    marginBottom: 6,
     letterSpacing: -0.5
   },
   instructionText: {
     fontSize: 15,
     color: '#64748b',
     fontWeight: '400',
-    lineHeight: 22
+    lineHeight: 22,
+    marginBottom: 24
   },
-  textWhite: { color: '#ffffff' },
+  textWhite: { color: '#f9fafb' },
   textMuted: { color: '#9ca3af' },
 
-  flatListArea: {
-    flex: 1,
-    overflow: 'visible'
+  sectionContainer: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 24,
+    paddingVertical: 8,
+    marginBottom: 20
   },
-  listPadding: {
-    paddingBottom: 40,
-    paddingTop: 4
+  sectionContainerDark: {
+    backgroundColor: '#1e293b'
   },
-
-  /* Cards BBVA */
-  cardBox: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
+  
+  settingItem: {
     flexDirection: 'row',
-    padding: 20,
     alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    borderWidth: 1,
-    borderColor: '#f1f5f9'
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16
   },
-  cardBoxDark: {
-    backgroundColor: '#1f2937',
-    borderColor: '#374151',
-    shadowColor: '#000'
+  settingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1
   },
+  
   avatarWrap: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#e2e8f0',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    marginRight: 14
   },
   avatarWrapDark: {
-    backgroundColor: '#111827',
-    borderColor: '#374151'
+    backgroundColor: '#334155'
   },
   avatarImg: {
-    width: '70%',
-    height: '70%'
+    width: '100%',
+    height: '100%',
+    borderRadius: 22
   },
   avatarInitials: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#2563eb'
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#4b5563'
   },
+  
   infoCol: {
     flex: 1,
     justifyContent: 'center',
     paddingRight: 10
   },
   companyName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 4,
-    letterSpacing: -0.3
-  },
-  companyNameDark: {
-    color: '#f3f4f6'
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    letterSpacing: -0.2,
+    marginBottom: 2
   },
   actionSubtitle: {
     fontSize: 13,
-    color: '#64748b',
+    color: '#9ca3af',
     fontWeight: '500'
   },
-  iconCol: {
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
 
-  footerCancelBtn: {
-    marginTop: 32,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 30,
-    backgroundColor: '#fff1f2',
-    borderWidth: 1,
-    borderColor: '#ffe4e6',
-    gap: 8
+  divider: {
+    height: 1,
+    backgroundColor: '#f1f5f9',
+    marginHorizontal: 16
   },
-  footerCancelBtnDark: {
-    backgroundColor: 'rgba(225, 29, 72, 0.1)',
-    borderColor: 'rgba(225, 29, 72, 0.2)'
-  },
-  footerCancelText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#e11d48'
+  dividerDark: {
+    backgroundColor: '#334155'
   }
 });

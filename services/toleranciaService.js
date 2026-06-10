@@ -1,4 +1,5 @@
 import { getApiEndpoint } from '../config/api.js';
+import fetchTimeout from './fetchTimeout.js';
 const API_URL = getApiEndpoint('/api');
 const DEFAULT_TOLERANCIA = {
   minutos_retardo: 0,
@@ -15,7 +16,7 @@ const DEFAULT_TOLERANCIA = {
 
 export const getTolerancias = async (token) => {
   try {
-    const response = await fetch(`${API_URL}/tolerancias`, {
+    const response = await fetchTimeout(`${API_URL}/tolerancias`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -36,7 +37,7 @@ export const getTolerancias = async (token) => {
 
 export const getToleranciaById = async (toleranciaId, token) => {
   try {
-    const response = await fetch(`${API_URL}/tolerancias/${toleranciaId}`, {
+    const response = await fetchTimeout(`${API_URL}/tolerancias/${toleranciaId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -55,7 +56,7 @@ export const getToleranciaById = async (toleranciaId, token) => {
 
 export const getToleranciaEmpleado = async (empleadoId, token) => {
   try {
-    const response = await fetch(
+    const response = await fetchTimeout(
       `${API_URL}/movil/sync/mis-datos?empleado_id=${empleadoId}`,
       {
         method: 'GET',
@@ -84,7 +85,7 @@ export const getToleranciaEmpleado = async (empleadoId, token) => {
 
 export const getToleranciaEmpleadoPorUsuario = async (usuarioId, token) => {
   try {
-    const rolesResponse = await fetch(`${API_URL}/usuarios/${usuarioId}/roles`, {
+    const rolesResponse = await fetchTimeout(`${API_URL}/usuarios/${usuarioId}/roles`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -114,7 +115,7 @@ export const getToleranciaEmpleadoPorUsuario = async (usuarioId, token) => {
 
 export const createTolerancia = async (toleranciaData, token) => {
   try {
-    const response = await fetch(`${API_URL}/tolerancias`, {
+    const response = await fetchTimeout(`${API_URL}/tolerancias`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -137,7 +138,7 @@ export const createTolerancia = async (toleranciaData, token) => {
 
 export const updateTolerancia = async (toleranciaId, toleranciaData, token) => {
   try {
-    const response = await fetch(`${API_URL}/tolerancias/${toleranciaId}`, {
+    const response = await fetchTimeout(`${API_URL}/tolerancias/${toleranciaId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -158,7 +159,7 @@ export const updateTolerancia = async (toleranciaId, toleranciaData, token) => {
 
 export const deleteTolerancia = async (toleranciaId, token) => {
   try {
-    const response = await fetch(`${API_URL}/tolerancias/${toleranciaId}`, {
+    const response = await fetchTimeout(`${API_URL}/tolerancias/${toleranciaId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

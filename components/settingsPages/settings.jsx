@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import getApiEndpoint from '../../config/api';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,17 +6,17 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
-  StatusBar,
   Platform,
   Image
-} from
-  'react-native';
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PersonalInfoScreen } from './personalinfo';
 import { TermsAndConditionsScreen } from './TermsAndConditionsScreen';
 import { SupportScreen } from './SupportScreen';
 import { SecurityScreen } from './SecurityScreen';
 import { NotificationsScreen } from './NotificationsScreen';
+import { getApiEndpoint } from '../../services/api';
+import appConfig from '../../app.json';
 
 const obtenerUrlFotoPerfil = (foto) => {
   if (!foto) {
@@ -31,7 +30,6 @@ const obtenerUrlFotoPerfil = (foto) => {
   }
   const BASE_URL = getApiEndpoint('');
   const url = `${BASE_URL}${foto.startsWith('/') ? '' : '/'}${foto}`;
-
   return url;
 };
 
@@ -41,7 +39,8 @@ export const SettingsScreen = ({
   darkMode,
   onToggleDarkMode,
   onLogout,
-  initialSection
+  initialSection,
+  setNavVisible
 }) => {
   const [showPersonalInfo, setShowPersonalInfo] = useState(initialSection === 'personalinfo');
   const [showTerms, setShowTerms] = useState(false);
@@ -52,521 +51,267 @@ export const SettingsScreen = ({
   const styles = darkMode ? settingsStylesDark : settingsStyles;
 
   const fotoUrl = userData.foto ? obtenerUrlFotoPerfil(userData.foto) : null;
-
-  const esEmpleado = userData.es_empleado && userData.empleado_id;
-  const rolMostrar = esEmpleado ?
-    'Empleado' :
-    userData.roles && userData.roles.length > 0 ?
-      userData.roles[0].nombre :
-      userData.esAdmin ? 'Administrador' : 'Usuario';
-
   const emailMostrar = userData.correo || email || 'usuario@correo.com';
 
-  if (showPersonalInfo) {
-    return (
-      <PersonalInfoScreen
-        userData={userData}
-        darkMode={darkMode}
-        onBack={() => setShowPersonalInfo(false)} />);
-
-
-  }
-
-  if (showTerms) {
-    return (
-      <TermsAndConditionsScreen
-        darkMode={darkMode}
-        onBack={() => setShowTerms(false)} />);
-
-
-  }
-
-  if (showSupport) {
-    return (
-      <SupportScreen
-        userData={userData}
-        darkMode={darkMode}
-        onBack={() => setShowSupport(false)} />);
-
-
-  }
-
-  if (showSecurity) {
-    return (
-      <SecurityScreen
-        darkMode={darkMode}
-        onBack={() => setShowSecurity(false)}
-        userData={userData} />);
-
-
-  }
-
-  if (showNotifications) {
-    return (
-      <NotificationsScreen
-        darkMode={darkMode}
-        onBack={() => setShowNotifications(false)} />);
-
-
-  }
+  if (showPersonalInfo) return <PersonalInfoScreen userData={userData} darkMode={darkMode} onBack={() => setShowPersonalInfo(false)} />;
+  if (showTerms) return <TermsAndConditionsScreen darkMode={darkMode} onBack={() => setShowTerms(false)} />;
+  if (showSupport) return <SupportScreen userData={userData} darkMode={darkMode} onBack={() => setShowSupport(false)} />;
+  if (showSecurity) return <SecurityScreen darkMode={darkMode} onBack={() => setShowSecurity(false)} userData={userData} />;
+  if (showNotifications) return <NotificationsScreen darkMode={darkMode} onBack={() => setShowNotifications(false)} />;
 
   return (
     <View style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={darkMode ? "#1e40af" : "#2563eb"}
-        translucent={false} />
-
-
-      { }
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Configuración</Text>
-        <Text style={styles.headerSubtitle}>Gestiona tu cuenta y preferencias</Text>
-      </View>
-
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
 
-        { }
+        {/* Tarjeta de Perfil */}
         <View style={styles.profileCard}>
-          <View style={styles.profileGradient}>
-            <View style={styles.profileHeader}>
-              <View style={styles.avatarWrapper}>
-                <View style={styles.avatarContainer}>
-                  {fotoUrl ?
-                    <Image
-                      source={{ uri: fotoUrl }}
-                      style={styles.avatarImage} /> :
-
-
-                    <View style={styles.avatarPlaceholder}>
-                      <Ionicons name="person" size={48} color="#fff" />
-                    </View>
-                  }
-                  <View style={[
-                    styles.statusIndicator,
-                    { backgroundColor: '#10b981' }]
-                  } />
-                </View>
+          <View style={styles.avatarContainer}>
+            {fotoUrl ? (
+              <Image source={{ uri: fotoUrl }} style={styles.avatarImage} />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Ionicons name="person" size={28} color={darkMode ? '#9ca3af' : '#64748b'} />
               </View>
-
-              <View style={[styles.profileInfo, { width: '100%', paddingHorizontal: 20, overflow: 'hidden' }]}>
-                <Text style={[styles.profileName, { textAlign: 'center', width: '100%' }]} numberOfLines={1} ellipsizeMode="tail">{userData.nombre}</Text>
-                <Text style={[styles.profileEmail, { textAlign: 'center', width: '100%' }]} numberOfLines={1} ellipsizeMode="tail">{emailMostrar}</Text>
-
-                <View style={styles.badgesContainer}>
-                  <View style={[
-                    styles.roleBadge,
-                    esEmpleado && styles.roleBadgeEmployee]
-                  }>
-                    <Ionicons
-                      name={esEmpleado ? "briefcase" : "person"}
-                      size={12}
-                      color={esEmpleado ? '#166534' : '#2563eb'} />
-
-                    <Text style={[
-                      styles.roleText,
-                      esEmpleado && styles.roleTextEmployee]
-                    }>
-                      {rolMostrar}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
+            )}
+            <View style={[
+              styles.statusIndicator,
+              { backgroundColor: '#10b981', borderColor: darkMode ? '#1e293b' : '#f9fafb' }
+            ]} />
+          </View>
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName} numberOfLines={1}>{userData.nombre}</Text>
+            <Text style={styles.profileEmail} numberOfLines={1}>{emailMostrar}</Text>
           </View>
         </View>
 
-        { }
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="image" size={18} color={darkMode ? '#3794fd' : '#2563eb'} />
-            <Text style={styles.sectionTitle}>Apariencia</Text>
-          </View>
+        {/* Sección: Cuenta */}
+        <Text style={styles.sectionLabel}>Cuenta</Text>
+        <View style={styles.sectionContainer}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => setShowPersonalInfo(true)} activeOpacity={0.7}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="person-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+              <Text style={styles.settingTitle}>Información Personal</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
+          </TouchableOpacity>
+
+          <View style={styles.divider} />
+
+          <TouchableOpacity style={styles.settingItem} onPress={() => setShowSecurity(true)} activeOpacity={0.7}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="lock-closed-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+              <Text style={styles.settingTitle}>Contraseña y Seguridad</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Sección: Preferencias */}
+        <Text style={styles.sectionLabel}>Preferencias</Text>
+        <View style={styles.sectionContainer}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => setShowNotifications(true)} activeOpacity={0.7}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="notifications-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+              <Text style={styles.settingTitle}>Notificaciones</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
+          </TouchableOpacity>
+
+          <View style={styles.divider} />
 
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <View style={[styles.iconCircle, { backgroundColor: darkMode ? '#2c1cd6' : '#0e8bff' }]}>
-                <Ionicons
-                  name={darkMode ? "moon" : "sunny"}
-                  size={22}
-                  color={darkMode ? '#fcda1c' : '#ffd900'} />
-
-              </View>
-              <View style={styles.settingTextContainer}>
-                <Text style={styles.settingTitle}>Modo {darkMode ? 'Oscuro' : 'Claro'}</Text>
-                <Text style={styles.settingSubtitle}>
-                  Cambia el tema de la aplicación
-                </Text>
-              </View>
+              <Ionicons name={darkMode ? "moon-outline" : "sunny-outline"} size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+              <Text style={styles.settingTitle}>Tema</Text>
             </View>
-            <Switch
-              value={darkMode}
-              onValueChange={onToggleDarkMode}
-              trackColor={{ false: '#d1d5db', true: '#6366f1' }}
-              thumbColor={darkMode ? '#fff' : '#f3f4f6'}
-              ios_backgroundColor="#d1d5db" />
-
+            <View style={styles.settingRight}>
+              <Text style={styles.settingValue}>{darkMode ? 'Oscuro' : 'Claro'}</Text>
+              <Switch
+                value={darkMode}
+                onValueChange={onToggleDarkMode}
+                trackColor={{ false: '#d1d5db', true: '#10b981' }}
+                thumbColor={Platform.OS === 'ios' ? '#fff' : (darkMode ? '#fff' : '#f3f4f6')}
+                style={Platform.OS === 'ios' ? { transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] } : {}}
+              />
+            </View>
           </View>
         </View>
 
-        { }
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="person-circle" size={18} color={darkMode ? '#3794fd' : '#2563eb'} />
-            <Text style={styles.sectionTitle}>Cuenta</Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => setShowPersonalInfo(true)}
-            activeOpacity={0.7}>
-
+        {/* Sección: Soporte */}
+        <Text style={styles.sectionLabel}>Soporte</Text>
+        <View style={styles.sectionContainer}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => setShowSupport(true)} activeOpacity={0.7}>
             <View style={styles.settingLeft}>
-              <View style={[styles.iconCircle, { backgroundColor: darkMode ? '#1e3a8a' : '#dbeafe' }]}>
-                <Ionicons name="person-outline" size={22} color={darkMode ? '#93c5fd' : '#2563eb'} />
-              </View>
-              <View style={styles.settingTextContainer}>
-                <Text style={styles.settingTitle}>Información Personal</Text>
-                <Text style={styles.settingSubtitle}>Actualiza tus datos</Text>
-              </View>
+              <Ionicons name="help-circle-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+              <Text style={styles.settingTitle}>Centro de Ayuda</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+            <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => setShowSecurity(true)}
-            activeOpacity={0.7}>
+          <View style={styles.divider} />
 
+          <TouchableOpacity style={styles.settingItem} onPress={() => setShowTerms(true)} activeOpacity={0.7}>
             <View style={styles.settingLeft}>
-              <View style={[styles.iconCircle, { backgroundColor: darkMode ? 'rgba(71, 85, 105, 0.2)' : '#f1f5f9' }]}>
-                <Ionicons name="lock-closed-outline" size={22} color={darkMode ? '#94a3b8' : '#475569'} />
-              </View>
-              <View style={styles.settingTextContainer}>
-                <Text style={styles.settingTitle}>Seguridad</Text>
-                <Text style={styles.settingSubtitle}>Contraseña y acceso</Text>
-              </View>
+              <Ionicons name="document-text-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+              <Text style={styles.settingTitle}>Términos y Condiciones</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+            <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
+          </TouchableOpacity>
+
+        </View>
+
+        {/* Sección: Información */}
+        <Text style={styles.sectionLabel}>Información</Text>
+        <View style={styles.sectionContainer}>
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="code-slash-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+              <Text style={styles.settingTitle}>Versión</Text>
+            </View>
+            <View style={styles.settingRight}>
+              <Text style={styles.settingValue}>{appConfig.expo.version}</Text>
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="build-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+              <Text style={styles.settingTitle}>Desarrollador</Text>
+            </View>
+            <View style={styles.settingRight}>
+              <Text style={styles.settingValue}>FASITLAC</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Sección: Cerrar Sesión (Independiente) */}
+        <View style={[styles.sectionContainer, { marginTop: 10 }]}>
+          <TouchableOpacity style={styles.settingItem} onPress={onLogout} activeOpacity={0.7}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="log-out-outline" size={20} color="#ef4444" style={styles.settingIcon} />
+              <Text style={[styles.settingTitle, { color: '#ef4444' }]}>Cerrar Sesión</Text>
+            </View>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="apps" size={18} color={darkMode ? '#3794fd' : '#2563eb'} />
-            <Text style={styles.sectionTitle}>Aplicación</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => setShowNotifications(true)}
-            activeOpacity={0.7}>
 
-            <View style={styles.settingLeft}>
-              <View style={[styles.iconCircle, { backgroundColor: darkMode ? '#a0552a' : '#fef3c7' }]}>
-                <Ionicons name="notifications-outline" size={22} color={darkMode ? '#f5ce4f' : '#d97706'} />
-              </View>
-              <View style={styles.settingTextContainer}>
-                <Text style={styles.settingTitle}>Notificaciones</Text>
-                <Text style={styles.settingSubtitle}>Alertas y avisos</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => setShowSupport(true)}
-            activeOpacity={0.7}>
-
-            <View style={styles.settingLeft}>
-              <View style={[styles.iconCircle, { backgroundColor: darkMode ? '#164e63' : '#cffafe' }]}>
-                <Ionicons name="help-circle-outline" size={22} color={darkMode ? '#67e8f9' : '#0891b2'} />
-              </View>
-              <View style={styles.settingTextContainer}>
-                <Text style={styles.settingTitle}>Ayuda y Soporte</Text>
-                <Text style={styles.settingSubtitle}>Centro de ayuda</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="document-text" size={18} color={darkMode ? '#3794fd' : '#2563eb'} />
-            <Text style={styles.sectionTitle}>Legal</Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.settingItem}
-            onPress={() => setShowTerms(true)}
-            activeOpacity={0.7}>
-
-            <View style={styles.settingLeft}>
-              <View style={[styles.iconCircle, { backgroundColor: darkMode ? '#4b5563' : '#f3f4f6' }]}>
-                <Ionicons name="document-text-outline" size={22} color={darkMode ? '#ffffff' : '#374151'} />
-              </View>
-              <View style={styles.settingTextContainer}>
-                <Text style={styles.settingTitle}>Términos y Condiciones</Text>
-                <Text style={styles.settingSubtitle}>Revisa nuestros términos</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons
-              name="information-circle"
-              size={18}
-              color={darkMode ? '#3794fd' : '#2563eb'} />
-
-            <Text style={styles.sectionTitle}>Información de la App</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <View style={styles.infoLeft}>
-              <Ionicons name="code-slash" size={18} color="#6b7280" />
-              <Text style={styles.infoLabel}>Versión</Text>
-            </View>
-            <Text style={styles.infoValue}>1.0.0</Text>
-          </View>
-          <View style={styles.infoDivider} />
-          <View style={styles.infoRow}>
-            <View style={styles.infoLeft}>
-              <Ionicons name="construct" size={18} color="#6b7280" />
-              <Text style={styles.infoLabel}>Build</Text>
-            </View>
-            <Text style={styles.infoValue}>16/04/2026</Text>
-          </View>
-          <View style={styles.infoDivider} />
-        </View>
-
-        { }
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={onLogout}
-          activeOpacity={0.85}>
-
-          <View style={styles.logoutGradient}>
-            <Ionicons name="log-out-outline" size={24} color="#ef4444" />
-            <Text style={styles.logoutText}>Cerrar Sesión</Text>
-          </View>
-        </TouchableOpacity>
       </ScrollView>
-    </View>);
-
+    </View>
+  );
 };
 
 const settingsStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc'
-  },
-  header: {
-    backgroundColor: '#2563eb',
-    paddingTop: Platform.OS === 'android' ? 16 : 50,
-    paddingBottom: 24,
-    paddingHorizontal: 20
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#fff',
-    marginBottom: 6
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: '#e0f2fe',
-    fontWeight: '500'
+    backgroundColor: '#ffffff',
+    paddingTop: 10
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 120
+    paddingBottom: 80
   },
   profileCard: {
-    borderRadius: 16,
-    marginBottom: 24,
-    overflow: 'hidden',
-    backgroundColor: '#ffffff',
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
-  },
-  profileGradient: {
-    padding: 24
-  },
-  profileHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24
-  },
-  avatarWrapper: {
-    marginBottom: 16
+    backgroundColor: '#f9fafb',
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 32
   },
   avatarContainer: {
-    position: 'relative'
+    position: 'relative',
+    marginRight: 16
   },
   avatarImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#f1f5f9'
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#e2e8f0'
   },
   avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#3b82f6',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#e2e8f0',
     justifyContent: 'center',
     alignItems: 'center'
   },
   statusIndicator: {
     position: 'absolute',
-    bottom: 4,
-    right: 4,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 3,
-    borderColor: '#fff'
+    bottom: 0,
+    right: 0,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 3
   },
   profileInfo: {
-    alignItems: 'center'
+    flex: 1
   },
   profileName: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '800',
     color: '#1f2937',
-    marginBottom: 6
+    marginBottom: 2,
+    letterSpacing: -0.5
   },
   profileEmail: {
-    fontSize: 15,
-    color: '#6b7280',
-    marginBottom: 12
-  },
-  badgesContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'wrap',
-    justifyContent: 'center'
-  },
-  roleBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#dbeafe',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 6
-  },
-  roleBadgeEmployee: {
-    backgroundColor: '#dcfce7'
-  },
-  roleText: {
-    color: '#2563eb',
     fontSize: 13,
-    fontWeight: '700'
+    color: '#64748b',
+    fontWeight: '500'
   },
-  roleTextEmployee: {
-    color: '#166534'
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#94a3b8',
+    marginBottom: 8,
+    marginLeft: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2
   },
-  section: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 18,
-    gap: 8
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1f2937'
+  sectionContainer: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 24,
+    paddingVertical: 8,
+    marginBottom: 28
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14
+    paddingVertical: 14,
+    paddingHorizontal: 16
   },
   settingLeft: {
     flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1
+    alignItems: 'center'
   },
-  iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+  settingIcon: {
     marginRight: 14
   },
-  settingTextContainer: {
-    flex: 1
-  },
   settingTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 3
+    letterSpacing: -0.2
   },
-  settingSubtitle: {
-    fontSize: 13,
-    color: '#6b7280'
-  },
-  infoRow: {
+  settingRight: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12
+    alignItems: 'center'
   },
-  infoLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10
-  },
-  infoLabel: {
+  settingValue: {
     fontSize: 14,
-    color: '#6b7280',
-    fontWeight: '500'
+    color: '#9ca3af',
+    marginRight: 8
   },
-  infoValue: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1f2937'
-  },
-  infoDivider: {
+  divider: {
     height: 1,
-    backgroundColor: '#f3f4f6',
-    marginVertical: 4
-  },
-  logoutButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 20,
-    borderWidth: 1.5,
-    borderColor: '#ef4444',
-    backgroundColor: '#ffffff',
-  },
-  logoutGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 12,
-  },
-  logoutText: {
-    color: '#ef4444',
-    fontSize: 17,
-    fontWeight: '700',
-    letterSpacing: 0.5
+    backgroundColor: '#f1f5f9',
+    marginHorizontal: 16
   }
 });
 
@@ -576,14 +321,9 @@ const settingsStylesDark = StyleSheet.create({
     ...settingsStyles.container,
     backgroundColor: '#0f172a'
   },
-  header: {
-    ...settingsStyles.header,
-    backgroundColor: '#1e40af'
-  },
   profileCard: {
     ...settingsStyles.profileCard,
-    backgroundColor: '#1e293b',
-    borderColor: '#334155'
+    backgroundColor: '#1e293b'
   },
   profileName: {
     ...settingsStyles.profileName,
@@ -593,42 +333,24 @@ const settingsStylesDark = StyleSheet.create({
     ...settingsStyles.profileEmail,
     color: '#9ca3af'
   },
-  section: {
-    ...settingsStyles.section,
-    backgroundColor: '#1e293b',
-    borderColor: '#334155'
+  avatarPlaceholder: {
+    ...settingsStyles.avatarPlaceholder,
+    backgroundColor: '#334155'
   },
-  sectionTitle: {
-    ...settingsStyles.sectionTitle,
-    color: '#f9fafb'
+  sectionLabel: {
+    ...settingsStyles.sectionLabel,
+    color: '#64748b'
+  },
+  sectionContainer: {
+    ...settingsStyles.sectionContainer,
+    backgroundColor: '#1e293b'
   },
   settingTitle: {
     ...settingsStyles.settingTitle,
     color: '#f9fafb'
   },
-  settingSubtitle: {
-    ...settingsStyles.settingSubtitle,
-    color: '#9ca3af'
-  },
-  infoValue: {
-    ...settingsStyles.infoValue,
-    color: '#f9fafb'
-  },
-  infoLabel: {
-    ...settingsStyles.infoLabel,
-    color: '#9ca3af'
-  },
-  infoDivider: {
-    ...settingsStyles.infoDivider,
-    backgroundColor: '#374151'
-  },
-  logoutButton: {
-    ...settingsStyles.logoutButton,
-    backgroundColor: '#0f172a',
-    borderColor: '#ef4444'
-  },
-  logoutGradient: {
-    ...settingsStyles.logoutGradient,
-    backgroundColor: 'transparent'
-  },
+  divider: {
+    ...settingsStyles.divider,
+    backgroundColor: '#334155'
+  }
 });

@@ -1,4 +1,5 @@
-import { getApiEndpoint } from '../config/api';
+import { getApiEndpoint } from '../config/api.js';
+import fetchTimeout from './fetchTimeout.js';
 const API_URL = getApiEndpoint('/api');
 
 export const processFaceImage = async (imageUri) => {
@@ -11,7 +12,7 @@ export const processFaceImage = async (imageUri) => {
       type: `image/${fileType}`,
       name: fileName
     });
-    const response = await fetch(`${API_URL}/credenciales/facial/process-mobile`, {
+    const response = await fetchTimeout(`${API_URL}/credenciales/facial/process-mobile`, {
       method: 'POST',
       body: formData,
       headers: {
@@ -42,7 +43,7 @@ export const processFaceImage = async (imageUri) => {
 
 export const registrarDescriptorFacial = async (empleadoId, descriptorBase64, token) => {
   try {
-    const response = await fetch(`${API_URL}/credenciales/facial`, {
+    const response = await fetchTimeout(`${API_URL}/credenciales/facial`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -64,6 +65,7 @@ export const registrarDescriptorFacial = async (empleadoId, descriptorBase64, to
       }
       throw new Error(errorMessage);
     }
+    const result = await response.json();
     return {
       success: true,
       data: {
@@ -82,7 +84,7 @@ export const registrarDescriptorFacial = async (empleadoId, descriptorBase64, to
 
 export const identificarPorFacial = async (descriptorBase64) => {
   try {
-    const response = await fetch(`${API_URL}/credenciales/facial/identify`, {
+    const response = await fetchTimeout(`${API_URL}/credenciales/facial/identify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -102,6 +104,7 @@ export const identificarPorFacial = async (descriptorBase64) => {
       }
       throw new Error(errorMessage);
     }
+    const result = await response.json();
     if (!result.success || !result.data) {
       return {
         success: false,

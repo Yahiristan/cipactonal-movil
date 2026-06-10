@@ -1,4 +1,5 @@
 import { getApiEndpoint } from '../config/api.js';
+import fetchTimeout from './fetchTimeout.js';
 const API_URL = getApiEndpoint('/api');
 
 export const getHorarioPorEmpleado = async (empleadoId, token = null) => {
@@ -11,7 +12,7 @@ export const getHorarioPorEmpleado = async (empleadoId, token = null) => {
       headers['Authorization'] = `Bearer ${token}`;
     }
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
     let response;
     try {
       response = await Promise.race([
@@ -21,7 +22,7 @@ export const getHorarioPorEmpleado = async (empleadoId, token = null) => {
           signal: controller.signal
         }),
         new Promise((_, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Timeout de 5s')), 5000);
+          const timeout = setTimeout(() => reject(new Error('Timeout de 20s')), 20000);
           controller.signal.addEventListener('abort', () => clearTimeout(timeout));
         })
       ]);
@@ -259,7 +260,7 @@ export const getInfoDiaActual = (horarioParsed) => {
 
 export const getHorarios = async (token) => {
   try {
-    const response = await fetch(`${API_URL}/horarios`, {
+    const response = await fetchTimeout(`${API_URL}/horarios`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -278,7 +279,7 @@ export const getHorarios = async (token) => {
 
 export const getHorarioById = async (horarioId, token) => {
   try {
-    const response = await fetch(`${API_URL}/horarios/${horarioId}`, {
+    const response = await fetchTimeout(`${API_URL}/horarios/${horarioId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -299,7 +300,7 @@ export const getHorarioById = async (horarioId, token) => {
 
 export const createHorario = async (horarioData, token) => {
   try {
-    const response = await fetch(`${API_URL}/horarios`, {
+    const response = await fetchTimeout(`${API_URL}/horarios`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -322,7 +323,7 @@ export const createHorario = async (horarioData, token) => {
 
 export const updateHorario = async (horarioId, horarioData, token) => {
   try {
-    const response = await fetch(`${API_URL}/horarios/${horarioId}`, {
+    const response = await fetchTimeout(`${API_URL}/horarios/${horarioId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -345,7 +346,7 @@ export const updateHorario = async (horarioId, horarioData, token) => {
 
 export const deleteHorario = async (horarioId, token) => {
   try {
-    const response = await fetch(`${API_URL}/horarios/${horarioId}`, {
+    const response = await fetchTimeout(`${API_URL}/horarios/${horarioId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -365,7 +366,7 @@ export const deleteHorario = async (horarioId, token) => {
 
 export const reactivarHorario = async (horarioId, token) => {
   try {
-    const response = await fetch(`${API_URL}/horarios/${horarioId}/reactivar`, {
+    const response = await fetchTimeout(`${API_URL}/horarios/${horarioId}/reactivar`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -387,7 +388,7 @@ export const reactivarHorario = async (horarioId, token) => {
 
 export const asignarHorario = async (horarioId, empleadoIds, token) => {
   try {
-    const response = await fetch(`${API_URL}/horarios/${horarioId}/asignar`, {
+    const response = await fetchTimeout(`${API_URL}/horarios/${horarioId}/asignar`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

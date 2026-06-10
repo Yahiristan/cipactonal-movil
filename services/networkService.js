@@ -1,10 +1,11 @@
 import NetInfo from '@react-native-community/netinfo';
 import { getApiEndpoint } from '../config/api.js';
+import fetchTimeout from './fetchTimeout.js';
 const API_URL = getApiEndpoint('/api');
 
 export const obtenerSegmentosRed = async (token) => {
   try {
-    const response = await fetch(`${API_URL}/configuracion`, {
+    const response = await fetchTimeout(`${API_URL}/configuracion`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -26,7 +27,7 @@ export const obtenerSegmentosRed = async (token) => {
 export const verificarRedDispositivo = async (token) => {
   const t0 = Date.now();
   try {
-    const response = await fetch(`${API_URL}/configuracion`, {
+    const response = await fetchTimeout(`${API_URL}/configuracion`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -50,7 +51,7 @@ export const verificarRedDispositivo = async (token) => {
     }
     let ip_cliente = null;
     try {
-      const ipRes = await fetch('https://api.ipify.org?format=json');
+      const ipRes = await fetchTimeout('https://api.ipify.org?format=json', {}, 5000);
       if (ipRes.ok) {
         const ipData = await ipRes.json();
         ip_cliente = ipData.ip;

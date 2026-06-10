@@ -1,8 +1,9 @@
 import { getApiEndpoint } from '../config/api.js';
+import fetchTimeout from './fetchTimeout.js';
 const API_URL = getApiEndpoint('/api');
 export const getNotificacionesRecientes = async (token, limit = 20) => {
   try {
-    const response = await fetch(`${API_URL}/eventos/recientes?limit=${limit}`, {
+    const response = await fetchTimeout(`${API_URL}/eventos/recientes?limit=${limit}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -28,7 +29,7 @@ export const getNotificaciones = async (token, filtros = {}) => {
     if (filtros.limit) params.append('limit', filtros.limit);
     if (filtros.offset) params.append('offset', filtros.offset);
     const url = `${API_URL}/eventos${params.toString() ? '?' + params.toString() : ''}`;
-    const response = await fetch(url, {
+    const response = await fetchTimeout(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -47,7 +48,7 @@ export const getNotificaciones = async (token, filtros = {}) => {
 
 export const getEstadisticasEventos = async (token) => {
   try {
-    const response = await fetch(`${API_URL}/eventos/stats`, {
+    const response = await fetchTimeout(`${API_URL}/eventos/stats`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -66,7 +67,7 @@ export const getEstadisticasEventos = async (token) => {
 
 export const getNotificacionById = async (token, id) => {
   try {
-    const response = await fetch(`${API_URL}/eventos/${id}`, {
+    const response = await fetchTimeout(`${API_URL}/eventos/${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

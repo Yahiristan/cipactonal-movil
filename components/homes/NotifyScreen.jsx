@@ -7,8 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
-  Platform,
-  StatusBar
+  Platform
 } from
   'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +16,7 @@ import sqliteManager from '../../services/offline/sqliteManager.mjs';
 import syncManager from '../../services/offline/syncManager.mjs';
 import { detectarAvisosNuevos } from '../../services/localNotificationService';
 import { getAvisosGlobales, getAvisosDeEmpleado } from '../../services/avisosService';
+import { Header } from '../ui/Header';
 
 const PINNED_STORAGE_KEY = '@avisos_pinned';
 
@@ -249,34 +249,24 @@ export const NotifyScreen = ({
 
     return (
       <View style={styles.mainContainer}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={darkMode ? "#1e40af" : "#2563eb"} />
+        
 
 
         { }
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <View style={styles.headerLeft}>
-              <TouchableOpacity onPress={() => setAvisoSeleccionado(null)} style={styles.backButton}>
-                <Ionicons name="arrow-back" size={24} color="#fff" />
-              </TouchableOpacity>
-              <View>
-                <Text style={styles.headerTitle}>Avisos</Text>
-              </View>
-            </View>
-            <TouchableOpacity
-              onPress={() => togglePin(avisoKey)}
-              style={styles.headerPinButton}>
-
-              <Ionicons
-                name={isPinned ? "bookmark" : "bookmark-outline"}
-                size={22}
-                color={isPinned ? "#f59e0b" : "#fff"} />
-
+        <Header
+          darkMode={darkMode}
+          title="Aviso"
+          leftComponent={
+            <TouchableOpacity onPress={() => setAvisoSeleccionado(null)} style={{ padding: 8, marginLeft: -8 }} activeOpacity={0.6}>
+              <Ionicons name="arrow-back" size={24} color={darkMode ? '#f8fafc' : '#0f172a'} />
             </TouchableOpacity>
-          </View>
-        </View>
+          }
+          rightComponent={
+            <TouchableOpacity onPress={() => togglePin(avisoKey)} style={{ padding: 8, marginRight: -8 }} activeOpacity={0.6}>
+              <Ionicons name={isPinned ? "bookmark" : "bookmark-outline"} size={24} color={isPinned ? "#f59e0b" : (darkMode ? '#9ca3af' : '#64748b')} />
+            </TouchableOpacity>
+          }
+        />
 
         <ScrollView
           style={styles.avisosScrollView}
@@ -463,69 +453,54 @@ export const NotifyScreen = ({
 
   return (
     <View style={styles.mainContainer}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={darkMode ? "#1e40af" : "#2563eb"} />
+      
 
 
       { }
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity onPress={onGoBack} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
-            </TouchableOpacity>
-            <View style={styles.headerIconContainer}>
-              <Ionicons name="notifications" size={26} color="#fff" />
-            </View>
-            <View>
-              <Text style={styles.headerTitle}>Avisos</Text>
-              <Text style={styles.headerSubtitle}>
-                {estadisticas.total} {estadisticas.total === 1 ? 'aviso' : 'avisos'}
-              </Text>
-            </View>
-          </View>
-        </View>
-      </View>
+      <Header
+        darkMode={darkMode}
+        title="Avisos"
+        leftComponent={
+          <TouchableOpacity onPress={onGoBack} style={{ padding: 8, marginLeft: -8 }} activeOpacity={0.6}>
+            <Ionicons name="arrow-back" size={24} color={darkMode ? '#f8fafc' : '#0f172a'} />
+          </TouchableOpacity>
+        }
+      />
 
       { }
       <View style={styles.filtrosWrapper}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtrosContainer}>
-
+        <View style={styles.segmentedControl}>
           {filtros.map((filtro) =>
             <TouchableOpacity
               key={filtro.key}
               style={[
-                styles.filtroChip,
-                filtroActivo === filtro.key && styles.filtroChipActive]
-              }
+                styles.segmentButton,
+                filtroActivo === filtro.key && styles.segmentButtonActive
+              ]}
+              activeOpacity={0.8}
               onPress={() => setFiltroActivo(filtro.key)}>
-
               <Text style={[
-                styles.filtroChipText,
-                filtroActivo === filtro.key && styles.filtroChipTextActive]
-              }>
+                styles.segmentText,
+                filtroActivo === filtro.key && styles.segmentTextActive
+              ]}>
                 {filtro.label}
               </Text>
               {filtro.count > 0 &&
                 <View style={[
-                  styles.filtroBadge,
-                  filtroActivo === filtro.key && styles.filtroBadgeActive]
-                }>
+                  styles.segmentBadge,
+                  filtroActivo === filtro.key && styles.segmentBadgeActive
+                ]}>
                   <Text style={[
-                    styles.filtroBadgeText,
-                    filtroActivo === filtro.key && styles.filtroBadgeTextActive]
-                  }>
-                    {filtro.count}
+                    styles.segmentBadgeText,
+                    filtroActivo === filtro.key && styles.segmentBadgeTextActive
+                  ]}>
+                    {filtro.count > 99 ? '99+' : filtro.count}
                   </Text>
                 </View>
               }
             </TouchableOpacity>
           )}
-        </ScrollView>
+        </View>
       </View>
 
       { }
@@ -554,117 +529,63 @@ const stylesLight = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc'
   },
-  header: {
-    backgroundColor: '#2563eb',
-    paddingTop: Platform.OS === 'android' ? 16 : 50,
-    paddingBottom: 20,
-    paddingHorizontal: 20
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  headerIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#fff'
-  },
-  headerSubtitle: {
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginTop: 2
-  },
-  headerPinButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 12
-  },
 
   filtrosWrapper: {
-    backgroundColor: '#f9fafb',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb'
-  },
-  filtrosContainer: {
+    backgroundColor: 'transparent',
     paddingHorizontal: 20,
-    paddingVertical: 14,
-    gap: 8
+    paddingTop: 10,
+    paddingBottom: 15,
+    zIndex: 10
   },
-  filtroChip: {
+  segmentedControl: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 18,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 12,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: '#e2e8f0'
+  },
+  segmentButton: {
+    flex: 1,
     paddingVertical: 10,
-    borderRadius: 24,
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
-    marginRight: 8,
-    gap: 8,
-    elevation: 0
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    flexDirection: 'row',
+    gap: 6
   },
-  filtroChipActive: {
-    backgroundColor: '#2563eb',
-    borderColor: '#2563eb',
-    elevation: 4,
-    shadowColor: '#2563eb',
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8
+  segmentButtonActive: {
+    backgroundColor: '#ffffff',
+    shadowColor: '#64748b',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2
   },
-  filtroChipText: {
-    fontSize: 14,
-    fontWeight: '700',
+  segmentText: {
+    fontSize: 13,
+    fontWeight: '600',
     color: '#64748b'
   },
-  filtroChipTextActive: {
-    color: '#fff'
+  segmentTextActive: {
+    color: '#0f172a'
   },
-  filtroBadge: {
-    backgroundColor: '#e5e7eb',
-    paddingHorizontal: 8,
+  segmentBadge: {
+    backgroundColor: '#e2e8f0',
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 12,
-    minWidth: 24,
-    alignItems: 'center'
+    borderRadius: 10
   },
-  filtroBadgeActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)'
+  segmentBadgeActive: {
+    backgroundColor: '#f1f5f9'
   },
-  filtroBadgeText: {
-    fontSize: 12,
+  segmentBadgeText: {
+    fontSize: 10,
     fontWeight: '700',
-    color: '#4b5563'
+    color: '#475569'
   },
-  filtroBadgeTextActive: {
-    color: '#fff'
+  segmentBadgeTextActive: {
+    color: '#0f172a'
   },
 
   avisosScrollView: {
@@ -894,25 +815,41 @@ const stylesDark = StyleSheet.create({
     backgroundColor: '#1e40af'
   },
   filtrosWrapper: {
-    ...stylesLight.filtrosWrapper,
+    ...stylesLight.filtrosWrapper
+  },
+  segmentedControl: {
+    ...stylesLight.segmentedControl,
     backgroundColor: '#1e293b',
-    borderBottomColor: '#334155'
+    borderColor: '#334155'
   },
-  filtroChip: {
-    ...stylesLight.filtroChip,
-    backgroundColor: '#334155'
+  segmentButtonActive: {
+    ...stylesLight.segmentButtonActive,
+    backgroundColor: '#334155',
+    shadowColor: '#000'
   },
-  filtroChipText: {
-    ...stylesLight.filtroChipText,
+  segmentText: {
+    ...stylesLight.segmentText,
     color: '#9ca3af'
   },
-  filtroBadge: {
-    ...stylesLight.filtroBadge,
+  segmentTextActive: {
+    ...stylesLight.segmentTextActive,
+    color: '#f8fafc'
+  },
+  segmentBadge: {
+    ...stylesLight.segmentBadge,
     backgroundColor: '#475569'
   },
-  filtroBadgeText: {
-    ...stylesLight.filtroBadgeText,
-    color: '#d1d5db'
+  segmentBadgeActive: {
+    ...stylesLight.segmentBadgeActive,
+    backgroundColor: '#1e293b'
+  },
+  segmentBadgeText: {
+    ...stylesLight.segmentBadgeText,
+    color: '#cbd5e1'
+  },
+  segmentBadgeTextActive: {
+    ...stylesLight.segmentBadgeTextActive,
+    color: '#f8fafc'
   },
   avisoCard: {
     ...stylesLight.avisoCard,

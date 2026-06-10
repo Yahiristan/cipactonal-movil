@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
   View,
   Text,
@@ -12,16 +13,14 @@ import {
   Modal,
   TextInput,
   Platform,
-  KeyboardAvoidingView
-} from
-  'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
+  KeyboardAvoidingView,
+  FlatList
+} from 'react-native';
 import {
   getIncidenciasEmpleado,
   createIncidencia
-} from
-  '../../services/incidenciasService';
+} from '../../services/incidenciasService';
+
 
 
 import sqliteManager from '../../services/offline/sqliteManager.mjs';
@@ -29,6 +28,7 @@ import syncManager from '../../services/offline/syncManager.mjs';
 import { detectarCambiosIncidencias } from '../../services/localNotificationService';
 import { incidenciasStyles, incidenciasStylesDark } from './IncidentScreenStyles';
 import { CreationIncidentScreen } from './CreationIncidentScreen';
+import { Header } from '../ui/Header';
 
 export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
   const [incidencias, setIncidencias] = useState([]);
@@ -91,7 +91,7 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
 
       try {
         if (syncManager.getIsBackendDown()) {
-            throw new Error('Backend is offline');
+          throw new Error('Backend is offline');
         }
         const response = await getIncidenciasEmpleado(empleadoId, token);
         datos = response.data || [];
@@ -446,115 +446,108 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
 
   };
 
-  const renderIncidenciaCard = (incidencia) => {
+  const renderIncidenciaCard = (incidencia, index, section) => {
     const isExpanded = expandedCard === incidencia.id;
     const diasTotal = calcularDiasDiferencia(incidencia.fecha_inicio, incidencia.fecha_fin);
+    const isLast = index === section.data.length - 1;
 
     return (
-      <TouchableOpacity
-        key={incidencia.id}
-        style={styles.incidenciaCard}
-        onPress={() => setExpandedCard(isExpanded ? null : incidencia.id)}
-        activeOpacity={0.7}>
+      <View key={incidencia.id}>
+        <TouchableOpacity
+          style={styles.incidenciaCard}
+          onPress={() => setExpandedCard(isExpanded ? null : incidencia.id)}
+          activeOpacity={0.7}>
 
-        <View style={styles.cardHeader}>
-          <View style={styles.tipoContainer}>
+          <View style={styles.cardHeader}>
+            <View style={styles.tipoContainer}>
+              <View style={[
+                styles.tipoIcon,
+                { backgroundColor: `${getTipoColor(incidencia.tipo)}20` }]
+              }>
+                <Ionicons
+                  name={getTipoIcon(incidencia.tipo)}
+                  size={20}
+                  color={getTipoColor(incidencia.tipo)} />
+
+              </View>
+              <View style={styles.tipoInfo}>
+                <Text style={styles.tipoText}>
+                  {tiposIncidencia.find((t) => t.value === incidencia.tipo)?.label || incidencia.tipo}
+                </Text>
+                <Text style={styles.fechaText}>
+                  {formatearFecha(incidencia.fecha_inicio)}
+                  {incidencia.fecha_fin && ` - ${formatearFecha(incidencia.fecha_fin)}`}
+                </Text>
+              </View>
+            </View>
+
             <View style={[
-              styles.tipoIcon,
-              { backgroundColor: `${getTipoColor(incidencia.tipo)}20` }]
+              styles.estadoBadge,
+              { backgroundColor: `${getEstadoColor(incidencia.estado)}20` }]
             }>
               <Ionicons
-                name={getTipoIcon(incidencia.tipo)}
-                size={20}
-                color={getTipoColor(incidencia.tipo)} />
+                name={getEstadoIcon(incidencia.estado)}
+                size={14}
+                color={getEstadoColor(incidencia.estado)} />
 
-            </View>
-            <View style={styles.tipoInfo}>
-              <Text style={styles.tipoText}>
-                {tiposIncidencia.find((t) => t.value === incidencia.tipo)?.label || incidencia.tipo}
-              </Text>
-              <Text style={styles.fechaText}>
-                {formatearFecha(incidencia.fecha_inicio)}
-                {incidencia.fecha_fin && ` - ${formatearFecha(incidencia.fecha_fin)}`}
-              </Text>
             </View>
           </View>
 
-          <View style={[
-            styles.estadoBadge,
-            { backgroundColor: `${getEstadoColor(incidencia.estado)}20` }]
-          }>
-            <Ionicons
-              name={getEstadoIcon(incidencia.estado)}
-              size={14}
-              color={getEstadoColor(incidencia.estado)} />
-
-          </View>
-        </View>
-
-        {incidencia.is_offline &&
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, backgroundColor: '#eef2ff', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, alignSelf: 'flex-start', gap: 4 }}>
-            <Ionicons name="cloud-offline" size={14} color="#6366f1" />
-            <Text style={{ fontSize: 12, fontWeight: '600', color: '#6366f1' }}>Pendiente de enviar</Text>
-          </View>
-        }
-
-        <Text style={styles.motivoText} numberOfLines={isExpanded ? undefined : 2}>
-          {incidencia.motivo}
-        </Text>
-
-        {incidencia.fecha_fin &&
-          <View style={styles.diasBadge}>
-            <Ionicons name="calendar-outline" size={14} color="#6b7280" />
-            <Text style={styles.diasText}>{diasTotal} {diasTotal === 1 ? 'día' : 'días'}</Text>
-          </View>
-        }
-
-        {isExpanded &&
-          <View style={styles.expandedContent}>
-            <View style={styles.divider} />
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Estado:</Text>
-              <Text style={[styles.detailValue, { color: getEstadoColor(incidencia.estado) }]}>
-                {incidencia.estado}
-              </Text>
+          {incidencia.is_offline &&
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, backgroundColor: '#eef2ff', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, alignSelf: 'flex-start', gap: 4 }}>
+              <Ionicons name="cloud-offline" size={14} color="#6366f1" />
+              <Text style={{ fontSize: 12, fontWeight: '600', color: '#6366f1' }}>Pendiente de enviar</Text>
             </View>
+          }
 
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Inicio:</Text>
-              <Text style={styles.detailValue}>{formatearFechaCompleta(incidencia.fecha_inicio)}</Text>
-            </View>
+          <Text style={[styles.motivoText, { marginTop: 12 }]} numberOfLines={isExpanded ? undefined : 2}>
+            {incidencia.motivo}
+          </Text>
 
-            {incidencia.fecha_fin &&
+          {isExpanded && (
+            <View style={styles.expandedContent}>
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Fin:</Text>
-                <Text style={styles.detailValue}>{formatearFechaCompleta(incidencia.fecha_fin)}</Text>
+                <Text style={styles.detailLabel}>Inicio:</Text>
+                <Text style={styles.detailValue}>{formatearFechaCompleta(incidencia.fecha_inicio)}</Text>
               </View>
-            }
 
-            {incidencia.observaciones &&
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>
-                  {incidencia.estado === 'rechazado' ? 'Motivo de rechazo:' : 'Observaciones:'}
-                </Text>
-                <Text style={[
-                  styles.detailValue,
-                  incidencia.estado === 'rechazado' && { color: '#ef4444' }]
-                }>
-                  {incidencia.observaciones}
-                </Text>
-              </View>
-            }
-          </View>
-        }
-      </TouchableOpacity>);
+              {incidencia.fecha_fin && (
+                <>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Fin:</Text>
+                    <Text style={styles.detailValue}>{formatearFechaCompleta(incidencia.fecha_fin)}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Duración:</Text>
+                    <Text style={styles.detailValue}>{diasTotal} {diasTotal === 1 ? 'día' : 'días'}</Text>
+                  </View>
+                </>
+              )}
 
+              {incidencia.observaciones && (
+                <View style={[styles.detailRow, { marginTop: 4 }]}>
+                  <Text style={styles.detailLabel}>
+                    {incidencia.estado === 'rechazado' ? 'Motivo:' : 'Observaciones:'}
+                  </Text>
+                  <Text style={[
+                    styles.detailValue,
+                    incidencia.estado === 'rechazado' && { color: '#ef4444' }]
+                  }>
+                    {incidencia.observaciones}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+        </TouchableOpacity>
+        {!isLast && <View style={styles.divider} />}
+      </View>
+    );
   };
 
   const keyExtractor = useCallback((item) => item.id.toString(), []);
 
-  const ListHeader = () =>
+  const ListHeader = () => (
     <>
       <View style={styles.viewToggle}>
         <TouchableOpacity
@@ -605,32 +598,29 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
 
       {vistaActual === 'calendario' && renderCalendario()}
 
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>
-          {rangoInicio && rangoFin && vistaActual === 'calendario'
-            ? `${rangoInicio.getDate()} – ${rangoFin.getDate()} de ${monthNames[rangoFin.getMonth()]}`
-            : rangoInicio && vistaActual === 'calendario'
-            ? `${rangoInicio.getDate()} de ${monthNames[rangoInicio.getMonth()]}`
-            : vistaActual === 'calendario'
-            ? 'Todas las incidencias'
-            : 'Incidencias'
-          }
-        </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          {(rangoInicio || rangoFin) && vistaActual === 'calendario' &&
+      {vistaActual === 'calendario' && (rangoInicio || rangoFin) && (
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>
+            {rangoInicio && rangoFin
+              ? `${rangoInicio.getDate()} – ${rangoFin.getDate()} de ${monthNames[rangoFin.getMonth()]}`
+              : `${rangoInicio.getDate()} de ${monthNames[rangoInicio.getMonth()]}`
+            }
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <TouchableOpacity onPress={() => { setRangoInicio(null); setRangoFin(null); setModoRango(false); }}>
               <Text style={{ fontSize: 12, fontWeight: '600', color: '#2563eb' }}>Ver todas</Text>
             </TouchableOpacity>
-          }
-          <Text style={styles.sectionCount}>
-            {incidenciasFiltradas.length} {incidenciasFiltradas.length === 1 ? 'registro' : 'registros'}
-          </Text>
+            <Text style={styles.sectionCount}>
+              {incidenciasFiltradas.length} {incidenciasFiltradas.length === 1 ? 'registro' : 'registros'}
+            </Text>
+          </View>
         </View>
-      </View>
-    </>;
+      )}
+    </>
+  );
 
 
-  const ListEmpty = () =>
+  const ListEmpty = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="document-text-outline" size={64} color="#cbd5e1" />
       <Text style={styles.emptyTitle}>No hay incidencias</Text>
@@ -640,21 +630,73 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
           'Cambia los filtros para ver otras incidencias'
         }
       </Text>
-    </View>;
+    </View>
+  );
 
+  const memoizedFlatList = useMemo(() => (
+    <FlatList
+      data={seccionesFiltradas}
+      extraData={expandedCard}
+      keyExtractor={(item, index) => item.fecha ? item.fecha.toString() + index : index.toString()}
+      renderItem={({ item: section }) => {
+        const mNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const diaNum = String(section.fecha.getDate()).padStart(2, '0');
+        const mesNum = String(section.fecha.getMonth() + 1).padStart(2, '0');
+        const anio = section.fecha.getFullYear();
+        const tituloDia = `${diasSemana[section.fecha.getDay()]} - ${diaNum}/${mesNum}/${anio}`;
+        const totalRegistros = section.data.length;
+
+        // Color del punto según el estado dominante de las incidencias del día
+        const tieneRechazado = section.data.some((i) => i.estado?.toLowerCase() === 'rechazado');
+        const tienePendiente = !tieneRechazado && section.data.some((i) =>
+          i.estado?.toLowerCase() === 'pendiente' || i.estado?.toLowerCase() === 'pendiente_sync'
+        );
+
+        return (
+          <View style={styles.incidenciasList}>
+            <View style={styles.sectionDayHeader}>
+              <Text style={styles.sectionDayTitle}>{tituloDia}</Text>
+              <Text style={styles.sectionDayCount}>
+                {totalRegistros} {totalRegistros === 1 ? 'registro' : 'registros'}
+              </Text>
+            </View>
+            <View style={styles.sectionContainer}>
+              {section.data.map((incidencia, idx) => renderIncidenciaCard(incidencia, idx, section))}
+            </View>
+          </View>
+        );
+      }}
+      ListHeaderComponent={ListHeader}
+      ListEmptyComponent={ListEmpty}
+      ListFooterComponent={<View style={{ height: 100 }} />}
+      contentContainerStyle={seccionesFiltradas.length === 0 ? { flexGrow: 1 } : undefined}
+      showsVerticalScrollIndicator={false}
+      initialNumToRender={10}
+      maxToRenderPerBatch={10}
+      windowSize={5}
+      removeClippedSubviews={Platform.OS !== 'ios'}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#3b82f6"
+          colors={['#3b82f6']} />
+      } />
+  ), [seccionesFiltradas, expandedCard, refreshing, styles, darkMode, currentMonth, vistaActual, filtroEstado, filtroTipo, rangoInicio, rangoFin]);
 
   if (loading) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <TouchableOpacity onPress={onBack} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+        <Header
+          darkMode={darkMode}
+          title="Incidencias"
+          leftComponent={
+            <TouchableOpacity onPress={onBack} style={{ padding: 8, marginLeft: -8 }} activeOpacity={0.6}>
+              <Ionicons name="arrow-back" size={24} color={darkMode ? '#f8fafc' : '#0f172a'} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Incidencias</Text>
-            <View style={styles.headerPlaceholder} />
-          </View>
-        </View>
+          }
+        />
 
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3b82f6" />
@@ -666,65 +708,22 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
   return (
     <View style={styles.container}>
       { }
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+      <Header
+        darkMode={darkMode}
+        title="Incidencias"
+        leftComponent={
+          <TouchableOpacity onPress={onBack} style={{ padding: 8, marginLeft: -8 }} activeOpacity={0.6}>
+            <Ionicons name="arrow-back" size={24} color={darkMode ? '#f8fafc' : '#0f172a'} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Incidencias</Text>
-          <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addButton}>
-            <Ionicons name="add" size={24} color="#fff" />
+        }
+        rightComponent={
+          <TouchableOpacity onPress={() => setModalVisible(true)} style={{ padding: 8, marginRight: -8 }} activeOpacity={0.6}>
+            <Ionicons name="add" size={28} color={darkMode ? '#34d399' : '#059669'} />
           </TouchableOpacity>
-        </View>
-      </View>
+        }
+      />
 
-      <SectionList
-        sections={seccionesFiltradas}
-        extraData={expandedCard}
-        keyExtractor={keyExtractor}
-        renderItem={({ item }) => renderIncidenciaCard(item)}
-        renderSectionHeader={({ section }) => {
-          const mNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-          const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-          const diaNum = String(section.fecha.getDate()).padStart(2, '0');
-          const mesNum = String(section.fecha.getMonth() + 1).padStart(2, '0');
-          const anio = section.fecha.getFullYear();
-          const tituloDia = `${diasSemana[section.fecha.getDay()]} - ${diaNum}/${mesNum}/${anio}`;
-          const totalRegistros = section.data.length;
-
-          // Color del punto según el estado dominante de las incidencias del día
-          const tieneRechazado = section.data.some((i) => i.estado?.toLowerCase() === 'rechazado');
-          const tienePendiente = !tieneRechazado && section.data.some((i) =>
-            i.estado?.toLowerCase() === 'pendiente' || i.estado?.toLowerCase() === 'pendiente_sync'
-          );
-          const dotColor = tieneRechazado ? '#ef4444' : tienePendiente ? '#f59e0b' : '#10b981';
-
-          return (
-            <View style={styles.sectionDayHeader}>
-              <View style={[styles.sectionDayDot, { backgroundColor: dotColor }]} />
-              <Text style={styles.sectionDayTitle}>{tituloDia}</Text>
-              <Text style={styles.sectionDayCount}>
-                {totalRegistros} {totalRegistros === 1 ? 'registro' : 'registros'}
-              </Text>
-            </View>
-          );
-        }}
-        ListHeaderComponent={ListHeader}
-        ListEmptyComponent={ListEmpty}
-        ListFooterComponent={<View style={{ height: 100 }} />}
-        contentContainerStyle={seccionesFiltradas.length === 0 ? { flexGrow: 1 } : undefined}
-        showsVerticalScrollIndicator={false}
-        initialNumToRender={10}
-        maxToRenderPerBatch={10}
-        windowSize={5}
-        removeClippedSubviews={Platform.OS !== 'ios'}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#3b82f6"
-            colors={['#3b82f6']} />
-        } />
+      {memoizedFlatList}
 
 
       { }
@@ -866,16 +865,18 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
         </View>
       </Modal>
 
-      <CreationIncidentScreen
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onSuccess={() => {
-          setModalVisible(false);
-          cargarIncidencias();
-        }}
-        userData={userData}
-        darkMode={darkMode}
-      />
+      {modalVisible && (
+        <CreationIncidentScreen
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          onSuccess={() => {
+            setModalVisible(false);
+            cargarIncidencias();
+          }}
+          userData={userData}
+          darkMode={darkMode}
+        />
+      )}
     </View>
   );
 };

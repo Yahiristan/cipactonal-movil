@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, Fingerprint, Lock, AlertCircle, CheckCircle2, Loader2, Trash2 } from 'lucide-react';
+import { getApiEndpoint } from '../../config/api.js';
 
 const BiometricRegistration = () => {
   const [loading, setLoading] = useState(false);
@@ -12,7 +13,7 @@ const BiometricRegistration = () => {
     tiene_pin: false
   });
 
-  const API_BASE = 'https://9dm7dqf9-3002.usw3.devtunnels.ms';
+  const API_BASE = getApiEndpoint('');
 
 
   useEffect(() => {

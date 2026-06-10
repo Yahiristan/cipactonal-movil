@@ -1,5 +1,5 @@
-
 import { getApiEndpoint } from '../config/api.js';
+import fetchTimeout from './fetchTimeout.js';
 const API_URL = getApiEndpoint('/api');
 const normalizarCoordenada = (coords) => {
   if (Array.isArray(coords)) {
@@ -154,7 +154,7 @@ export const getUbicacionDepartamento = async (departamentoId, token) => {
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    const response = await fetch(url, { headers });
+    const response = await fetchTimeout(url, { headers });
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Error del servidor (${response.status}): ${errorText}`);

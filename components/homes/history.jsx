@@ -5,7 +5,6 @@ import {
   StyleSheet,
   SectionList,
   TouchableOpacity,
-  StatusBar,
   ActivityIndicator,
   RefreshControl,
   Platform } from
@@ -513,24 +512,23 @@ export const HistoryScreen = ({ darkMode, userData }) => {
         </View>
     }
 
-      {}
-      <View style={styles.recordsHeader}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text style={styles.recordsTitle}>
-            {rangoInicio && rangoFin
-              ? `${rangoInicio.getDate()} – ${rangoFin.getDate()} de ${monthNames[rangoFin.getMonth()]}`
-              : rangoInicio
-              ? `${rangoInicio.getDate()} de ${monthNames[rangoInicio.getMonth()]}`
-              : `${monthNames[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`
-            }
-          </Text>
-          {(rangoInicio || rangoFin) &&
+      {(rangoInicio || rangoFin) && (
+        <View style={styles.recordsHeader}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={styles.recordsTitle}>
+              {rangoInicio && rangoFin
+                ? `${rangoInicio.getDate()} – ${rangoFin.getDate()} de ${monthNames[rangoFin.getMonth()]}`
+                : rangoInicio
+                ? `${rangoInicio.getDate()} de ${monthNames[rangoInicio.getMonth()]}`
+                : ''
+              }
+            </Text>
             <TouchableOpacity onPress={limpiarRango}>
               <Text style={{ fontSize: 13, fontWeight: '600', color: '#2563eb' }}>Ver mes</Text>
             </TouchableOpacity>
-          }
+          </View>
         </View>
-      </View>
+      )}
     </>;
 
 
@@ -546,16 +544,6 @@ export const HistoryScreen = ({ darkMode, userData }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={darkMode ? '#1e40af' : '#2563eb'} />
-      
-
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Historial</Text>
-        <Text style={styles.headerSubtitle}>Registro de asistencias</Text>
-      </View>
-
       {loading ?
       <View style={styles.centerContent}>
           <ActivityIndicator size="large" color="#2563eb" />
@@ -591,7 +579,7 @@ export const HistoryScreen = ({ darkMode, userData }) => {
 
 
 const historyStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
+  container: { flex: 1, backgroundColor: '#ffffff' },
   centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     backgroundColor: '#2563eb',
@@ -761,10 +749,10 @@ const historyStylesDark = StyleSheet.create({
   ...historyStyles,
   container: { ...historyStyles.container, backgroundColor: '#0f172a' },
   header: { ...historyStyles.header, backgroundColor: '#1e40af' },
-  monthSelector: { ...historyStyles.monthSelector, backgroundColor: '#1e293b' },
+  monthSelector: { ...historyStyles.monthSelector, backgroundColor: '#1e293b', shadowColor: '#000000' },
   monthButtonText: { color: '#60a5fa' },
   monthText: { ...historyStyles.monthText, color: '#f1f5f9' },
-  calendarContainer: { ...historyStyles.calendarContainer, backgroundColor: '#1e293b' },
+  calendarContainer: { ...historyStyles.calendarContainer, backgroundColor: '#1e293b', shadowColor: '#000000' },
   weekDayText: { ...historyStyles.weekDayText, color: '#94a3b8' },
   dayContentSelected: { backgroundColor: '#3b82f6' },
   dayContentSelectedRange: { backgroundColor: '#3b82f6' },
@@ -773,15 +761,15 @@ const historyStylesDark = StyleSheet.create({
   dayContentToday: { ...historyStyles.dayContentToday, borderColor: '#3b82f6' },
   dayText: { ...historyStyles.dayText, color: '#e2e8f0' },
   dayTextToday: { ...historyStyles.dayTextToday, color: '#60a5fa' },
-  statCard: { ...historyStyles.statCard, backgroundColor: '#1e293b' },
+  statCard: { ...historyStyles.statCard, backgroundColor: '#1e293b', shadowColor: '#000000' },
   statNumber: { ...historyStyles.statNumber, color: '#f1f5f9' },
   statLabel: { ...historyStyles.statLabel, color: '#94a3b8' },
   recordsTitle: { ...historyStyles.recordsTitle, color: '#f1f5f9' },
   recordsCount: { ...historyStyles.recordsCount, color: '#94a3b8' },
   sectionTitle: { ...historyStyles.sectionTitle, color: '#cbd5e1' },
   sectionCount: { ...historyStyles.sectionCount, color: '#64748b' },
-  recordItem: { ...historyStyles.recordItem, backgroundColor: '#1e293b' },
-  recordItemPair: { ...historyStyles.recordItemPair, backgroundColor: '#1e293b' },
+  recordItem: { ...historyStyles.recordItem, backgroundColor: '#1e293b', borderColor: 'transparent', shadowColor: '#000000' },
+  recordItemPair: { ...historyStyles.recordItemPair, backgroundColor: '#1e293b', borderColor: 'transparent', shadowColor: '#000000' },
   recordType: { ...historyStyles.recordType, color: '#f1f5f9' },
   recordEstado: { ...historyStyles.recordEstado },
   recordHora: { ...historyStyles.recordHora, color: '#e2e8f0' },

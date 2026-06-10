@@ -5,24 +5,34 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  StatusBar,
   ActivityIndicator,
   Platform,
   Alert,
   Linking,
   Modal,
-  ScrollView
-} from
-  'react-native';
+  ScrollView,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Image
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StepIndicator } from './StepIndicator';
 import { crearSolicitudMovil, reabrirSolicitudMovil, verificarCorreoEnEmpresa } from '../../services/solicitudMovilService';
 import { detectDeviceInfo } from '../../services/deviceUtils';
+import getApiEndpoint from '../../config/api';
+
+const obtenerUrlLogo = (logo) => {
+  if (!logo) return null;
+  if (logo.startsWith('data:image/') || logo.startsWith('http://') || logo.startsWith('https://')) return logo;
+  const cleanPath = logo.startsWith('/') ? logo.substring(1) : logo;
+  return `${getApiEndpoint()}/${cleanPath}`;
+};
 
 const DEVICE_CONFIG = {
   title: "Configuración del Dispositivo",
-  subtitle: "Paso 2 de 3",
   fields: [
     {
       id: "email",
@@ -34,16 +44,7 @@ const DEVICE_CONFIG = {
       readonly: false,
       helpText: "Usa tu correo institucional"
     },
-    {
-      id: "registrationDate",
-      label: "Fecha de Registro",
-      placeholder: "YYYY-MM-DD",
-      icon: "calendar-outline",
-      type: "text",
-      required: true,
-      readonly: true,
-      helpText: "Fecha automática del sistema"
-    },
+
     {
       id: "macAddress",
       label: "Dirección MAC",
@@ -52,7 +53,7 @@ const DEVICE_CONFIG = {
       type: "text",
       required: true,
       readonly: false,
-      helpText: "Ingresa la dirección MAC de tu dispositivo\n(Formato: XX:XX:XX:XX:XX:XX)"
+      helpText: "Formato: XX:XX:XX:XX:XX:XX"
     },
     {
       id: "ipAddress",
@@ -63,14 +64,14 @@ const DEVICE_CONFIG = {
       required: true,
       readonly: true,
       helpText: "IP de la red actual"
-    }],
-
+    }
+  ],
   deviceInfo: {
-    title: "Información del Dispositivo Detectada"
+    title: "Información del Dispositivo"
   }
 };
 
-export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPrevious, initialEmail, userData }) => {
+export const DeviceConfigScreen = ({ empresaId, empresaNombre, empresaLogo, onNext, onPrevious, initialEmail, userData }) => {
   const insets = useSafeAreaInsets();
   const deviceConfig = DEVICE_CONFIG;
 
@@ -88,7 +89,6 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPreviou
   const [solicitudExistente, setSolicitudExistente] = useState(null);
   const [showMacHelp, setShowMacHelp] = useState(false);
 
-
   const [isValidatingEmail, setIsValidatingEmail] = useState(false);
   const [emailValidation, setEmailValidation] = useState({
     isValid: null,
@@ -98,11 +98,9 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPreviou
     empleadoId: null
   });
 
-
   useEffect(() => {
     initializeScreen();
   }, []);
-
 
   useEffect(() => {
     if (formData.email && !emailValidation.checked && !isDetecting) {
@@ -158,7 +156,6 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPreviou
 
   const detectDevice = async () => {
     try {
-
       const deviceData = await detectDeviceInfo();
 
       if (!deviceData) {
@@ -172,7 +169,6 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPreviou
         deviceModel: deviceData.deviceInfo.model,
         os: deviceData.deviceInfo.os
       }));
-
 
     } catch (error) {
       Alert.alert('Error', 'No se pudo detectar la información del dispositivo');
@@ -201,7 +197,7 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPreviou
     if (!isValidEmailFormat(emailTrimmed)) {
       setEmailValidation({
         isValid: false,
-        message: '✗ Formato de correo electrónico inválido',
+        message: '✗ Formato de correo inválido',
         checked: true,
         usuario: null,
         empleadoId: null
@@ -212,11 +208,10 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPreviou
     setIsValidatingEmail(true);
 
     try {
-      // Si el correo coincide con el del usuario autenticado, aceptar directamente sin llamada API
       if (userData?.correo && emailTrimmed === userData.correo.trim().toLowerCase()) {
         setEmailValidation({
           isValid: true,
-          message: `Correo verificado: ${userData.nombre || emailTrimmed.split('@')[0]}`,
+          message: `Verificado: ${userData.nombre || emailTrimmed.split('@')[0]}`,
           checked: true,
           usuario: { id: userData.id, nombre: userData.nombre, correo: emailTrimmed },
           empleadoId: userData.empleado_id || null
@@ -225,7 +220,6 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPreviou
         return;
       }
 
-      // Usar token personal si está disponible para no usar el token-movil del storage
       const tokenParaVerificar = userData?.token || null;
       const result = await verificarCorreoEnEmpresa(emailTrimmed, empresaId, tokenParaVerificar);
 
@@ -233,8 +227,8 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPreviou
 
       if (esValido) {
         let mensaje = result.usuario ?
-          `Correo verificado: ${result.usuario.nombre}` :
-          `[Atención] ${result.mensaje || 'Correo pendiente de verificación'}`;
+          `Verificado: ${result.usuario.nombre}` :
+          `[Atención] ${result.mensaje || 'Pendiente de verificación'}`;
         setEmailValidation({
           isValid: true,
           message: mensaje,
@@ -245,7 +239,7 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPreviou
       } else if (result.existe && !result.activo) {
         setEmailValidation({
           isValid: false,
-          message: '✗ Este usuario está inactivo en la empresa',
+          message: '✗ Usuario inactivo',
           checked: true,
           usuario: null,
           empleadoId: null
@@ -253,7 +247,7 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPreviou
       } else {
         setEmailValidation({
           isValid: false,
-          message: result.mensaje || `✗ Este correo no está registrado en ${empresaNombre}`,
+          message: result.mensaje || `✗ Correo no registrado`,
           checked: true,
           usuario: null,
           empleadoId: null
@@ -262,7 +256,7 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPreviou
     } catch (error) {
       setEmailValidation({
         isValid: false,
-        message: 'No se pudo verificar el correo. Verifica tu conexión a internet.',
+        message: 'Error de red',
         checked: true,
         usuario: null,
         empleadoId: null
@@ -300,7 +294,7 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPreviou
       return;
     }
     if (!isValidMacFormat(macTrimmed)) {
-      Alert.alert('Formato Inválido', 'La dirección MAC debe tener el formato XX:XX:XX:XX:XX:XX (ejemplo: A1:B2:C3:D4:E5:F6)');
+      Alert.alert('Formato Inválido', 'La dirección MAC debe tener el formato XX:XX:XX:XX:XX:XX');
       return;
     }
 
@@ -338,7 +332,6 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPreviou
 
         response = await crearSolicitudMovil(solicitudData);
       }
-
 
       if (!response.token_solicitud) {
         throw new Error('No se recibió token de solicitud del servidor');
@@ -378,236 +371,233 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPreviou
         error.message || 'No se pudo enviar la solicitud. Por favor intenta nuevamente.',
         [
           { text: 'Reintentar', onPress: handleNext },
-          { text: 'Cancelar', style: 'cancel' }]
-
+          { text: 'Cancelar', style: 'cancel' }
+        ]
       );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const renderField = (field) => {
+  const renderField = (field, index) => {
     const isReadonly = field.readonly;
     const isEmailField = field.id === 'email';
     const isMacField = field.id === 'macAddress';
 
-
-
     const fieldIsReadonly = isReadonly || isEmailField;
 
     return (
-      <View key={field.id} style={styles.fieldContainer}>
-        <Text style={styles.label}>
-          {field.label} {field.required && <Text style={styles.required}>*</Text>}
-        </Text>
-        <View style={[
-          styles.inputWrapper,
-          fieldIsReadonly && styles.inputWrapperReadonly,
-          isEmailField && emailValidation.checked && emailValidation.isValid && styles.inputWrapperValid,
-          isEmailField && emailValidation.checked && !emailValidation.isValid && styles.inputWrapperInvalid]
-        }>
-          <Ionicons
-            name={field.icon}
-            size={15}
-            color={fieldIsReadonly ? '#9ca3af' : '#2563eb'}
-            style={styles.inputIcon} />
-
-          <TextInput
-            style={[styles.input, fieldIsReadonly && styles.inputReadonly]}
-            placeholder={field.placeholder}
-            placeholderTextColor="#9ca3af"
-            value={formData[field.id]}
-            onChangeText={(text) => {
-              if (isMacField) {
-
-                const clean = text.replace(/[^0-9A-Fa-f]/g, '').toUpperCase().slice(0, 12);
-                let formatted = '';
-                for (let i = 0; i < clean.length; i++) {
-                  if (i > 0 && i % 2 === 0) formatted += ':';
-                  formatted += clean[i];
-                }
-                setFormData((prev) => ({ ...prev, [field.id]: formatted }));
-              } else {
-                setFormData((prev) => ({ ...prev, [field.id]: text }));
-              }
-            }}
-            keyboardType={isMacField ? 'default' : field.type === 'email' ? 'email-address' : 'default'}
-            autoCapitalize={isMacField ? 'characters' : field.type === 'email' ? 'none' : 'sentences'}
-            editable={isMacField ? true : false} />
-
-          {fieldIsReadonly &&
+      <React.Fragment key={field.id}>
+        <View style={styles.settingItem}>
+          <View style={styles.settingLeft}>
             <Ionicons
-              name="checkmark-circle"
-              size={15}
-              color="#10b981" />
+              name={field.icon}
+              size={18}
+              color={fieldIsReadonly ? '#9ca3af' : '#4b5563'}
+              style={styles.settingIcon} 
+            />
+            <View style={{ flex: 1 }}>
+              <View style={{ marginBottom: 4 }}>
+                <Text style={styles.settingTitle}>
+                  {field.label} {field.required && <Text style={{color: '#ef4444'}}>*</Text>}
+                </Text>
+              </View>
+              
+              <View style={[
+                styles.inputWrapper,
+                fieldIsReadonly && styles.inputWrapperReadonly,
+                isEmailField && emailValidation.checked && emailValidation.isValid && styles.inputWrapperValid,
+                isEmailField && emailValidation.checked && !emailValidation.isValid && styles.inputWrapperInvalid]
+              }>
+                <TextInput
+                  style={[styles.input, fieldIsReadonly && styles.inputReadonly]}
+                  placeholder={field.placeholder}
+                  placeholderTextColor="#9ca3af"
+                  value={formData[field.id]}
+                  onChangeText={(text) => {
+                    if (isMacField) {
+                      const clean = text.replace(/[^0-9A-Fa-f]/g, '').toUpperCase().slice(0, 12);
+                      let formatted = '';
+                      for (let i = 0; i < clean.length; i++) {
+                        if (i > 0 && i % 2 === 0) formatted += ':';
+                        formatted += clean[i];
+                      }
+                      setFormData((prev) => ({ ...prev, [field.id]: formatted }));
+                    } else {
+                      setFormData((prev) => ({ ...prev, [field.id]: text }));
+                    }
+                  }}
+                  keyboardType={isMacField ? 'default' : field.type === 'email' ? 'email-address' : 'default'}
+                  autoCapitalize={isMacField ? 'characters' : field.type === 'email' ? 'none' : 'sentences'}
+                  editable={isMacField ? true : false} 
+                />
 
-          }
-          {isEmailField && isValidatingEmail &&
-            <ActivityIndicator size="small" color="#2563eb" style={{ marginLeft: 6 }} />
-          }
+                {fieldIsReadonly &&
+                  <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+                }
+                {isEmailField && isValidatingEmail &&
+                  <ActivityIndicator size="small" color="#2563eb" style={{ marginLeft: 6 }} />
+                }
+                {isMacField && (
+                  <TouchableOpacity onPress={() => setShowMacHelp(true)} style={{ paddingLeft: 8 }}>
+                    <Ionicons name="help-circle" size={20} color="#9ca3af" />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <View style={styles.validationRow}>
+                {isEmailField && isValidatingEmail &&
+                  <Text style={styles.validatingText}>Verificando...</Text>
+                }
+                {isEmailField && emailValidation.checked && emailValidation.message &&
+                  <Text style={[
+                    styles.validationMessage,
+                    emailValidation.isValid ? styles.validMessage : styles.invalidMessage]
+                  }>
+                    {emailValidation.message}
+                  </Text>
+                }
+
+                {isEmailField && !emailValidation.checked &&
+                  <Text style={styles.helpText}>✓ Detectado automáticamente</Text>
+                }
+
+              </View>
+            </View>
+          </View>
         </View>
-
-        {isEmailField && isValidatingEmail &&
-          <Text style={styles.validatingText}>Verificando correo...</Text>
-        }
-        {isEmailField && emailValidation.checked && emailValidation.message &&
-          <Text style={[
-            styles.validationMessage,
-            emailValidation.isValid ? styles.validMessage : styles.invalidMessage]
-          }>
-            {emailValidation.message}
-          </Text>
-        }
-
-        {isEmailField && !emailValidation.checked &&
-          <Text style={styles.helpText}>
-            ✓ Correo detectado automáticamente desde tu sesión
-          </Text>
-        }
-
-        {field.helpText && !isEmailField &&
-          <Text style={styles.helpText}>{field.helpText}</Text>
-        }
-
-        { }
-        {isMacField &&
-          <TouchableOpacity
-            style={styles.macHelpButton}
-            onPress={() => setShowMacHelp(true)}
-            activeOpacity={0.7}>
-
-            <Ionicons name="help-circle-outline" size={16} color="#4f46e5" />
-            <Text style={styles.macHelpButtonText}>¿Cómo encuentro mi dirección MAC Wi-Fi?</Text>
-          </TouchableOpacity>
-        }
-      </View>);
-
+        {index < deviceConfig.fields.length - 1 && <View style={styles.divider} />}
+      </React.Fragment>
+    );
   };
 
   if (isDetecting) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
-        <StatusBar barStyle="light-content" backgroundColor="#2563eb" />
         <ActivityIndicator size="large" color="#2563eb" />
         <Text style={styles.loadingText}>Detectando información del dispositivo...</Text>
-      </View>);
-
+      </View>
+    );
   }
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#2563eb" />
-
-      { }
       <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? insets.top + 16 : insets.top + 8 }]}>
-        <Text style={styles.headerTitle}>{deviceConfig.title}</Text>
-        <Text style={styles.headerSubtitle}>{deviceConfig.subtitle}</Text>
-
-        <View style={styles.stepperContainer}>
-          <View style={styles.stepComplete}>
-            <Ionicons name="checkmark" size={12} color="#fff" />
+        <StepIndicator currentStep={2} />
+        <View style={styles.profileCard}>
+          <View style={styles.avatarPlaceholder}>
+            <Ionicons name="hardware-chip" size={32} color="#64748b" />
           </View>
-          <View style={styles.stepLine} />
-          <View style={styles.stepActive}>
-            <Text style={styles.stepActiveText}>2</Text>
-          </View>
-          <View style={styles.stepLineInactive} />
-          <View style={styles.stepInactive}>
-            <Text style={styles.stepInactiveText}>3</Text>
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName} numberOfLines={2}>{deviceConfig.title}</Text>
           </View>
         </View>
       </View>
 
-      { }
-      <View style={styles.contentArea}>
-        {solicitudExistente &&
-          <View style={styles.retryBadge}>
-            <Ionicons name="refresh-circle" size={18} color="#f59e0b" />
-            <Text style={styles.retryText}>Reintentando solicitud anterior</Text>
-          </View>
-        }
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={styles.contentArea}>
+            
+            <Text style={styles.sectionLabel}>Empresa Vinculada</Text>
+            <View style={styles.sectionContainer}>
+              <View style={styles.settingItem}>
+                <View style={[styles.settingLeft, { alignItems: 'center' }]}>
+                  {empresaLogo ? (
+                    <Image source={{ uri: obtenerUrlLogo(empresaLogo) }} style={[styles.iconCircle, { backgroundColor: '#ffffff', resizeMode: 'contain' }]} />
+                  ) : (
+                    <View style={[styles.iconCircle, { backgroundColor: '#f1f5f9' }]}>
+                      <Ionicons name="business" size={20} color="#4b5563" />
+                    </View>
+                  )}
+                  <View style={{ flex: 1, paddingRight: 10, paddingLeft: 14, justifyContent: 'center' }}>
+                    <Text style={[styles.settingTitle, { marginBottom: 0 }]} numberOfLines={1}>{empresaNombre || 'Empresa'}</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
 
-        <View style={styles.empresaCard}>
-          <Ionicons name="business" size={18} color="#2563eb" />
-          <View style={styles.empresaInfo}>
-            <Text style={styles.empresaLabel}>Empresa:</Text>
-            <Text style={styles.empresaNombre}>{empresaNombre || empresaId}</Text>
-          </View>
-        </View>
+            <Text style={styles.sectionLabel}>Dispositivo Detectado</Text>
+            <View style={styles.sectionContainer}>
+              <View style={styles.settingItem}>
+                <View style={styles.settingLeft}>
+                  <View style={[styles.iconCircle, { backgroundColor: '#f1f5f9' }]}>
+                    <Ionicons name={Platform.OS === 'ios' ? "logo-apple" : "logo-android"} size={20} color="#4b5563" />
+                  </View>
+                  <View style={{ flex: 1, paddingRight: 10, paddingLeft: 14 }}>
+                    <Text style={styles.settingTitle} numberOfLines={1}>{formData.deviceModel}</Text>
+                    <Text style={styles.settingValue} numberOfLines={1}>Sistema: {formData.os}</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
 
-        <View style={styles.formCard}>
-          {deviceConfig.fields.map(renderField)}
-        </View>
+            <Text style={styles.sectionLabel}>Configuración</Text>
+            <View style={styles.sectionContainer}>
+              {deviceConfig.fields.map((field, index) => renderField(field, index))}
+            </View>
 
-        <View style={styles.deviceInfoRow}>
-          <View style={styles.deviceInfoChip}>
-            <Ionicons name="phone-portrait-outline" size={12} color="#2563eb" />
-            <Text style={styles.deviceInfoChipText}>{formData.deviceModel}</Text>
-          </View>
-          <View style={styles.deviceInfoChip}>
-            <Ionicons name="logo-android" size={12} color="#2563eb" />
-            <Text style={styles.deviceInfoChipText}>{formData.os}</Text>
-          </View>
-          <View style={styles.deviceInfoChip}>
-            <Ionicons name="layers-outline" size={12} color="#2563eb" />
-            <Text style={styles.deviceInfoChipText}>{Platform.OS === 'ios' ? 'iOS' : 'Android'}</Text>
-          </View>
-        </View>
-      </View>
+            {solicitudExistente &&
+              <View style={styles.retryBadge}>
+                <Ionicons name="refresh-circle" size={16} color="#f59e0b" />
+                <Text style={styles.retryText}>Reintentando solicitud anterior</Text>
+              </View>
+            }
 
-      { }
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+
       <View style={[styles.footer, { paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 16) : insets.bottom + 8 }]}>
         <View style={styles.buttonRow}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={onPrevious}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
             disabled={isLoading}>
-
-            <Ionicons name="arrow-back" size={18} color="#6b7280" />
+            <Ionicons name="arrow-back" size={20} color="#4b5563" />
             <Text style={styles.backButtonText}>Anterior</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[
               styles.nextButton,
-              (!emailValidation.isValid || isLoading || isValidatingEmail || !formData.macAddress.trim()) && styles.nextButtonDisabled]
-            }
+              (!emailValidation.isValid || isLoading || isValidatingEmail || !formData.macAddress.trim()) && styles.nextButtonDisabled
+            ]}
             onPress={handleNext}
             disabled={!emailValidation.isValid || isLoading || isValidatingEmail || !formData.macAddress.trim()}
-            activeOpacity={0.8}>
+            activeOpacity={0.7}>
 
-            {isLoading ?
+            {isLoading ? (
               <>
                 <ActivityIndicator color="#fff" size="small" />
                 <Text style={[styles.nextButtonText, { marginLeft: 8 }]}>
                   {solicitudExistente ? 'Reabriendo...' : 'Enviando...'}
                 </Text>
-              </> :
-
+              </>
+            ) : (
               <>
                 <Text style={styles.nextButtonText}>
-                  {solicitudExistente ? 'Reabrir Solicitud' : 'Enviar Solicitud'}
+                  {solicitudExistente ? 'Reabrir' : 'Enviar'}
                 </Text>
-                <Ionicons name="send" size={14} color="#fff" />
+                <Ionicons name="send" size={16} color="#fff" />
               </>
-            }
+            )}
           </TouchableOpacity>
         </View>
       </View>
 
-      { }
       <Modal
         visible={showMacHelp}
         animationType="slide"
         transparent={true}
         onRequestClose={() => setShowMacHelp(false)}>
-
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderIcon}>
-                <Ionicons name="hardware-chip" size={24} color="#2563eb" />
+                <Ionicons name="hardware-chip" size={24} color="#64748b" />
               </View>
               <Text style={styles.modalTitle}>Buscar MAC Wi-Fi</Text>
               <TouchableOpacity onPress={() => setShowMacHelp(false)} style={styles.closeModalButton}>
@@ -619,35 +609,34 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPreviou
               {Platform.OS === 'android' ?
                 <>
                   <View style={styles.stepItem}>
+                    <Ionicons name="wifi-outline" size={22} color="#4b5563" />
+                    <Text style={styles.stepText}>Abre <Text style={{fontWeight: 'bold'}}>Ajustes {'>'} Wi-Fi</Text> (o Internet y redes)</Text>
+                  </View>
+                  <View style={styles.stepItem}>
                     <Ionicons name="settings-outline" size={22} color="#4b5563" />
-                    <Text style={styles.stepText}>Abre la aplicación de Configuración o Ajustes</Text>
+                    <Text style={styles.stepText}>Toca el engranaje junto a tu red conectada (o ve a opciones Avanzadas)</Text>
                   </View>
                   <View style={styles.stepItem}>
-                    <Ionicons name="information-circle-outline" size={22} color="#4b5563" />
-                    <Text style={styles.stepText}>Desplázate hacia abajo y toca en "Acerca del teléfono"</Text>
-                  </View>
-                  <View style={styles.stepItem}>
-                    <Ionicons name="list-outline" size={22} color="#4b5563" />
-                    <Text style={styles.stepText}>Busca "Estado", "Información de hardware" o "Dirección MAC de Wi-Fi"</Text>
+                    <Ionicons name="search-outline" size={22} color="#4b5563" />
+                    <Text style={styles.stepText}>Busca <Text style={{fontWeight: 'bold'}}>"Dirección MAC"</Text></Text>
                   </View>
                 </> :
-
                 <>
                   <View style={styles.stepItem}>
                     <Ionicons name="settings-outline" size={22} color="#4b5563" />
-                    <Text style={styles.stepText}>Abre la aplicación de Configuración</Text>
+                    <Text style={styles.stepText}>Abre la aplicación de <Text style={{fontWeight: 'bold'}}>Configuración</Text></Text>
                   </View>
                   <View style={styles.stepItem}>
                     <Ionicons name="cog-outline" size={22} color="#4b5563" />
-                    <Text style={styles.stepText}>Toca en "General"</Text>
+                    <Text style={styles.stepText}>Toca en <Text style={{fontWeight: 'bold'}}>"General"</Text></Text>
                   </View>
                   <View style={styles.stepItem}>
                     <Ionicons name="information-circle-outline" size={22} color="#4b5563" />
-                    <Text style={styles.stepText}>Toca en "Información"</Text>
+                    <Text style={styles.stepText}>Toca en <Text style={{fontWeight: 'bold'}}>"Información"</Text></Text>
                   </View>
                   <View style={styles.stepItem}>
                     <Ionicons name="wifi-outline" size={22} color="#4b5563" />
-                    <Text style={styles.stepText}>Busca la fila "Dirección Wi-Fi" (esa es tu MAC)</Text>
+                    <Text style={styles.stepText}>Busca la fila <Text style={{fontWeight: 'bold'}}>"Dirección Wi-Fi"</Text> (esa es tu MAC)</Text>
                   </View>
                 </>
               }
@@ -663,38 +652,34 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, onNext, onPreviou
                 <TouchableOpacity
                   style={styles.modalPrimaryButton}
                   onPress={() => {
-                    Linking.sendIntent('android.settings.DEVICE_INFO_SETTINGS').catch(() => {
-
+                    Linking.sendIntent('android.settings.WIFI_SETTINGS').catch(() => {
                       Linking.sendIntent('android.settings.SETTINGS').catch(() => {
-                        Alert.alert("Aviso", "No se pudo abrir la configuración automáticamente, por favor hazlo manualmente.");
+                        Alert.alert("Aviso", "No se pudo abrir la configuración de Wi-Fi automáticamente, por favor hazlo manualmente.");
                       });
                     });
                   }}>
-
                   <Ionicons name="open-outline" size={16} color="#fff" />
-                  <Text style={styles.modalPrimaryButtonText}>Abrir Ajustes</Text>
+                  <Text style={styles.modalPrimaryButtonText}>Abrir Ajustes de Wi-Fi</Text>
                 </TouchableOpacity>
               }
 
               <TouchableOpacity
                 style={[styles.modalSecondaryButton, Platform.OS !== 'android' && { width: '100%' }]}
                 onPress={() => setShowMacHelp(false)}>
-
                 <Text style={styles.modalSecondaryButtonText}>Cerrar Ayuda</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-
-    </View>);
-
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb'
+    backgroundColor: '#ffffff'
   },
   loadingContainer: {
     justifyContent: 'center',
@@ -706,155 +691,85 @@ const styles = StyleSheet.create({
     color: '#6b7280'
   },
   header: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#ffffff',
     paddingHorizontal: 20,
-    paddingBottom: 16
+    paddingBottom: 10
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 2
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: '#dbeafe',
-    marginBottom: 14
-  },
-  stepperContainer: {
+  profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    borderRadius: 22,
+    padding: 14,
+  },
+  avatarPlaceholder: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#e2e8f0',
     justifyContent: 'center',
-    paddingVertical: 4
+    alignItems: 'center',
+    marginRight: 14
   },
-  stepComplete: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#10b981',
-    justifyContent: 'center',
-    alignItems: 'center'
+  profileInfo: {
+    flex: 1
   },
-  stepActive: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center'
+  profileName: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#1f2937',
+    marginBottom: 3,
+    letterSpacing: -0.5
   },
-  stepActiveText: {
-    color: '#2563eb',
-    fontSize: 12,
-    fontWeight: 'bold'
-  },
-  stepLine: {
-    flex: 1,
-    height: 3,
-    backgroundColor: '#10b981',
-    marginHorizontal: 8,
-    maxWidth: 80,
-    borderRadius: 2
-  },
-  stepInactive: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  stepInactiveText: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 12,
-    fontWeight: 'bold'
-  },
-  stepLineInactive: {
-    flex: 1,
-    height: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    marginHorizontal: 8,
-    maxWidth: 80,
-    borderRadius: 2
+  profileEmail: {
+    fontSize: 13,
+    color: '#64748b',
+    fontWeight: '500'
   },
   contentArea: {
     flex: 1,
-    padding: 14
+    paddingHorizontal: 20,
+    paddingTop: 6,
+    paddingBottom: 10
   },
-  retryBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fef3c7',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#fde68a'
-  },
-  retryText: {
-    flex: 1,
-    fontSize: 12,
-    color: '#92400e',
-    marginLeft: 8,
-    fontWeight: '600'
-  },
-  empresaCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#eff6ff',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#dbeafe'
-  },
-  empresaInfo: {
-    flex: 1,
-    marginLeft: 10
-  },
-  empresaLabel: {
-    fontSize: 10,
-    color: '#6b7280',
-    marginBottom: 1
-  },
-  empresaNombre: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1e40af'
-  },
-  formCard: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#f0f0f4'
-  },
-  fieldContainer: {
+  sectionContainer: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 22,
+    paddingVertical: 4,
     marginBottom: 10
   },
-  label: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 4
+  settingItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 16
   },
-  required: {
-    color: '#ef4444'
+  settingLeft: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flex: 1
+  },
+  settingIcon: {
+    marginRight: 14,
+    marginTop: 2
+  },
+  settingTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1f2937',
+    letterSpacing: -0.2,
+    marginBottom: 3
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9fafb',
-    borderRadius: 10,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    paddingHorizontal: 10
+    paddingHorizontal: 10,
+    height: 34
   },
   inputWrapperReadonly: {
     backgroundColor: '#f3f4f6',
@@ -862,41 +777,42 @@ const styles = StyleSheet.create({
   },
   inputWrapperValid: {
     borderColor: '#10b981',
-    borderWidth: 2,
+    borderWidth: 1,
     backgroundColor: '#f0fdf4'
   },
   inputWrapperInvalid: {
     borderColor: '#ef4444',
-    borderWidth: 2,
+    borderWidth: 1,
     backgroundColor: '#fef2f2'
-  },
-  inputIcon: {
-    marginRight: 6
   },
   input: {
     flex: 1,
-    height: 38,
+    height: 34,
     fontSize: 13,
-    color: '#374151'
+    color: '#374151',
+    paddingVertical: 0
   },
   inputReadonly: {
     color: '#6b7280'
   },
+  validationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginTop: 4
+  },
   helpText: {
     fontSize: 10,
     color: '#6b7280',
-    marginTop: 3,
     marginLeft: 2
   },
   validatingText: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#2563eb',
-    marginTop: 4,
     marginLeft: 2
   },
   validationMessage: {
-    fontSize: 11,
-    marginTop: 4,
+    fontSize: 10,
     marginLeft: 2
   },
   validMessage: {
@@ -905,50 +821,55 @@ const styles = StyleSheet.create({
   invalidMessage: {
     color: '#ef4444'
   },
+  divider: {
+    height: 1,
+    backgroundColor: '#f1f5f9',
+    marginHorizontal: 16
+  },
   deviceInfoRow: {
     flexDirection: 'row',
     gap: 8,
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
+    marginBottom: 16
   },
   deviceInfoChip: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#eff6ff',
     borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    gap: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    gap: 4,
     borderWidth: 1,
     borderColor: '#dbeafe'
   },
   deviceInfoChipText: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#1e40af',
     fontWeight: '500'
   },
-  footer: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb'
-  },
-  warningRow: {
+  retryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fef3c7',
     borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
-    gap: 8,
+    padding: 8,
     borderWidth: 1,
-    borderColor: '#fde68a'
+    borderColor: '#fde68a',
+    alignSelf: 'flex-start'
   },
-  warningText: {
-    flex: 1,
+  retryText: {
     fontSize: 11,
     color: '#92400e',
-    lineHeight: 15
+    marginLeft: 6,
+    fontWeight: '600'
+  },
+  footer: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9'
   },
   buttonRow: {
     flexDirection: 'row',
@@ -956,10 +877,8 @@ const styles = StyleSheet.create({
   },
   backButton: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: '#e5e7eb',
-    borderRadius: 14,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 24,
     padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
@@ -967,50 +886,40 @@ const styles = StyleSheet.create({
     gap: 6
   },
   backButtonText: {
-    color: '#6b7280',
-    fontSize: 14,
-    fontWeight: '600'
+    color: '#4b5563',
+    fontSize: 15,
+    fontWeight: '700'
   },
   nextButton: {
     flex: 2,
     backgroundColor: '#2563eb',
-    borderRadius: 14,
+    borderRadius: 24,
     padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    shadowColor: '#2563eb',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 4
+    gap: 8
   },
   nextButtonDisabled: {
-    backgroundColor: '#9ca3af',
-    shadowOpacity: 0,
-    elevation: 0
+    backgroundColor: '#94a3b8'
   },
   nextButtonText: {
     color: '#ffffff',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginRight: 6
+    fontSize: 15,
+    fontWeight: 'bold'
   },
-  macHelpButton: {
+  macHelpInlineBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    backgroundColor: '#eff6ff',
-    alignSelf: 'flex-start',
-    borderRadius: 8
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    gap: 2
   },
-  macHelpButtonText: {
-    fontSize: 12,
-    color: '#4f46e5',
+  macHelpInlineTxt: {
+    fontSize: 9,
+    color: '#64748b',
     fontWeight: '600'
   },
   modalOverlay: {
@@ -1022,7 +931,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderRadius: 16,
+    borderRadius: 24,
     width: '100%',
     maxWidth: 400,
     padding: 20,
@@ -1041,7 +950,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#f1f5f9',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12
@@ -1095,7 +1004,7 @@ const styles = StyleSheet.create({
   modalPrimaryButton: {
     backgroundColor: '#2563eb',
     paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: 16,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
@@ -1109,12 +1018,19 @@ const styles = StyleSheet.create({
   modalSecondaryButton: {
     backgroundColor: '#f3f4f6',
     paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: 16,
     alignItems: 'center'
   },
   modalSecondaryButtonText: {
     color: '#4b5563',
     fontSize: 15,
     fontWeight: '700'
+  },
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center'
   }
 });

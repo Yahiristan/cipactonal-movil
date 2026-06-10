@@ -9,7 +9,6 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
-  StatusBar,
   TextInput,
   Modal
 } from
@@ -191,7 +190,7 @@ export const AdminCredencialesScreen = ({ empleado, userData, darkMode, onBack }
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={darkMode ? '#1e40af' : '#2563eb'} />
+      
 
       { }
       <View style={styles.header}>
@@ -259,13 +258,6 @@ export const AdminCredencialesScreen = ({ empleado, userData, darkMode, onBack }
 
 
       { }
-      {showFacialCapture &&
-        <FacialCaptureScreen
-          onCapture={handleFacialCapture}
-          onCancel={() => setShowFacialCapture(false)}
-          darkMode={darkMode} />
-
-      }
     </View>);
 
 };

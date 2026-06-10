@@ -18,6 +18,7 @@ import { createIncidencia } from '../../services/incidenciasService';
 import sqliteManager from '../../services/offline/sqliteManager.mjs';
 import syncManager from '../../services/offline/syncManager.mjs';
 import { creationIncidentStyles, creationIncidentStylesDark } from './creationIncidentStyles';
+import { Header } from '../ui/Header';
 
 export const CreationIncidentScreen = ({ visible, onClose, onSuccess, userData, darkMode }) => {
     const insets = useSafeAreaInsets();
@@ -145,8 +146,9 @@ export const CreationIncidentScreen = ({ visible, onClose, onSuccess, userData, 
     return (
         <>
             {/* Modal Selector de Tipo */}
-            <Modal
-                visible={modalTipoVisible}
+            {modalTipoVisible && (
+                <Modal
+                    visible={modalTipoVisible}
                 transparent={true}
                 animationType="slide"
                 onRequestClose={() => setModalTipoVisible(false)}
@@ -223,6 +225,7 @@ export const CreationIncidentScreen = ({ visible, onClose, onSuccess, userData, 
                     </View>
                 </View>
             </Modal>
+            )}
 
             {/* Modal Principal de Creación */}
             <Modal
@@ -237,16 +240,16 @@ export const CreationIncidentScreen = ({ visible, onClose, onSuccess, userData, 
                         style={{ flex: 1 }}>
 
                         <View style={{ flex: 1 }}>
-                            <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-                                <View style={styles.headerContent}>
-                                    <TouchableOpacity
-                                        onPress={onClose}
-                                        style={styles.backButton}>
-                                        <Ionicons name="arrow-back" size={24} color="#fff" />
-                                    </TouchableOpacity>
-                                    <Text style={styles.headerTitle}>Nueva Incidencia</Text>
-                                    <View style={styles.headerPlaceholder} />
-                                </View>
+                            <View style={{ paddingTop: insets.top }}>
+                                <Header
+                                    darkMode={darkMode}
+                                    title="Nueva Incidencia"
+                                    leftComponent={
+                                        <TouchableOpacity onPress={onClose} style={{ padding: 8, marginLeft: -8 }} activeOpacity={0.6}>
+                                            <Ionicons name="close" size={28} color={darkMode ? '#f8fafc' : '#0f172a'} />
+                                        </TouchableOpacity>
+                                    }
+                                />
                             </View>
 
                             <ScrollView
@@ -256,88 +259,82 @@ export const CreationIncidentScreen = ({ visible, onClose, onSuccess, userData, 
                                 contentContainerStyle={{ paddingBottom: 100 }}>
 
                                 {/* Selector de Tipo */}
+                                <Text style={styles.sectionLabel}>Tipo de Incidencia</Text>
                                 <View style={styles.sectionContainer}>
-                                    <Text style={styles.sectionLabel}>Tipo de Incidencia</Text>
                                     <TouchableOpacity
-                                        style={styles.selectInput}
+                                        style={styles.settingItem}
                                         onPress={() => setModalTipoVisible(true)}
                                         activeOpacity={0.7}>
 
-                                        <View style={styles.selectInputContent}>
-                                            {tipoSeleccionado ? (
-                                                <>
-                                                    <View style={[
-                                                        styles.tipoIconSmall,
-                                                        { backgroundColor: `${getTipoColor(tipoSeleccionado)}20` }
-                                                    ]}>
-                                                        <Ionicons
-                                                            name={getTipoIcon(tipoSeleccionado)}
-                                                            size={18}
-                                                            color={getTipoColor(tipoSeleccionado)} />
-                                                    </View>
-                                                    <Text style={styles.selectInputText}>
-                                                        {tiposIncidencia.find((t) => t.value === tipoSeleccionado)?.label}
-                                                    </Text>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Ionicons name="list" size={20} color="#9ca3af" />
-                                                    <Text style={styles.selectInputPlaceholder}>Selecciona el tipo</Text>
-                                                </>
-                                            )}
+                                        <View style={styles.settingItemLeft}>
+                                            <Ionicons
+                                                name={tipoSeleccionado ? getTipoIcon(tipoSeleccionado) : 'list'}
+                                                size={20}
+                                                color={darkMode ? '#9ca3af' : '#4b5563'} />
+                                            <Text style={styles.settingItemTitle}>
+                                                {tipoSeleccionado ? tiposIncidencia.find((t) => t.value === tipoSeleccionado)?.label : 'Selecciona el tipo'}
+                                            </Text>
                                         </View>
-                                        <Ionicons name="chevron-down" size={20} color="#6b7280" />
+                                        <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
                                     </TouchableOpacity>
                                 </View>
 
                                 {/* Fechas */}
+                                <Text style={styles.sectionLabel}>Período</Text>
                                 <View style={styles.sectionContainer}>
-                                    <Text style={styles.sectionLabel}>Período</Text>
 
-                                    <View style={styles.dateRow}>
-                                        <TouchableOpacity
-                                            style={[styles.dateCompact, showDatePickerInicio && Platform.OS === 'ios' && styles.dateCompactActive]}
-                                            onPress={() => {
-                                                if (Platform.OS === 'ios') {
-                                                    setShowDatePickerFin(false);
-                                                    setShowDatePickerInicio(!showDatePickerInicio);
-                                                } else {
-                                                    setShowDatePickerInicio(true);
-                                                }
-                                            }}>
-
-                                            <Ionicons name="calendar" size={18} color="#3b82f6" />
-                                            <View style={styles.dateCompactInfo}>
-                                                <Text style={styles.dateCompactLabel}>Inicio</Text>
-                                                <Text style={styles.dateCompactValue}>
-                                                    {fechaInicio.getDate()} {monthNames[fechaInicio.getMonth()].substring(0, 3)} {fechaInicio.getFullYear()}
-                                                </Text>
-                                            </View>
-                                        </TouchableOpacity>
-
-                                        <View style={styles.dateArrow}>
-                                            <Ionicons name="arrow-forward" size={16} color="#9ca3af" />
+                                    <TouchableOpacity style={styles.settingItem} onPress={() => {
+                                        if (Platform.OS === 'ios') {
+                                            setShowDatePickerFin(false);
+                                            setShowDatePickerInicio(!showDatePickerInicio);
+                                        } else {
+                                            setShowDatePickerInicio(true);
+                                        }
+                                    }} activeOpacity={0.7}>
+                                        <View style={styles.settingItemLeft}>
+                                            <Ionicons name="calendar-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} />
+                                            <Text style={styles.settingItemTitle}>Fecha de inicio</Text>
                                         </View>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                            <Text style={styles.settingItemValue}>
+                                                {fechaInicio.getDate()} {monthNames[fechaInicio.getMonth()].substring(0, 3)} {fechaInicio.getFullYear()}
+                                            </Text>
+                                            <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
+                                        </View>
+                                    </TouchableOpacity>
 
-                                        <TouchableOpacity
-                                            style={[styles.dateCompact, showDatePickerFin && Platform.OS === 'ios' && styles.dateCompactActive]}
-                                            onPress={() => {
-                                                if (Platform.OS === 'ios') {
-                                                    setShowDatePickerInicio(false);
-                                                    setShowDatePickerFin(!showDatePickerFin);
-                                                } else {
-                                                    setShowDatePickerFin(true);
-                                                }
-                                            }}>
+                                    <View style={styles.divider} />
 
-                                            <Ionicons name="calendar" size={18} color="#10b981" />
-                                            <View style={styles.dateCompactInfo}>
-                                                <Text style={styles.dateCompactLabel}>Fin</Text>
-                                                <Text style={styles.dateCompactValue}>
-                                                    {fechaFin.getDate()} {monthNames[fechaFin.getMonth()].substring(0, 3)} {fechaFin.getFullYear()}
-                                                </Text>
-                                            </View>
-                                        </TouchableOpacity>
+                                    <TouchableOpacity style={styles.settingItem} onPress={() => {
+                                        if (Platform.OS === 'ios') {
+                                            setShowDatePickerInicio(false);
+                                            setShowDatePickerFin(!showDatePickerFin);
+                                        } else {
+                                            setShowDatePickerFin(true);
+                                        }
+                                    }} activeOpacity={0.7}>
+                                        <View style={styles.settingItemLeft}>
+                                            <Ionicons name="calendar-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} />
+                                            <Text style={styles.settingItemTitle}>Fecha de fin</Text>
+                                        </View>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                            <Text style={styles.settingItemValue}>
+                                                {fechaFin.getDate()} {monthNames[fechaFin.getMonth()].substring(0, 3)} {fechaFin.getFullYear()}
+                                            </Text>
+                                            <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
+                                        </View>
+                                    </TouchableOpacity>
+
+                                    <View style={styles.divider} />
+
+                                    <View style={styles.settingItem}>
+                                        <View style={styles.settingItemLeft}>
+                                            <Ionicons name="time-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} />
+                                            <Text style={styles.settingItemTitle}>Duración total</Text>
+                                        </View>
+                                        <Text style={styles.settingItemValue}>
+                                            {calcularDiasDiferencia(fechaInicio, fechaFin)} {calcularDiasDiferencia(fechaInicio, fechaFin) === 1 ? 'día' : 'días'}
+                                        </Text>
                                     </View>
 
                                     {showDatePickerInicio && Platform.OS === 'ios' && (
@@ -405,23 +402,13 @@ export const CreationIncidentScreen = ({ visible, onClose, onSuccess, userData, 
                                                 }
                                             }} />
                                     )}
-
-                                    <View style={styles.durationSummary}>
-                                        <Ionicons name="time" size={16} color="#8b5cf6" />
-                                        <Text style={styles.durationText}>
-                                            Duración: <Text style={styles.durationValue}>
-                                                {calcularDiasDiferencia(fechaInicio, fechaFin)} {calcularDiasDiferencia(fechaInicio, fechaFin) === 1 ? 'día' : 'días'}
-                                            </Text>
-                                        </Text>
-                                    </View>
                                 </View>
 
                                 {/* Motivo */}
+                                <Text style={styles.sectionLabel}>Motivo de la Incidencia</Text>
                                 <View style={styles.sectionContainer}>
-                                    <Text style={styles.sectionLabel}>Motivo de la Incidencia</Text>
-                                    <View style={styles.motivoCard}>
-                                        <View style={styles.motivoHeader}>
-                                            <Ionicons name="document-text" size={20} color="#6b7280" />
+                                    <View style={styles.motivoHeader}>
+                                            <Ionicons name="document-text-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} />
                                             <Text style={styles.motivoPlaceholder}>
                                                 {motivo.length > 0 ? `${motivo.length} caracteres` : 'Describe el motivo'}
                                             </Text>
@@ -439,7 +426,6 @@ export const CreationIncidentScreen = ({ visible, onClose, onSuccess, userData, 
                                             blurOnSubmit={false}
                                             autoCorrect={true}
                                             spellCheck={true} />
-                                    </View>
                                 </View>
                             </ScrollView>
 

@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Linking,
   Alert,
-  StatusBar,
   Platform,
   ActivityIndicator,
   Image
@@ -19,6 +18,7 @@ import { getMiEmpresa } from '../../services/empresaService';
 import sqliteManager from '../../services/offline/sqliteManager.mjs';
 import syncManager from '../../services/offline/syncManager.mjs';
 import getApiEndpoint from '../../config/api.js';
+import { Header } from '../ui/Header';
 
 const obtenerUrlLogo = (logo) => {
   if (!logo) {
@@ -227,23 +227,18 @@ export const SupportScreen = ({ darkMode, onBack, userData }) => {
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={darkMode ? "#1e40af" : "#2563eb"} />
+        
 
 
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <TouchableOpacity onPress={onBack} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+        <Header
+          darkMode={darkMode}
+          title="Ayuda y Soporte"
+          leftComponent={
+            <TouchableOpacity onPress={onBack} style={{ padding: 8, marginLeft: -8 }}>
+              <Ionicons name="arrow-back" size={24} color={darkMode ? '#f8fafc' : '#0f172a'} />
             </TouchableOpacity>
-            <View style={styles.headerTextContainer}>
-              <Text style={styles.headerTitle}>Ayuda y Soporte</Text>
-              <Text style={styles.headerSubtitle}>Cargando...</Text>
-            </View>
-            <View style={styles.headerPlaceholder} />
-          </View>
-        </View>
+          }
+        />
 
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#2563eb" />
@@ -255,118 +250,77 @@ export const SupportScreen = ({ darkMode, onBack, userData }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={darkMode ? "#1e40af" : "#2563eb"} />
+      
 
 
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+      <Header
+        darkMode={darkMode}
+        title="Ayuda y Soporte"
+        leftComponent={
+          <TouchableOpacity onPress={onBack} style={{ padding: 8, marginLeft: -8 }}>
+            <Ionicons name="arrow-back" size={24} color={darkMode ? '#f8fafc' : '#0f172a'} />
           </TouchableOpacity>
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.headerTitle}>Ayuda y Soporte</Text>
-            <Text style={styles.headerSubtitle}>
-              {empresaData?.nombre || 'Estamos aquí'}
-            </Text>
-          </View>
-          <View style={styles.headerPlaceholder} />
-        </View>
-      </View>
+        }
+      />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
 
-        <View style={styles.quickHelpSection}>
-          <View style={styles.quickHelpIconContainer}>
-            {empresaData?.logo ?
-              <Image
-                source={{ uri: obtenerUrlLogo(empresaData.logo) }}
-                style={styles.empresaLogo}
-                resizeMode="contain" /> :
-              <Ionicons
-                name="help-circle"
-                size={48}
-                color={darkMode ? '#93c5fd' : '#2563eb'} />
-            }
-          </View>
-          <Text style={[styles.quickHelpTitle, { color: darkMode ? '#f9fafb' : '#1f2937' }]}>
-            ¿Necesitas ayuda inmediata?
-          </Text>
-          <Text style={styles.quickHelpText}>
-            Encuentra respuestas rápidas en nuestras preguntas frecuentes o contáctanos directamente.
-          </Text>
+        <Text style={styles.sectionLabel}>Contácta a la empresa</Text>
+        <View style={styles.sectionContainer}>
+          {contactOptions.length > 0 ? (
+            contactOptions.map((option, index) => (
+              <View key={option.id}>
+                <TouchableOpacity style={styles.settingItem} onPress={option.action} activeOpacity={0.7}>
+                  <View style={styles.settingLeft}>
+                    <Ionicons name={option.icon} size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+                    <View style={styles.settingTextContainer}>
+                      <Text style={styles.settingTitle}>{option.title}</Text>
+                      <Text style={styles.settingSubtitle}>{option.subtitle}</Text>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
+                </TouchableOpacity>
+                {index < contactOptions.length - 1 && <View style={styles.divider} />}
+              </View>
+            ))
+          ) : (
+            <View style={styles.settingItem}>
+              <View style={styles.settingLeft}>
+                <Ionicons name="information-circle-outline" size={20} color="#f59e0b" style={styles.settingIcon} />
+                <View style={styles.settingTextContainer}>
+                  <Text style={[styles.settingTitle, { color: '#f59e0b' }]}>Sin información de contacto</Text>
+                  <Text style={styles.settingSubtitle}>Consulta a tu administrador.</Text>
+                </View>
+              </View>
+            </View>
+          )}
         </View>
 
-        {contactOptions.length > 0 ?
-          <View style={styles.listSection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Contácta a la empresa</Text>
-            </View>
-
-            {contactOptions.map((option, index) =>
-              <TouchableOpacity
-                key={option.id}
-                style={[
-                  styles.listItem,
-                  index === contactOptions.length - 1 && styles.listItemLast]
-                }
-                onPress={option.action}
-                activeOpacity={0.7}>
-                <Ionicons name={option.icon} size={24} color={darkMode ? '#60a5fa' : '#2563eb'} style={{ marginRight: 16 }} />
-                <View style={styles.contactTextContainer}>
-                  <Text style={styles.contactTitle}>{option.title}</Text>
-                  <Text style={styles.contactSubtitle}>{option.subtitle}</Text>
+        <Text style={[styles.sectionLabel, { marginTop: 10 }]}>Preguntas Frecuentes</Text>
+        <View style={styles.sectionContainer}>
+          {faqs.map((faq, index) => (
+            <View key={faq.id}>
+              <TouchableOpacity style={styles.settingItem} onPress={() => toggleFaq(faq.id)} activeOpacity={0.7}>
+                <View style={styles.settingLeft}>
+                  <Ionicons name={faq.icon || "help-circle-outline"} size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+                  <View style={styles.settingTextContainer}>
+                    <Text style={styles.settingTitle}>{faq.pregunta}</Text>
+                    {expandedFaq === faq.id && (
+                      <Text style={[styles.settingSubtitle, { marginTop: 6 }]}>{faq.respuesta}</Text>
+                    )}
+                  </View>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={darkMode ? '#4b5563' : '#9ca3af'} />
-              </TouchableOpacity>
-            )}
-          </View> :
-
-          <View style={styles.listSection}>
-            <View style={styles.noContactCard}>
-              <Ionicons name="information-circle" size={48} color="#f59e0b" />
-              <Text style={styles.noContactTitle}>
-                Información de contacto no disponible
-              </Text>
-              <Text style={styles.noContactText}>
-                Consulta las preguntas frecuentes o contacta a tu administrador.
-              </Text>
-            </View>
-          </View>
-        }
-
-        <View style={styles.listSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Preguntas Frecuentes</Text>
-          </View>
-
-          {faqs.map((faq, index) =>
-            <TouchableOpacity
-              key={faq.id}
-              style={[
-                styles.faqItem,
-                index === faqs.length - 1 && styles.faqItemLast]
-              }
-              onPress={() => toggleFaq(faq.id)}
-              activeOpacity={0.7}>
-              <View style={styles.faqHeader}>
-                <Text style={[styles.faqQuestion, expandedFaq === faq.id && styles.faqQuestionActive]}>{faq.pregunta}</Text>
                 <Ionicons
                   name={expandedFaq === faq.id ? "chevron-up" : "chevron-down"}
-                  size={20}
-                  color={darkMode ? '#4b5563' : '#9ca3af'} />
-              </View>
-
-              {expandedFaq === faq.id &&
-                <View style={styles.faqAnswerContainer}>
-                  <Text style={styles.faqAnswer}>{faq.respuesta}</Text>
-                </View>
-              }
-            </TouchableOpacity>
-          )}
+                  size={18}
+                  color="#9ca3af"
+                />
+              </TouchableOpacity>
+              {index < faqs.length - 1 && <View style={styles.divider} />}
+            </View>
+          ))}
         </View>
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -378,42 +332,6 @@ const supportStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc'
-  },
-  header: {
-    backgroundColor: '#2563eb',
-    paddingTop: Platform.OS === 'android' ? 16 : 50,
-    paddingBottom: 20,
-    paddingHorizontal: 16
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  headerTextContainer: {
-    flex: 1,
-    alignItems: 'center'
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#fff'
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#e0f2fe',
-    marginTop: 2
-  },
-  headerPlaceholder: {
-    width: 40
   },
   loadingContainer: {
     flex: 1,
@@ -432,119 +350,61 @@ const supportStyles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 90
   },
-  quickHelpSection: {
-    padding: 24,
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    marginBottom: 16
-  },
-  quickHelpIconContainer: {
-    marginBottom: 16
-  },
-  empresaLogo: {
-    width: 60,
-    height: 60
-  },
-  quickHelpTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#94a3b8',
     marginBottom: 8,
-    textAlign: 'center'
-  },
-  quickHelpText: {
-    fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
-    lineHeight: 22
-  },
-  listSection: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 16
-  },
-  sectionHeader: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    paddingBottom: 8
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#2563eb',
+    marginLeft: 12,
     textTransform: 'uppercase',
-    letterSpacing: 0.5
+    letterSpacing: 1.2
   },
-  listItem: {
+  sectionContainer: {
+    backgroundColor: '#f1f5f9',
+    borderRadius: 24,
+    paddingVertical: 8,
+    marginBottom: 28,
+    borderWidth: 1,
+    borderColor: '#e2e8f0'
+  },
+  settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 14,
-    paddingHorizontal: 20
+    paddingHorizontal: 16
   },
-  listItemLast: {
-  },
-  contactTextContainer: {
+  settingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1
   },
-  contactTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 3
+  settingIcon: {
+    marginRight: 14
   },
-  contactSubtitle: {
-    fontSize: 13,
-    color: '#6b7280'
-  },
-  noContactCard: {
-    padding: 32,
-    alignItems: 'center'
-  },
-  noContactTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#92400e',
-    marginTop: 12,
-    marginBottom: 8,
-    textAlign: 'center'
-  },
-  noContactText: {
-    fontSize: 14,
-    color: '#78350f',
-    textAlign: 'center',
-    lineHeight: 20
-  },
-  faqItem: {
-    paddingVertical: 14,
-    paddingHorizontal: 20
-  },
-  faqItemLast: {
-  },
-  faqHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
-  faqQuestion: {
+  settingTextContainer: {
     flex: 1,
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#1f2937',
     paddingRight: 16
   },
-  faqQuestionActive: {
-    color: '#2563eb',
-    fontWeight: '700'
+  settingTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1f2937'
   },
-  faqAnswerContainer: {
-    marginTop: 12,
-    paddingRight: 32
+  settingSubtitle: {
+    fontSize: 13,
+    color: '#6b7280',
+    marginTop: 2,
+    lineHeight: 20
   },
-  faqAnswer: {
-    fontSize: 14,
-    color: '#4b5563',
-    lineHeight: 22
+  settingRight: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e2e8f0',
+    marginHorizontal: 16
   },
   bottomSpacer: {
     height: 100
@@ -557,62 +417,26 @@ const supportStylesDark = StyleSheet.create({
     ...supportStyles.container,
     backgroundColor: '#0f172a'
   },
-  header: {
-    ...supportStyles.header,
-    backgroundColor: '#1e40af'
-  },
   loadingText: {
     ...supportStyles.loadingText,
     color: '#9ca3af'
   },
-  quickHelpSection: {
-    ...supportStyles.quickHelpSection,
-    backgroundColor: '#1e293b'
+  sectionContainer: {
+    ...supportStyles.sectionContainer,
+    backgroundColor: '#1e293b',
+    borderWidth: 0
   },
-  quickHelpTitle: {
-    ...supportStyles.quickHelpTitle,
+  settingTitle: {
+    ...supportStyles.settingTitle,
     color: '#f9fafb'
   },
-  quickHelpText: {
-    ...supportStyles.quickHelpText,
+  settingSubtitle: {
+    ...supportStyles.settingSubtitle,
     color: '#9ca3af'
   },
-  listSection: {
-    ...supportStyles.listSection,
-    backgroundColor: '#1e293b'
-  },
-  sectionHeader: {
-    ...supportStyles.sectionHeader
-  },
-  sectionTitle: {
-    ...supportStyles.sectionTitle,
-    color: '#60a5fa'
-  },
-  listItem: {
-    ...supportStyles.listItem
-  },
-  contactTitle: {
-    ...supportStyles.contactTitle,
-    color: '#f9fafb'
-  },
-  contactSubtitle: {
-    ...supportStyles.contactSubtitle,
-    color: '#9ca3af'
-  },
-  faqItem: {
-    ...supportStyles.faqItem
-  },
-  faqQuestion: {
-    ...supportStyles.faqQuestion,
-    color: '#f9fafb'
-  },
-  faqQuestionActive: {
-    ...supportStyles.faqQuestionActive,
-    color: '#60a5fa'
-  },
-  faqAnswer: {
-    ...supportStyles.faqAnswer,
-    color: '#d1d5db'
+  divider: {
+    ...supportStyles.divider,
+    backgroundColor: '#334155'
   }
 });
 

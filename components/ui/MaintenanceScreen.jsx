@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, Animated,
-  StatusBar, TouchableOpacity, ActivityIndicator } from
+  TouchableOpacity, ActivityIndicator } from
 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const MaintenanceScreen = ({ onRetry, darkMode = false }) => {
+const MaintenanceScreen = ({ onRetry, onLogout, darkMode = false }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const spinAnim = useRef(new Animated.Value(0)).current;
@@ -74,9 +74,7 @@ const MaintenanceScreen = ({ onRetry, darkMode = false }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
-            <StatusBar
-        barStyle={dm ? 'light-content' : 'dark-content'}
-        backgroundColor={colors.bg} />
+            
       
 
             <Animated.View style={[
@@ -152,6 +150,20 @@ const MaintenanceScreen = ({ onRetry, darkMode = false }) => {
                             Reintentar ahora
                         </Text>
                     </TouchableOpacity>
+
+                    {/* Return Home Button */}
+                    {onLogout && (
+                      <TouchableOpacity
+                        style={[styles.homeBtn, { marginTop: 12, borderColor: colors.retryBorder }]}
+                        onPress={onLogout}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="log-out-outline" size={16} color={colors.subtitle} />
+                        <Text style={[styles.homeText, { color: colors.subtitle }]}>
+                          Regresar al inicio
+                        </Text>
+                      </TouchableOpacity>
+                    )}
                 </View>
             </Animated.View>
 
@@ -287,6 +299,22 @@ const styles = StyleSheet.create({
     marginTop: 2
   },
   retryText: {
+    fontSize: 14,
+    fontWeight: '600'
+  },
+  homeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    width: '100%',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    backgroundColor: 'transparent'
+  },
+  homeText: {
     fontSize: 14,
     fontWeight: '600'
   },

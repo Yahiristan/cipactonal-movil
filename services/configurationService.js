@@ -1,10 +1,10 @@
-
-import { getApiEndpoint } from '../config/api';
+import { getApiEndpoint } from '../config/api.js';
+import fetchTimeout from './fetchTimeout.js';
 const API_URL = getApiEndpoint('/api');
 
 export const getConfiguracion = async (token) => {
   try {
-    const configResponse = await fetch(`${API_URL}/configuracion`, {
+    const configResponse = await fetchTimeout(`${API_URL}/configuracion`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -91,7 +91,7 @@ export const getConfiguracion = async (token) => {
 
 export const updateConfiguracion = async (configId, configuracionData, token) => {
   try {
-    const response = await fetch(`${API_URL}/configuracion/${configId}`, {
+    const response = await fetchTimeout(`${API_URL}/configuracion/${configId}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -112,7 +112,7 @@ export const updateConfiguracion = async (configId, configuracionData, token) =>
 
 export const toggleMantenimiento = async (configId, esMantenimiento, token) => {
   try {
-    const response = await fetch(`${API_URL}/configuracion/${configId}/mantenimiento`, {
+    const response = await fetchTimeout(`${API_URL}/configuracion/${configId}/mantenimiento`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -170,7 +170,7 @@ export const getOrdenCredenciales = async (token) => {
 export const getMaintenanceStatus = async () => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
 
     let response;
     try {

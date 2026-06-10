@@ -6,6 +6,8 @@ import pullService from './pullService.mjs';
 import pushService from './pushService.mjs';
 import { detectarCambiosIncidencias, detectarAvisosNuevos } from '../localNotificationService';
 import { getApiEndpoint } from '../../config/api.js';
+import fetchTimeout from '../fetchTimeout.js';
+
 let authToken = null;
 let storedEmpleadoId = null;
 let isPushingSessions = false;
@@ -85,7 +87,7 @@ export async function pushSessions() {
     }));
     const url = `${API_URL}/movil/sync/sesiones`;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
     let response;
     try {
       response = await Promise.race([
@@ -99,7 +101,7 @@ export async function pushSessions() {
           signal: controller.signal
         }),
         new Promise((_, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Timeout de 5s')), 5000);
+          const timeout = setTimeout(() => reject(new Error('Timeout de 20s')), 20000);
           controller.signal.addEventListener('abort', () => clearTimeout(timeout));
         })
       ]);
@@ -183,7 +185,7 @@ export async function pushIncidencias() {
       processedIds.add(inc.local_id);
 
       try {
-        const response = await fetch(`${API_URL}/incidencias`, {
+        const response = await fetchTimeout(`${API_URL}/incidencias`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${authToken}`,

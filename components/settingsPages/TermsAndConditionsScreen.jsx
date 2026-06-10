@@ -5,12 +5,12 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
   Platform,
   BackHandler
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Header } from '../ui/Header';
 
 const TERMS_ACCEPTED_KEY = '@terms_accepted';
 
@@ -145,93 +145,48 @@ export const TermsAndConditionsScreen = ({ darkMode, onBack }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={darkMode ? "#1e40af" : "#2563eb"}
-        translucent={false} />
+      
       
       
       {}
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.7}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+      <Header
+        darkMode={darkMode}
+        title="Términos y condiciones"
+        leftComponent={
+          <TouchableOpacity onPress={onBack} style={{ padding: 8, marginLeft: -8 }} activeOpacity={0.7}>
+            <Ionicons name="arrow-back" size={24} color={darkMode ? '#f8fafc' : '#0f172a'} />
           </TouchableOpacity>
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.headerTitle}>Términos y condiciones</Text>
-            <Text style={styles.headerSubtitle}>Información legal</Text>
-          </View>
-          <View style={styles.headerPlaceholder} />
-        </View>
-      </View>
+        }
+      />
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
         
-        {}
-        <View style={styles.introCard}>
-          <View style={styles.introHeader}>
-            <View style={styles.introIconContainer}>
-              <Ionicons name="document-text" size={24} color="#2563eb" />
-            </View>
-            <View style={styles.introTextContainer}>
-              <Text style={styles.introTitle}>Última actualización</Text>
-              <Text style={styles.introDate}>
-                2 de Junio de 2026
-              </Text>
-            </View>
-          </View>
-          <View style={styles.introDivider} />
-          <Text style={styles.introDescription}>
-            Estos términos y condiciones rigen el uso de la aplicación de control de asistencia. 
-            Es importante que los lea y comprenda antes de utilizar la aplicación.
-          </Text>
-        </View>
-
-        {}
-        {sections.map((section, index) =>
-        <TouchableOpacity
-          key={section.id}
-          style={[
-          styles.sectionCard,
-          expandedSections[section.id] && styles.sectionCardExpanded]
-          }
-          onPress={() => toggleSection(section.id)}
-          activeOpacity={0.7}>
-          
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionHeaderLeft}>
-                <View style={[styles.sectionIconContainer, { backgroundColor: '#2563eb' }]}>
-                  <Ionicons name={section.icon} size={22} color="#fff" />
+        <View style={styles.sectionContainer}>
+          {sections.map((section, index) => (
+            <View key={section.id}>
+              <TouchableOpacity style={styles.settingItem} onPress={() => toggleSection(section.id)} activeOpacity={0.7}>
+                <View style={styles.settingLeft}>
+                  <Ionicons name={section.icon} size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+                  <View style={styles.settingTextContainer}>
+                    <Text style={styles.settingTitle}>{section.title}</Text>
+                    {expandedSections[section.id] && (
+                      <Text style={[styles.settingSubtitle, { marginTop: 8 }]}>{section.content}</Text>
+                    )}
+                  </View>
                 </View>
-                <Text style={styles.sectionTitle}>{section.title}</Text>
-              </View>
-              <View style={[
-            styles.chevronContainer,
-            expandedSections[section.id] && styles.chevronContainerExpanded]
-            }>
                 <Ionicons
-                name={expandedSections[section.id] ? "chevron-up" : "chevron-down"}
-                size={20}
-                color={
-                  expandedSections[section.id] 
-                    ? (darkMode ? "#60a5fa" : "#2563eb") 
-                    : (darkMode ? "#ffffff" : "#9ca3af")
-                } />
-              
-              </View>
+                  name={expandedSections[section.id] ? "chevron-up" : "chevron-down"}
+                  size={18}
+                  color="#9ca3af"
+                />
+              </TouchableOpacity>
+              {index < sections.length - 1 && <View style={styles.divider} />}
             </View>
-
-            {expandedSections[section.id] &&
-          <View style={styles.sectionContent}>
-                <View style={[styles.sectionDivider, { backgroundColor: '#dbeafe' }]} />
-                <Text style={styles.sectionText}>{section.content}</Text>
-              </View>
-          }
-          </TouchableOpacity>
-        )}
+          ))}
+        </View>
 
         {}
         <View style={styles.buttonContainer}>
@@ -261,7 +216,6 @@ export const TermsAndConditionsScreen = ({ darkMode, onBack }) => {
 
         {}
         <View style={styles.footer}>
-          <Ionicons name="information-circle" size={20} color="#2563eb" />
           <Text style={styles.footerText}>
             Al aceptar estos términos, confirma que ha leído y comprendido todos los puntos mencionados.
           </Text>
@@ -276,42 +230,6 @@ const termsStyles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc'
   },
-  header: {
-    backgroundColor: '#2563eb',
-    paddingTop: Platform.OS === 'android' ? 16 : 50,
-    paddingBottom: 20,
-    paddingHorizontal: 16
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  headerTextContainer: {
-    flex: 1,
-    alignItems: 'center'
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#fff'
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#e0f2fe',
-    marginTop: 2
-  },
-  headerPlaceholder: {
-    width: 40
-  },
   scrollView: {
     flex: 1
   },
@@ -320,112 +238,48 @@ const termsStyles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 120
   },
-  introCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
-  },
-  introHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16
-  },
-  introIconContainer: {
-    width: 48,
-    height: 48,
+  sectionContainer: {
+    backgroundColor: '#f1f5f9',
     borderRadius: 24,
-    backgroundColor: '#dbeafe',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 14
-  },
-  introTextContainer: {
-    flex: 1
-  },
-  introTitle: {
-    fontSize: 13,
-    color: '#6b7280',
-    fontWeight: '600',
-    marginBottom: 2
-  },
-  introDate: {
-    fontSize: 15,
-    color: '#1f2937',
-    fontWeight: '700'
-  },
-  introDivider: {
-    height: 1,
-    backgroundColor: '#f3f4f6',
-    marginBottom: 16
-  },
-  introDescription: {
-    fontSize: 14,
-    color: '#4b5563',
-    lineHeight: 22
-  },
-  sectionCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    marginBottom: 12,
-    overflow: 'hidden',
-    borderWidth: 1.5,
+    paddingVertical: 8,
+    borderWidth: 1,
     borderColor: '#e2e8f0'
   },
-  sectionCardExpanded: {
-    borderColor: '#2563eb'
-  },
-  sectionHeader: {
+  settingItem: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16
+    paddingVertical: 14,
+    paddingHorizontal: 16
   },
-  sectionHeaderLeft: {
+  settingLeft: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flex: 1
   },
-  sectionIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+  settingIcon: {
+    marginRight: 14,
+    marginTop: 2
   },
-  sectionTitle: {
+  settingTextContainer: {
+    flex: 1,
+    paddingRight: 16
+  },
+  settingTitle: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#1f2937',
-    flex: 1
+    fontWeight: '600',
+    color: '#1f2937'
   },
-  chevronContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#f3f4f6',
-    justifyContent: 'center',
-    alignItems: 'center'
+  settingSubtitle: {
+    fontSize: 13,
+    color: '#6b7280',
+    marginTop: 2,
+    lineHeight: 20
   },
-  chevronContainerExpanded: {
-    backgroundColor: '#dbeafe'
-  },
-  sectionContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 16
-  },
-  sectionDivider: {
-    height: 2,
-    marginBottom: 14,
-    borderRadius: 1
-  },
-  sectionText: {
-    fontSize: 14,
-    color: '#4b5563',
-    lineHeight: 22
+  divider: {
+    height: 1,
+    backgroundColor: '#e2e8f0',
+    marginHorizontal: 16
   },
 
   buttonContainer: {
@@ -472,19 +326,14 @@ const termsStyles = StyleSheet.create({
     fontWeight: '700'
   },
   footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
     padding: 16,
-    backgroundColor: '#dbeafe',
-    borderRadius: 12,
-    gap: 12
+    alignItems: 'center'
   },
   footerText: {
-    flex: 1,
     fontSize: 12,
-    color: '#1e40af',
+    color: '#64748b',
     lineHeight: 18,
-    fontWeight: '500'
+    textAlign: 'center'
   }
 });
 
@@ -494,55 +343,22 @@ const termsStylesDark = StyleSheet.create({
     ...termsStyles.container,
     backgroundColor: '#0f172a'
   },
-  header: {
-    ...termsStyles.header,
-    backgroundColor: '#1e40af'
-  },
-  introCard: {
-    ...termsStyles.introCard,
+  sectionContainer: {
+    ...termsStyles.sectionContainer,
     backgroundColor: '#1e293b',
-    borderColor: '#334155'
+    borderWidth: 0
   },
-  introIconContainer: {
-    ...termsStyles.introIconContainer,
-    backgroundColor: '#1e3a8a'
-  },
-  introDate: {
-    ...termsStyles.introDate,
+  settingTitle: {
+    ...termsStyles.settingTitle,
     color: '#f9fafb'
   },
-  introDivider: {
-    ...termsStyles.introDivider,
-    backgroundColor: '#334155'
-  },
-  introDescription: {
-    ...termsStyles.introDescription,
+  settingSubtitle: {
+    ...termsStyles.settingSubtitle,
     color: '#d1d5db'
   },
-  sectionCard: {
-    ...termsStyles.sectionCard,
-    backgroundColor: '#1e293b',
-    borderColor: '#334155'
-  },
-  sectionCardExpanded: {
-    ...termsStyles.sectionCardExpanded,
-    borderColor: '#3b82f6'
-  },
-  sectionTitle: {
-    ...termsStyles.sectionTitle,
-    color: '#f9fafb'
-  },
-  chevronContainer: {
-    ...termsStyles.chevronContainer,
+  divider: {
+    ...termsStyles.divider,
     backgroundColor: '#334155'
-  },
-  chevronContainerExpanded: {
-    ...termsStyles.chevronContainerExpanded,
-    backgroundColor: '#1d4ed8'
-  },
-  sectionText: {
-    ...termsStyles.sectionText,
-    color: '#d1d5db'
   },
 
   declineButton: {
@@ -555,12 +371,11 @@ const termsStylesDark = StyleSheet.create({
     color: '#ef4444'
   },
   footer: {
-    ...termsStyles.footer,
-    backgroundColor: '#1e3a8a'
+    ...termsStyles.footer
   },
   footerText: {
     ...termsStyles.footerText,
-    color: '#93c5fd'
+    color: '#94a3b8'
   }
 });
 

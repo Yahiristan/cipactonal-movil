@@ -1,6 +1,12 @@
 import * as SQLite from 'expo-sqlite';
-import 'react-native-get-random-values';
-import { v4 as uuidv4 } from 'uuid';
+// UUID nativo via Hermes (React Native 0.71+) — sin dependencias externas
+const uuidv4 = () =>
+  typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+      });
 let db = null;
 let initializationPromise = null;
 const DB_NAME = 'checador_offline.db';
@@ -489,14 +495,13 @@ export async function upsertCredenciales(credenciales) {
 
 export async function upsertHorario(empleadoId, horario) {
   if (!db) await initDatabase();
+  
+  // Limpiar el horario anterior para evitar duplicados si el ID del servidor cambia
+  await db.runAsync('DELETE FROM cache_horarios WHERE empleado_id = ?', [empleadoId]);
+  
   await db.runAsync(
     `INSERT INTO cache_horarios (horario_id, empleado_id, configuracion, es_activo, updated_at)
-     VALUES (?, ?, ?, ?, datetime('now', 'localtime'))
-     ON CONFLICT(horario_id) DO UPDATE SET
-       empleado_id = excluded.empleado_id,
-       configuracion = excluded.configuracion,
-       es_activo = excluded.es_activo,
-       updated_at = excluded.updated_at`,
+     VALUES (?, ?, ?, ?, datetime('now', 'localtime'))`,
     [
       horario.id || horario.horario_id,
       empleadoId,
@@ -578,13 +583,16 @@ export async function upsertDepartamentos(empleadoId, departamentos) {
   if (!db) await initDatabase();
 
   try {
+    // Limpiar caché vieja
+    await db.runAsync('DELETE FROM cache_departamentos WHERE empleado_id = ?', [empleadoId]);
+
     for (const dep of departamentos) {
       const ubicacionStr = dep.ubicacion ?
         typeof dep.ubicacion === 'string' ? dep.ubicacion : JSON.stringify(dep.ubicacion) :
         null;
 
       await db.runAsync(`
-                INSERT OR REPLACE INTO cache_departamentos (empleado_id, departamento_id, nombre, ubicacion, es_activo, updated_at)
+                INSERT INTO cache_departamentos (empleado_id, departamento_id, nombre, ubicacion, es_activo, updated_at)
                 VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))
              `, [
         empleadoId,
@@ -703,9 +711,16 @@ export async function getDepartamento(empleadoId) {
 export async function upsertAsistenciasMes(empleadoId, mesKey, asistencias) {
   if (!db) await initDatabase();
   await db.withTransactionAsync(async () => {
+    
+    // Limpiar mes completo para este empleado para evitar duplicar registros offline sincronizados
+    await db.runAsync(
+      'DELETE FROM cache_asistencias WHERE empleado_id = ? AND mes_key = ?', 
+      [empleadoId, mesKey]
+    );
+
     for (const reg of asistencias) {
       await db.runAsync(
-        `INSERT OR REPLACE INTO cache_asistencias (id, empleado_id, tipo, estado, fecha_registro, dispositivo_origen, departamento_id, departamento_nombre, mes_key, updated_at)
+        `INSERT INTO cache_asistencias (id, empleado_id, tipo, estado, fecha_registro, dispositivo_origen, departamento_id, departamento_nombre, mes_key, updated_at)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))`,
         [
           reg.id,

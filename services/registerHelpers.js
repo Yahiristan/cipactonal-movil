@@ -1,9 +1,10 @@
 import { getApiEndpoint } from '../config/api';
+import fetchTimeout from './fetchTimeout.js';
 const API_URL = getApiEndpoint('/api');
 
 export const obtenerHorarioSimplificado = async (empleadoId, token) => {
   try {
-    const response = await fetch(
+    const response = await fetchTimeout(
       `${API_URL}/empleados/${empleadoId}/horario`,
       {
         headers: {
@@ -59,7 +60,7 @@ const DEFAULT_TOLERANCIA = {
 
 export const obtenerTolerancia = async (token) => {
   try {
-    const response = await fetch(`${API_URL}/tolerancias`, {
+    const response = await fetchTimeout(`${API_URL}/tolerancias`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -88,7 +89,7 @@ export const obtenerTolerancia = async (token) => {
 
 export const obtenerUltimoRegistro = async (empleadoId, token) => {
   try {
-    const response = await fetch(
+    const response = await fetchTimeout(
       `${API_URL}/asistencias/empleado/${empleadoId}`,
       {
         headers: {

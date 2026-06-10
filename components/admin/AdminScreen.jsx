@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
-  StatusBar,
   Modal } from
 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,24 +27,7 @@ export const AdminScreen = ({ userData, darkMode }) => {
 
   return (
     <View style={styles.container}>
-            <StatusBar
-        barStyle="light-content"
-        backgroundColor={darkMode ? '#1e40af' : '#2563eb'} />
       
-
-            {}
-            <View style={styles.header}>
-                <View style={styles.headerIconWrap}>
-                    <Ionicons name="shield-checkmark" size={26} color="#fff" />
-                </View>
-                <View style={styles.headerText}>
-                    <Text style={styles.headerTitle}>Panel Administrador</Text>
-                    <Text style={styles.headerSubtitle} numberOfLines={1}>
-                        {userData?.nombre || 'Administrador'}
-                    </Text>
-                </View>
-            </View>
-
             {}
             <View style={styles.body}>
                 <Text style={styles.sectionLabel}>Gestión</Text>
@@ -75,27 +57,7 @@ export const AdminScreen = ({ userData, darkMode }) => {
 
 
 const adminStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  header: {
-    backgroundColor: '#2563eb',
-    paddingTop: Platform.OS === 'android' ? 16 : 50,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14
-  },
-  headerIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  headerText: { flex: 1 },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
-  headerSubtitle: { fontSize: 13, color: '#bfdbfe', marginTop: 2 },
+  container: { flex: 1, backgroundColor: '#ffffff' },
   body: { flex: 1, padding: 20 },
   sectionLabel: {
     fontSize: 14,
@@ -135,7 +97,6 @@ const adminStyles = StyleSheet.create({
 const adminStylesDark = StyleSheet.create({
   ...adminStyles,
   container: { ...adminStyles.container, backgroundColor: '#0f172a' },
-  header: { ...adminStyles.header, backgroundColor: '#1e40af' },
   sectionLabel: { ...adminStyles.sectionLabel, color: '#9ca3af' },
   card: { ...adminStyles.card, backgroundColor: '#1f2937' },
   cardTitle: { ...adminStyles.cardTitle, color: '#f9fafb' },

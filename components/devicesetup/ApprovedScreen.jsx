@@ -4,253 +4,200 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  StatusBar,
-  Platform } from
-'react-native';
+  Platform
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const APPROVED_CONFIG = {
-  title: "¡Aprobado!",
-  subtitle: "Configuración Completada",
-  icon: "checkmark-circle",
-  message: "Tu dispositivo ha sido aprobado exitosamente. Ya puedes comenzar a usar la aplicación."
-};
-
 export const ApprovedScreen = ({ email, empresaNombre, deviceInfo, onComplete }) => {
-  const approved = APPROVED_CONFIG;
-
   const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#2563eb" />
-
-      {}
       <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? insets.top + 16 : insets.top + 8 }]}>
-        <Text style={styles.headerTitle}>{approved.title}</Text>
-        <Text style={styles.headerSubtitle}>{approved.subtitle}</Text>
-
-        <View style={styles.stepperContainer}>
-          <View style={styles.stepComplete}>
-            <Ionicons name="checkmark" size={12} color="#fff" />
+        <View style={styles.profileCard}>
+          <View style={[styles.avatarPlaceholder, { backgroundColor: '#d1fae5' }]}>
+            <Ionicons name="checkmark-circle" size={32} color="#10b981" />
           </View>
-          <View style={styles.stepLine} />
-          <View style={styles.stepComplete}>
-            <Ionicons name="checkmark" size={12} color="#fff" />
-          </View>
-          <View style={styles.stepLine} />
-          <View style={styles.stepComplete}>
-            <Ionicons name="checkmark" size={12} color="#fff" />
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName} numberOfLines={1}>¡Aprobado!</Text>
+            <Text style={styles.profileEmail} numberOfLines={1}>Configuración Completada</Text>
           </View>
         </View>
       </View>
 
-      {}
       <View style={styles.content}>
-        {}
-        <View style={styles.successIcon}>
-          <Ionicons name={approved.icon} size={56} color="#10b981" />
+        <Text style={styles.sectionLabel}>Detalles de la vinculación</Text>
+        <View style={styles.sectionContainer}>
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="business-outline" size={20} color="#10b981" style={styles.settingIcon} />
+              <View style={{ flex: 1, paddingRight: 10 }}>
+                <Text style={styles.settingTitle}>Empresa</Text>
+                <Text style={styles.settingValue}>{empresaNombre || 'Empresa vinculada'}</Text>
+              </View>
+            </View>
+          </View>
+          
+          <View style={styles.divider} />
+          
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="mail-outline" size={20} color="#10b981" style={styles.settingIcon} />
+              <View style={{ flex: 1, paddingRight: 10 }}>
+                <Text style={styles.settingTitle}>Correo Verificado</Text>
+                <Text style={styles.settingValue}>{email}</Text>
+              </View>
+            </View>
+          </View>
+          
+          <View style={styles.divider} />
+          
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="phone-portrait-outline" size={20} color="#10b981" style={styles.settingIcon} />
+              <View style={{ flex: 1, paddingRight: 10 }}>
+                <Text style={styles.settingTitle}>Dispositivo</Text>
+                <Text style={styles.settingValue}>{deviceInfo?.model || 'Dispositivo móvil'}</Text>
+              </View>
+            </View>
+          </View>
         </View>
 
-        {}
-        <Text style={styles.message}>{approved.message}</Text>
-
-        {}
-        <View style={styles.checklist}>
-          <View style={styles.checkItem}>
-            <Ionicons name="business" size={16} color="#10b981" />
-            <View style={styles.checkContent}>
-              <Text style={styles.checkTitle}>Empresa Vinculada</Text>
-              <Text style={styles.checkValue}>{empresaNombre || 'Empresa'}</Text>
-            </View>
-          </View>
-
-          <View style={styles.checkItem}>
-            <Ionicons name="mail" size={16} color="#10b981" />
-            <View style={styles.checkContent}>
-              <Text style={styles.checkTitle}>Correo Verificado</Text>
-              <Text style={styles.checkValue}>{email}</Text>
-            </View>
-          </View>
-
-          <View style={styles.checkItem}>
-            <Ionicons name="phone-portrait" size={16} color="#10b981" />
-            <View style={styles.checkContent}>
-              <Text style={styles.checkTitle}>Dispositivo Registrado</Text>
-              <Text style={styles.checkValue}>
-                {deviceInfo?.model || 'Dispositivo móvil'}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.checkItem}>
-            <Ionicons name="shield-checkmark" size={16} color="#10b981" />
-            <View style={styles.checkContent}>
-              <Text style={styles.checkTitle}>Acceso Aprobado</Text>
-              <Text style={styles.checkValue}>Listo para usar</Text>
+        <Text style={styles.sectionLabel}>Información</Text>
+        <View style={styles.sectionContainer}>
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="information-circle-outline" size={20} color="#4b5563" style={styles.settingIcon} />
+              <View style={{ flex: 1, paddingRight: 10 }}>
+                <Text style={[styles.settingValue, { lineHeight: 18 }]}>Tu dispositivo ha sido vinculado exitosamente y está listo para usarse.</Text>
+              </View>
             </View>
           </View>
         </View>
       </View>
 
-      {}
-      <View style={[styles.footer, { paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 20) : insets.bottom + 12 }]}>
-        <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={14} color="#065f46" />
-          <Text style={styles.infoText}>
-            Tu dispositivo ha sido vinculado exitosamente a {empresaNombre}.
-          </Text>
-        </View>
+      <View style={[styles.footer, { paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 20) : insets.bottom + 16 }]}>
         <TouchableOpacity
-          style={styles.completeButton}
+          style={styles.startButton}
           onPress={onComplete}
-          activeOpacity={0.8}>
-          
-          <Text style={styles.completeButtonText}>Comenzar a Usar</Text>
-          <Ionicons name="arrow-forward" size={18} color="#fff" />
+          activeOpacity={0.7}>
+          <Text style={styles.startButtonText}>Comenzar a Usar</Text>
+          <Ionicons name="arrow-forward" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
-    </View>);
-
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb'
+    backgroundColor: '#ffffff'
   },
   header: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#ffffff',
     paddingHorizontal: 20,
-    paddingBottom: 16
+    paddingBottom: 10
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 2
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: '#dbeafe',
-    marginBottom: 14
-  },
-  stepperContainer: {
+  profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 4
+    backgroundColor: '#f9fafb',
+    borderRadius: 24,
+    padding: 20,
   },
-  stepComplete: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#10b981',
+  avatarPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    marginRight: 16
   },
-  stepLine: {
-    flex: 1,
-    height: 3,
-    backgroundColor: '#10b981',
-    marginHorizontal: 8,
-    maxWidth: 80,
-    borderRadius: 2
+  profileInfo: {
+    flex: 1
+  },
+  profileName: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1f2937',
+    marginBottom: 4,
+    letterSpacing: -0.5
+  },
+  profileEmail: {
+    fontSize: 13,
+    color: '#64748b',
+    fontWeight: '500'
   },
   content: {
     flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-    alignItems: 'center'
+    paddingHorizontal: 20,
+    paddingTop: 10
   },
-  successIcon: {
-    width: 80,
-    height: 80,
-    backgroundColor: '#d1fae5',
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#a7f3d0'
-  },
-  message: {
-    fontSize: 13,
-    color: '#065f46',
-    textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 18,
-    paddingHorizontal: 10
-  },
-  checklist: {
-    width: '100%'
-  },
-  checkItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#d1fae5',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#a7f3d0'
-  },
-  checkContent: {
-    flex: 1,
-    marginLeft: 10
-  },
-  checkTitle: {
+  sectionLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#065f46',
-    marginBottom: 1
+    color: '#94a3b8',
+    marginBottom: 8,
+    marginLeft: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2
   },
-  checkValue: {
-    fontSize: 11,
-    color: '#047857'
+  sectionContainer: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 24,
+    paddingVertical: 8,
+    marginBottom: 24
+  },
+  settingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16
+  },
+  settingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1
+  },
+  settingIcon: {
+    marginRight: 14
+  },
+  settingTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1f2937',
+    letterSpacing: -0.2,
+    marginBottom: 2
+  },
+  settingValue: {
+    fontSize: 13,
+    color: '#9ca3af'
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#f1f5f9',
+    marginHorizontal: 16
   },
   footer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     paddingHorizontal: 20,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb'
+    paddingTop: 10
   },
-  infoBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#d1fae5',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 12,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: '#a7f3d0'
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 11,
-    color: '#065f46',
-    lineHeight: 15
-  },
-  completeButton: {
+  startButton: {
     backgroundColor: '#10b981',
-    borderRadius: 14,
+    borderRadius: 24,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    shadowColor: '#10b981',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 5
+    gap: 10
   },
-  completeButtonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: 'bold'
+  startButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff'
   }
 });

@@ -27,7 +27,7 @@ const OVAL_LEFT = OVAL_CENTER_X - OVAL_WIDTH / 2;
 const OVAL_RIGHT = OVAL_CENTER_X + OVAL_WIDTH / 2;
 const OVAL_TOP = OVAL_CENTER_Y - OVAL_HEIGHT / 2;
 const OVAL_BOTTOM = OVAL_CENTER_Y + OVAL_HEIGHT / 2;
-const isFaceInOval = (face) => {
+const isFaceInOval = (face, livenessActive = false) => {
   if (!face?.bounds) return false;
   const { x, y, width, height } = face.bounds;
   const faceCX = x + width / 2;
@@ -37,8 +37,11 @@ const isFaceInOval = (face) => {
   const ellipseTest =
     Math.pow((faceCX - OVAL_CENTER_X) / radiusX, 2) +
     Math.pow((faceCY - OVAL_CENTER_Y) / radiusY, 2);
-  const isCentered = ellipseTest <= 1.05;
-  const isBigEnough = width >= OVAL_WIDTH * 0.30;
+  
+  // Si liveness está activo, somos más permisivos para que pueda mover la cabeza
+  const maxEllipse = livenessActive ? 3.0 : 1.05; 
+  const isCentered = ellipseTest <= maxEllipse;
+  const isBigEnough = width >= OVAL_WIDTH * (livenessActive ? 0.20 : 0.30);
   return isCentered && isBigEnough;
 };
 
@@ -74,9 +77,15 @@ export const FacialCaptureScreen = ({
   const [facesDetected, setFacesDetected] = useState([]);
   const [faceDetected, setFaceDetected] = useState(false);
   const [lastFaceData, setLastFaceData] = useState(null);
-  const [flashEnabled, setFlashEnabled] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const faceDetectionTimeout = useRef(null);
+  const errorFramesRef = useRef(0);
+  
+  const livenessStepRef = useRef(0); // 0: init, 1: target1, 2: target2, 3: recenter, 4: done
+  const activeTargetRef = useRef(null);
+  const livenessCompletedRef = useRef(false);
+  const isTransitioningRef = useRef(false);
+  const [renderTarget, setRenderTarget] = useState(null);
   useEffect(() => {
     checkPermissions();
     startPulseAnimation();
@@ -120,42 +129,141 @@ export const FacialCaptureScreen = ({
       const rightEyeOpen = face.rightEyeOpenProbability !== undefined ? face.rightEyeOpenProbability : 1;
       const yaw = Math.abs(face.yawAngle || 0);
       const roll = Math.abs(face.rollAngle || 0);
-      const isGoodQuality = leftEyeOpen > 0.3 && rightEyeOpen > 0.3 && yaw < 30 && roll < 30;
-      const inOval = isFaceInOval(face);
+      const step = livenessStepRef.current;
+      const livenessActive = step === 1 || step === 2;
+      const maxYaw = livenessActive ? 80 : 20; // 20 para centrar, 80 para permitir giro completo
+      const isGoodQuality = leftEyeOpen > 0.3 && rightEyeOpen > 0.3 && yaw <= maxYaw && roll <= 30; // Roll más permisivo
+      const inOval = isFaceInOval(face, livenessActive);
 
-      if (!countdown && !isProcessing && !isValidating) {
+      if (!countdown && !isProcessing && !isValidating && !livenessCompletedRef.current && !isTransitioningRef.current) {
         if (!inOval) {
-          setFaceDetected(false);
-          setInstruction('Centra tu rostro dentro del óvalo');
-        } else if (isGoodQuality) {
+          errorFramesRef.current += 1;
+          if (errorFramesRef.current > 5) {
+            setFaceDetected(false);
+            setInstruction('Centra tu rostro dentro del óvalo');
+            if (step > 0 && step < 4) {
+              livenessStepRef.current = 0;
+              activeTargetRef.current = null;
+              setRenderTarget(null);
+            }
+          }
+        } else if (isGoodQuality && step === 0) {
+          errorFramesRef.current = 0;
           setFaceDetected(true);
-          setInstruction('✓ Rostro detectado - Toca para capturar');
-        } else {
-          setFaceDetected(false);
-          if (leftEyeOpen < 0.3 || rightEyeOpen < 0.3) {
-            setInstruction('Abre bien los ojos');
-          } else if (yaw >= 30) {
-            setInstruction('Mira de frente a la cámara');
-          } else if (roll >= 30) {
-            setInstruction('Mantén la cabeza recta');
+          // Iniciar liveness
+          livenessStepRef.current = 1;
+          const isLeft = Math.random() > 0.5;
+          const tX = OVAL_CENTER_X + (isLeft ? -1 : 1) * (OVAL_WIDTH * 0.40); // Más lejos del centro
+          const tY = OVAL_CENTER_Y + (Math.random() * 40 - 20);
+          activeTargetRef.current = { id: 1, x: tX, y: tY, hit: false };
+          setRenderTarget(activeTargetRef.current);
+          setInstruction('Toca el punto rojo con tu nariz');
+        } else if (step === 1 || step === 2) {
+          errorFramesRef.current = 0;
+          setFaceDetected(true);
+          
+          // Usamos el centro del bounding box en vez de landmarks para evitar errores de escala de coordenadas
+          const headCX = face.bounds.x + face.bounds.width / 2;
+          const headCY = face.bounds.y + face.bounds.height / 2;
+          const target = activeTargetRef.current;
+          
+          if (target && !target.hit) {
+            const dx = target.x - headCX;
+            const dy = target.y - headCY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < 50) { // Hit tolerante (bounding box center)
+              if (step === 1) {
+                activeTargetRef.current.hit = true;
+                setRenderTarget({ ...activeTargetRef.current });
+                setInstruction('¡Punto tocado!');
+                isTransitioningRef.current = true;
+                
+                setTimeout(() => {
+                  livenessStepRef.current = 2;
+                  const wasLeft = target.x < OVAL_CENTER_X;
+                  const tX = OVAL_CENTER_X + (wasLeft ? 1 : -1) * (OVAL_WIDTH * 0.40); // Siguiente al otro lado
+                  const tY = OVAL_CENTER_Y + (Math.random() * 40 - 20);
+                  activeTargetRef.current = { id: 2, x: tX, y: tY, hit: false };
+                  setRenderTarget(activeTargetRef.current);
+                  setInstruction('Ahora toca el segundo punto rojo');
+                  isTransitioningRef.current = false;
+                }, 800);
+                
+              } else if (step === 2) {
+                activeTargetRef.current.hit = true;
+                setRenderTarget({ ...activeTargetRef.current });
+                setInstruction('¡Prueba superada!');
+                isTransitioningRef.current = true;
+                
+                setTimeout(() => {
+                  livenessStepRef.current = 3;
+                  activeTargetRef.current = null;
+                  setRenderTarget(null);
+                  setInstruction('Centra tu rostro en el óvalo');
+                  isTransitioningRef.current = false;
+                }, 800);
+              }
+            } else {
+              setInstruction(step === 1 ? 'Mueve tu cabeza hacia el punto rojo' : 'Ahora hacia el segundo punto');
+            }
+          }
+        } else if (step === 3) {
+          errorFramesRef.current = 0;
+          setFaceDetected(true);
+          if (isGoodQuality && inOval && yaw < 15 && roll < 15) {
+            livenessStepRef.current = 4;
+            livenessCompletedRef.current = true;
+            setInstruction('¡Perfecto! Mantén la posición');
+            setTimeout(() => {
+              startCountdown();
+            }, 600);
           } else {
-            setInstruction('Ajusta la posición de tu rostro');
+            setInstruction('Centra tu rostro mirando al frente');
+          }
+        } else {
+          errorFramesRef.current += 1;
+          if (errorFramesRef.current > 5) {
+            setFaceDetected(false);
+            if (leftEyeOpen < 0.3 || rightEyeOpen < 0.3) {
+              setInstruction('Abre bien los ojos');
+            } else if (yaw > maxYaw) {
+              setInstruction(livenessActive ? 'Mueve tu cabeza hacia el punto rojo' : 'Mira de frente a la cámara');
+            } else if (roll > 20) {
+              setInstruction('Mantén la cabeza recta');
+            } else {
+              setInstruction('Ajusta la posición de tu rostro');
+            }
           }
         }
       }
 
       faceDetectionTimeout.current = setTimeout(() => {
+        errorFramesRef.current = 10;
         setFaceDetected(false);
-        if (!countdown && !isProcessing && !isValidating) {
+        if (!countdown && !isProcessing && !isValidating && !livenessCompletedRef.current) {
           setInstruction('Centra tu rostro dentro del óvalo');
+          if (livenessStepRef.current > 0 && livenessStepRef.current < 4) {
+            livenessStepRef.current = 0;
+            activeTargetRef.current = null;
+            setRenderTarget(null);
+          }
         }
       }, 500);
 
     } else {
-      setFaceDetected(false);
-      setLastFaceData(null);
-      if (!countdown && !isProcessing && !isValidating) {
-        setInstruction('No se detecta rostro');
+      errorFramesRef.current += 1;
+      if (errorFramesRef.current > 5) {
+        setFaceDetected(false);
+        setLastFaceData(null);
+        if (!countdown && !isProcessing && !isValidating && !livenessCompletedRef.current) {
+          setInstruction('No se detecta rostro');
+          if (livenessStepRef.current > 0 && livenessStepRef.current < 4) {
+            livenessStepRef.current = 0;
+            activeTargetRef.current = null;
+            setRenderTarget(null);
+          }
+        }
       }
     }
   }, [countdown, isProcessing, isValidating]);
@@ -163,10 +271,6 @@ export const FacialCaptureScreen = ({
   const handleFaceDetection = useCallback((faces) => {
     updateFaceDetection(faces);
   }, [updateFaceDetection]);
-
-  const toggleFlash = () => {
-    setFlashEnabled(!flashEnabled);
-  };
 
   const startCountdown = () => {
     setCountdown(3);
@@ -190,7 +294,7 @@ export const FacialCaptureScreen = ({
       setInstruction(' Capturando foto...');
       const photo = await camera.current.takePhoto({
         qualityPrioritization: 'quality',
-        flash: flashEnabled ? 'on' : 'off',
+        flash: 'off',
         skipMetadata: true
       });
       const fileUri = Platform.OS === 'ios' ? photo.path : `file://${photo.path}`;
@@ -365,6 +469,31 @@ export const FacialCaptureScreen = ({
             <ActivityIndicator size="large" color="#f59e0b" style={styles.validatingIndicator} />
           }
         </View>
+
+        {/* Liveness Target Render */}
+        {!countdown && !isValidating && renderTarget && (
+          <View
+            style={{
+              position: 'absolute',
+              left: renderTarget.x - 15,
+              top: renderTarget.y - 15,
+              width: 30,
+              height: 30,
+              borderRadius: 15,
+              backgroundColor: renderTarget.hit ? '#10b981' : '#ef4444',
+              borderWidth: 2,
+              borderColor: '#ffffff',
+              zIndex: 20,
+              opacity: renderTarget.hit ? 0.8 : 1,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.5,
+              shadowRadius: 4,
+              elevation: 5
+            }}
+          />
+        )}
+
         { }
         <TouchableOpacity
           style={[styles.closeButton, {
@@ -375,21 +504,6 @@ export const FacialCaptureScreen = ({
           disabled={isProcessing || isValidating}
           activeOpacity={0.7}>
           <Ionicons name="close" size={24} color={closeIconClr} />
-        </TouchableOpacity>
-        { }
-        <TouchableOpacity
-          style={[styles.flashButton, {
-            top: closeTop,
-            backgroundColor: flashEnabled ? '#f59e0b' : closeBtnBg
-          }]}
-          onPress={toggleFlash}
-          disabled={isProcessing || isValidating}
-          activeOpacity={0.7}>
-          <Ionicons 
-            name={flashEnabled ? 'flash' : 'flash-outline'} 
-            size={22} 
-            color={flashEnabled ? '#000' : closeIconClr} 
-          />
         </TouchableOpacity>
         { }
         <View style={[styles.instructionContainer, { top: closeTop + 56 }]} pointerEvents="none">
@@ -444,9 +558,9 @@ export const FacialCaptureScreen = ({
                 'Analizando rostro...' :
                 countdown ?
                   `Capturando en ${countdown}...` :
-                  faceDetected ?
-                    '✓ Listo – Toca para capturar' :
-                    'Centra tu rostro en el óvalo y toca'}
+                  faceDetected && livenessCompletedRef.current ?
+                    'Iniciando captura...' :
+                    'Completa la prueba de vida para capturar'}
           </Text>
         </View>
       </View>

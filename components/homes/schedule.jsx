@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  StatusBar,
   Platform,
   ActivityIndicator,
   RefreshControl,
@@ -284,19 +283,6 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
 
   return (
     <View style={styles.mainContainer}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={darkMode ? "#1e40af" : "#2563eb"} />
-
-
-      { }
-      <View style={styles.headerWrapper}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Horario</Text>
-          <Text style={styles.headerSubtitle}>Tu horario asignado</Text>
-        </View>
-      </View>
-
       {isLoading ?
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#2563eb" />
@@ -407,32 +393,36 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
           }
 
           { }
-          <View style={styles.summarySection}>
-            <View style={styles.summaryCard}>
-              <View style={styles.summaryContent}>
-                <Ionicons name="time-outline" size={28} color="#fff" />
-                <Text style={styles.summaryValue}>{resumen.horasTotales}</Text>
-                <Text style={styles.summaryLabel}>Horas Totales</Text>
+          <Text style={styles.sectionLabel}>RESUMEN SEMANAL</Text>
+          <View style={styles.sectionContainer}>
+            <View style={styles.settingItem}>
+              <View style={styles.settingLeft}>
+                <Ionicons name="time-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+                <Text style={styles.settingTitle}>Horas Totales</Text>
+              </View>
+              <View style={styles.settingRight}>
+                <Text style={styles.settingValue}>{resumen.horasTotales}</Text>
               </View>
             </View>
 
-            <View style={styles.summaryCard}>
-              <View style={[styles.summaryContent, { backgroundColor: '#10b981' }]}>
-                <Ionicons name="calendar-outline" size={28} color="#fff" />
-                <Text style={styles.summaryValue}>{resumen.diasLaborales}</Text>
-                <Text style={styles.summaryLabel}>Días Laborales</Text>
+            <View style={styles.divider} />
+
+            <View style={styles.settingItem}>
+              <View style={styles.settingLeft}>
+                <Ionicons name="calendar-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+                <Text style={styles.settingTitle}>Días Laborales</Text>
+              </View>
+              <View style={styles.settingRight}>
+                <Text style={styles.settingValue}>{resumen.diasLaborales}</Text>
               </View>
             </View>
           </View>
 
           { }
-          <View style={styles.scheduleSection}>
-            <View style={styles.scheduleSectionHeader}>
-              <Text style={styles.scheduleSectionTitle}>Horario Semanal</Text>
-              <Text style={styles.scheduleSectionSubtitle}>{obtenerFechaSemana()}</Text>
-            </View>
-
+          <Text style={styles.sectionLabel}>HORARIO SEMANAL</Text>
+          <View style={[styles.sectionContainer, { borderRadius: 0, paddingVertical: 0 }]}>
             {scheduleData.map((schedule, index) => {
+              const isLast = index === scheduleData.length - 1;
               const diasSemana = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
               const hoy = new Date();
               const diaActual = diasSemana[hoy.getDay()];
@@ -455,15 +445,15 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
               }
 
               return (
-                <TouchableOpacity
-                  key={index}
-                  activeOpacity={0.7}
-                  onPress={() => handleDayPress(schedule)}
-                  style={[
-                    styles.scheduleItem,
-                    !schedule.active && styles.scheduleItemInactive,
-                    isToday && styles.scheduleItemToday]
-                  }>
+                <View key={index}>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => handleDayPress(schedule)}
+                    style={[
+                      styles.settingItem,
+                      !schedule.active && styles.scheduleItemInactive,
+                      isToday && styles.scheduleItemToday
+                    ]}>
 
                   <View style={styles.scheduleLeft}>
                     <View style={[
@@ -489,7 +479,7 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
                           <View style={styles.todayDot} />
                         }
                       </View>
-                      
+
                       {tieneMasTurnos &&
                         <View style={styles.multipleTurnsBadge}>
                           <Ionicons name="albums-outline" size={10} color={darkMode ? "#60a5fa" : "#2563eb"} />
@@ -511,29 +501,34 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
                       <Ionicons name="chevron-forward" size={16} color="#9ca3af" style={{ marginTop: 4 }} />
                     }
                   </View>
-                </TouchableOpacity>);
+                </TouchableOpacity>
+                {!isLast && <View style={styles.divider} />}
+              </View>);
 
             })}
           </View>
 
           { }
           {userData?.es_empleado && userData?.empleado_id &&
-            <TouchableOpacity
-              style={styles.incidenciasButton}
-              onPress={() => setShowIncidencias(true)}
-              activeOpacity={0.7}>
+            <>
+              <Text style={styles.sectionLabel}>GESTIÓN</Text>
+              <View style={styles.sectionContainer}>
+                <TouchableOpacity
+                  style={styles.settingItem}
+                  onPress={() => setShowIncidencias(true)}
+                  activeOpacity={0.7}>
 
-              <View style={styles.incidenciasLeft}>
-                <View style={styles.incidenciasIcon}>
-                  <Ionicons name="document-text-outline" size={24} color={darkMode ? '#60a5fa' : '#2563eb'} />
-                </View>
-                <View>
-                  <Text style={styles.incidenciasTitle}>Incidencias</Text>
-                  <Text style={styles.incidenciasSubtitle}>Justificantes y permisos</Text>
-                </View>
+                  <View style={styles.settingLeft}>
+                    <Ionicons name="document-text-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+                    <View>
+                      <Text style={styles.settingTitle}>Incidencias</Text>
+                      <Text style={styles.settingTitleSecondary}>Justificantes y permisos</Text>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
+                </TouchableOpacity>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
-            </TouchableOpacity>
+            </>
           }
         </ScrollView>
       }
@@ -592,16 +587,10 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
               {selectedDay?.active && selectedDay?.turnos?.length > 0 ?
                 selectedDay.turnos.map((turno, idx) =>
                   <View key={idx} style={styles.modalTurnoBlock}>
-                    <View style={styles.modalTurnoHeader}>
-                      <View style={styles.modalTurnoNumber}>
-                        <Text style={styles.modalTurnoNumberText}>{idx + 1}</Text>
-                      </View>
-                      <Text style={styles.modalTurnoTitle}>Turno {idx + 1}</Text>
-                    </View>
-
+                    <Text style={styles.modalTurnoTitle}>Turno {idx + 1}</Text>
                     <View style={styles.modalTurnoDetails}>
                       <View style={styles.modalTurnoRow}>
-                        <Ionicons name="log-in-outline" size={20} color="#10b981" />
+                        <Ionicons name="log-in-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} />
                         <Text style={styles.modalTurnoLabel}>Entrada</Text>
                         <Text style={styles.modalTurnoTime}>{turno.entrada}</Text>
                       </View>
@@ -609,7 +598,7 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
                       <View style={styles.modalTurnoDivider} />
 
                       <View style={styles.modalTurnoRow}>
-                        <Ionicons name="log-out-outline" size={20} color="#f59e0b" />
+                        <Ionicons name="log-out-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} />
                         <Text style={styles.modalTurnoLabel}>Salida</Text>
                         <Text style={styles.modalTurnoTime}>{turno.salida}</Text>
                       </View>

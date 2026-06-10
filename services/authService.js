@@ -1,4 +1,5 @@
 import { getApiEndpoint } from '../config/api.js';
+import fetchTimeout from './fetchTimeout.js';
 const API_URL = getApiEndpoint('/api');
 
 export const login = async (usuario, contraseña, empresaId = null) => {
@@ -66,8 +67,7 @@ export const login = async (usuario, contraseña, empresaId = null) => {
         const empleadoId = data.data.usuario.empleado_id;
         const token = data.data.token;
         const empUrl = `${API_URL}/empleados/${empleadoId}`;
-        const empResponse = await fetch(empUrl, {
-          method: 'GET',
+        const empResponse = await fetchTimeout(empUrl, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -86,8 +86,7 @@ export const login = async (usuario, contraseña, empresaId = null) => {
 
           const deptoUrl = `${API_URL}/departamentos/${deptoId}`;
 
-          const deptoResponse = await fetch(deptoUrl, {
-            method: 'GET',
+          const deptoResponse = await fetchTimeout(deptoUrl, {
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
@@ -145,7 +144,7 @@ export const logout = async (token) => {
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    const response = await fetch(`${API_URL}/auth/logout`, {
+    const response = await fetchTimeout(`${API_URL}/auth/logout`, {
       method: 'POST',
       headers
     });
@@ -168,7 +167,7 @@ export const verificarSesion = async (token) => {
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    const response = await fetch(`${API_URL}/auth/verificar`, {
+    const response = await fetchTimeout(`${API_URL}/auth/verificar`, {
       method: 'GET',
       headers
     });
@@ -194,7 +193,7 @@ export const cambiarPassword = async (contraseñaActual, contraseñaNueva, token
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    const response = await fetch(`${API_URL}/auth/cambiar-password`, {
+    const response = await fetchTimeout(`${API_URL}/auth/cambiar-password`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -215,7 +214,7 @@ export const cambiarPassword = async (contraseñaActual, contraseñaNueva, token
 
 export const loginBiometrico = async (biometricData) => {
   try {
-    const response = await fetch(`${API_URL}/auth/biometric`, {
+    const response = await fetchTimeout(`${API_URL}/auth/biometric`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
