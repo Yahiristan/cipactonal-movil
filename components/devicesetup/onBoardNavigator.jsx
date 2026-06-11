@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Alert, ActivityIndicator, View, Text } from 'react-native';
+import { StyleSheet, Alert, ActivityIndicator, View, Text, useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { WelcomeScreen } from './WelcomeScreen';
@@ -24,6 +24,8 @@ const STORAGE_KEYS = {
 };
 
 export const OnboardingNavigator = ({ onComplete, userData, onLogout }) => {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
   const [onboardingData, setOnboardingData] = useState({
@@ -223,17 +225,16 @@ export const OnboardingNavigator = ({ onComplete, userData, onLogout }) => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, styles.loadingContainer]}>
-
-        <ActivityIndicator size="large" color="#2563eb" />
-        <Text style={styles.loadingText}>Verificando estado del dispositivo...</Text>
+      <SafeAreaView style={[styles.container, styles.loadingContainer, { backgroundColor: isDark ? '#0f172a' : '#f9fafb' }]}>
+        <ActivityIndicator size="large" color={isDark ? '#3b82f6' : '#2563eb'} />
+        <Text style={[styles.loadingText, { color: isDark ? '#94a3b8' : '#64748b' }]}>Verificando estado del dispositivo...</Text>
       </SafeAreaView>);
 
   }
 
   return (
     <SafeAreaProvider>
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: isDark ? '#0f172a' : '#f9fafb' }]}>
         { }
         {currentStep === 0 &&
           <WelcomeScreen
@@ -308,16 +309,14 @@ export const OnboardingNavigator = ({ onComplete, userData, onLogout }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb'
   },
   loadingContainer: {
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   loadingText: {
     marginTop: 16,
     fontSize: 14,
-    color: '#64748b',
-    fontWeight: '500'
-  }
+    fontWeight: '500',
+  },
 });

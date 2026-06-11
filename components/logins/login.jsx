@@ -249,6 +249,13 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
         } catch (err) {
           lastErr = err;
           const msg = err.message || '';
+
+          // NUNCA reintentar errores de autenticación — consumen intentos de bloqueo
+          const isAuthError = msg.includes('401') || msg.includes('403') || msg.includes('Credenciales') || msg.includes('Demasiados intentos') || msg.includes('Bloqueo');
+          if (isAuthError) {
+            throw err;
+          }
+
           const isSleepError = msg.includes('Network') || msg.includes('Failed to fetch') || msg.includes('connection') || msg.includes('timeout') || msg.includes('500') || msg.includes('502') || msg.includes('503') || msg.includes('504');
           if (isSleepError && i < retries - 1) {
             await new Promise(res => setTimeout(res, delayMs));
@@ -264,31 +271,8 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
       const response = await loginWithRetry(usuario, password, empresaId);
 
       if (response && response.isMultiCompany) {
-        // Validar credenciales con la primera empresa antes de mostrar el selector
-        const primeraEmpresaId = response.empresas[0]?.empresa_id;
-        if (primeraEmpresaId) {
-          try {
-            await loginWithRetry(usuario, password, primeraEmpresaId);
-          } catch (credError) {
-            const msg = credError.message || '';
-            if (
-              msg.includes('401') ||
-              msg.includes('credentials') ||
-              msg.includes('Credenciales') ||
-              msg.includes('contraseña') ||
-              msg.includes('nválid') ||
-              msg.includes('usuario')
-            ) {
-              Alert.alert('Error', 'Usuario o contraseña incorrectos');
-            } else {
-              Alert.alert('Error', msg || 'Error al iniciar sesión');
-            }
-            setIsLoading(false);
-            return;
-          }
-        }
-
-        // Credenciales correctas — cargar logos y mostrar selector
+        // Las credenciales ya fueron validadas por el servidor (status 300)
+        // Cargar logos y mostrar selector
         try {
           const empresasConLogo = await Promise.all(
             response.empresas.map(async (emp) => {

@@ -1,8 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 export const StepIndicator = ({ currentStep }) => {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const t = isDark ? dark : light;
+
   const steps = [
     { number: 1, label: 'Afiliación' },
     { number: 2, label: 'Dispositivo' },
@@ -10,7 +14,7 @@ export const StepIndicator = ({ currentStep }) => {
   ];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: t.headerBg }]}>
       {steps.map((step, index) => {
         const isActive = currentStep >= step.number;
         const isCurrent = currentStep === step.number;
@@ -20,15 +24,19 @@ export const StepIndicator = ({ currentStep }) => {
           <React.Fragment key={step.number}>
             <View style={styles.stepWrapper}>
               <View style={[
-                styles.circle, 
-                isCompleted ? styles.circleCompleted : (isCurrent ? styles.circleCurrent : styles.circleInactive)
+                styles.circle,
+                isCompleted
+                  ? { borderColor: t.accent, backgroundColor: t.accent }
+                  : isCurrent
+                    ? { borderColor: t.accent, backgroundColor: t.headerBg }
+                    : { borderColor: t.lineInactive, backgroundColor: t.headerBg }
               ]}>
                 {isCompleted ? (
                   <Ionicons name="checkmark" size={14} color="#fff" />
                 ) : (
                   <Text style={[
                     styles.stepNumber,
-                    isCurrent ? styles.textCurrent : styles.textInactive
+                    { color: isCurrent ? t.accent : t.textInactive }
                   ]}>
                     {step.number}
                   </Text>
@@ -36,7 +44,7 @@ export const StepIndicator = ({ currentStep }) => {
               </View>
               <Text style={[
                 styles.label,
-                isCurrent || isCompleted ? styles.labelActive : styles.labelInactive
+                { color: isCurrent || isCompleted ? t.labelActive : t.textInactive }
               ]}>
                 {step.label}
               </Text>
@@ -45,7 +53,7 @@ export const StepIndicator = ({ currentStep }) => {
             {index < steps.length - 1 && (
               <View style={[
                 styles.line,
-                isCompleted ? styles.lineActive : styles.lineInactive
+                { backgroundColor: isCompleted ? t.accent : t.lineInactive }
               ]} />
             )}
           </React.Fragment>
@@ -55,6 +63,24 @@ export const StepIndicator = ({ currentStep }) => {
   );
 };
 
+// ─── Paletas ──────────────────────────────────────────────────────────────────
+const light = {
+  headerBg:     '#ffffff',
+  accent:       '#2563eb',
+  lineInactive: '#e2e8f0',
+  textInactive: '#94a3b8',
+  labelActive:  '#1e293b',
+};
+
+const dark = {
+  headerBg:     '#0f172a',
+  accent:       '#3b82f6',
+  lineInactive: '#334155',
+  textInactive: '#94a3b8',
+  labelActive:  '#ffffff',
+};
+
+// ─── Estilos base (layout/dimensiones sin color) ──────────────────────────────
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
@@ -62,11 +88,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 20,
     marginBottom: 16,
-    width: '100%'
+    width: '100%',
   },
   stepWrapper: {
     alignItems: 'center',
-    width: 70
+    width: 70,
   },
   circle: {
     width: 24,
@@ -75,41 +101,18 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ffffff',
-    zIndex: 2
-  },
-  circleCompleted: {
-    borderColor: '#2563eb',
-    backgroundColor: '#2563eb'
-  },
-  circleCurrent: {
-    borderColor: '#2563eb'
-  },
-  circleInactive: {
-    borderColor: '#e2e8f0'
+    zIndex: 2,
   },
   stepNumber: {
     fontSize: 12,
-    fontWeight: 'bold'
-  },
-  textCurrent: {
-    color: '#2563eb'
-  },
-  textInactive: {
-    color: '#94a3b8'
+    fontWeight: 'bold',
   },
   label: {
     fontSize: 10,
     marginTop: 6,
     fontWeight: '600',
     textAlign: 'center',
-    letterSpacing: 0.2
-  },
-  labelActive: {
-    color: '#1e293b'
-  },
-  labelInactive: {
-    color: '#94a3b8'
+    letterSpacing: 0.2,
   },
   line: {
     flex: 1,
@@ -117,12 +120,6 @@ const styles = StyleSheet.create({
     marginTop: 11,
     marginHorizontal: -15,
     zIndex: 1,
-    borderRadius: 2
+    borderRadius: 2,
   },
-  lineActive: {
-    backgroundColor: '#2563eb'
-  },
-  lineInactive: {
-    backgroundColor: '#e2e8f0'
-  }
 });

@@ -5,7 +5,8 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  Platform
+  Platform,
+  useColorScheme
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +15,10 @@ import { StepIndicator } from './StepIndicator';
 
 export const PendingApprovalScreen = ({ tokenSolicitud, idSolicitud, onApproved, onRejected }) => {
   const insets = useSafeAreaInsets();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const t = isDark ? dark : light;
+
   const [solicitudStatus, setSolicitudStatus] = useState('pendiente');
   const intervalRef = useRef(null);
   const onApprovedRef = useRef(onApproved);
@@ -28,14 +33,11 @@ export const PendingApprovalScreen = ({ tokenSolicitud, idSolicitud, onApproved,
     const checkStatus = async () => {
       try {
         const response = await getSolicitudPorToken(tokenSolicitud);
-
         const estadoLower = response.estado?.toLowerCase();
         setSolicitudStatus(estadoLower);
 
         if (estadoLower === 'aceptado') {
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-          }
+          if (intervalRef.current) clearInterval(intervalRef.current);
           setTimeout(() => {
             onApprovedRef.current({
               idDispositivo: response.id_escritorio || response.id,
@@ -46,14 +48,13 @@ export const PendingApprovalScreen = ({ tokenSolicitud, idSolicitud, onApproved,
         }
 
         if (estadoLower === 'rechazado') {
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-          }
+          if (intervalRef.current) clearInterval(intervalRef.current);
           setTimeout(() => {
             onRejectedRef.current(response);
           }, 500);
         }
       } catch (error) {
+        // silently ignore polling errors
       }
     };
 
@@ -61,66 +62,64 @@ export const PendingApprovalScreen = ({ tokenSolicitud, idSolicitud, onApproved,
     intervalRef.current = setInterval(checkStatus, 5000);
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [tokenSolicitud]);
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? insets.top + 16 : insets.top + 8 }]}>
+    <View style={[styles.container, { backgroundColor: t.bg }]}>
+      <View style={[styles.header, { backgroundColor: t.bg, paddingTop: Platform.OS === 'android' ? insets.top + 16 : insets.top + 8 }]}>
         <StepIndicator currentStep={3} />
-        <View style={styles.profileCard}>
-          <View style={styles.avatarPlaceholder}>
-            <Ionicons name="time" size={32} color="#64748b" />
+        <View style={[styles.profileCard, { backgroundColor: t.card }]}>
+          <View style={[styles.avatarPlaceholder, { backgroundColor: t.avatarBg }]}>
+            <Ionicons name="time" size={32} color={t.iconColor} />
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName} numberOfLines={1}>Solicitud Enviada</Text>
-            <Text style={styles.profileEmail} numberOfLines={1}>Esperando aprobación</Text>
+            <Text style={[styles.profileName, { color: t.textPrimary }]} numberOfLines={1}>Solicitud Enviada</Text>
+            <Text style={[styles.profileEmail, { color: t.textSecondary }]} numberOfLines={1}>Esperando aprobación</Text>
           </View>
         </View>
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.sectionLabel}>Estado Actual</Text>
-        <View style={styles.sectionContainer}>
+        <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Estado Actual</Text>
+        <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <View style={[styles.iconCircle, { backgroundColor: '#eff6ff' }]}>
-                <Ionicons name="sync-outline" size={20} color="#2563eb" />
+              <View style={[styles.iconCircle, { backgroundColor: isDark ? '#1e3a5f' : '#eff6ff' }]}>
+                <Ionicons name="sync-outline" size={20} color={t.accentBlue} />
               </View>
               <View style={styles.stepContent}>
-                <Text style={styles.settingTitle}>En Revisión</Text>
-                <Text style={styles.settingValue}>El administrador revisará pronto.</Text>
+                <Text style={[styles.settingTitle, { color: t.textPrimary }]}>En Revisión</Text>
+                <Text style={[styles.settingValue, { color: t.textMuted }]}>El administrador revisará pronto.</Text>
               </View>
             </View>
             <View style={{ paddingRight: 8 }}>
-              <ActivityIndicator size="small" color="#2563eb" />
+              <ActivityIndicator size="small" color={t.accentBlue} />
             </View>
           </View>
         </View>
 
-        <Text style={styles.sectionLabel}>¿Qué sigue?</Text>
-        <View style={styles.sectionContainer}>
+        <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>¿Qué sigue?</Text>
+        <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Ionicons name="notifications-outline" size={20} color="#4b5563" style={styles.settingIcon} />
+              <Ionicons name="notifications-outline" size={20} color={t.iconColor} style={styles.settingIcon} />
               <View style={{ flex: 1, paddingRight: 10 }}>
-                <Text style={styles.settingTitle}>Notificación</Text>
-                <Text style={[styles.settingValue, { lineHeight: 18 }]}>Recibirás una respuesta cuando sea procesada.</Text>
+                <Text style={[styles.settingTitle, { color: t.textPrimary }]}>Notificación</Text>
+                <Text style={[styles.settingValue, { lineHeight: 18, color: t.textMuted }]}>Recibirás una respuesta cuando sea procesada.</Text>
               </View>
             </View>
           </View>
-          
-          <View style={styles.divider} />
-          
+
+          <View style={[styles.divider, { backgroundColor: t.divider }]} />
+
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <Ionicons name="hand-left-outline" size={20} color="#4b5563" style={styles.settingIcon} />
+              <Ionicons name="hand-left-outline" size={20} color={t.iconColor} style={styles.settingIcon} />
               <View style={{ flex: 1, paddingRight: 10 }}>
-                <Text style={styles.settingTitle}>No cierres</Text>
-                <Text style={[styles.settingValue, { lineHeight: 18 }]}>Esta pantalla se actualizará automáticamente.</Text>
+                <Text style={[styles.settingTitle, { color: t.textPrimary }]}>No cierres</Text>
+                <Text style={[styles.settingValue, { lineHeight: 18, color: t.textMuted }]}>Esta pantalla se actualizará automáticamente.</Text>
               </View>
             </View>
           </View>
@@ -130,20 +129,45 @@ export const PendingApprovalScreen = ({ tokenSolicitud, idSolicitud, onApproved,
   );
 };
 
+// ─── Paletas ──────────────────────────────────────────────────────────────────
+const light = {
+  bg:            '#ffffff',
+  card:          '#f9fafb',
+  avatarBg:      '#e2e8f0',
+  textPrimary:   '#1f2937',
+  textSecondary: '#64748b',
+  textMuted:     '#9ca3af',
+  sectionLabel:  '#94a3b8',
+  iconColor:     '#4b5563',
+  divider:       '#f1f5f9',
+  accentBlue:    '#2563eb',
+};
+
+const dark = {
+  bg:            '#0f172a',
+  card:          '#1e293b',
+  avatarBg:      '#334155',
+  textPrimary:   '#ffffff',
+  textSecondary: '#94a3b8',
+  textMuted:     '#94a3b8',
+  sectionLabel:  '#ffffff',
+  iconColor:     '#94a3b8',
+  divider:       '#1e293b',
+  accentBlue:    '#3b82f6',
+};
+
+// ─── Estilos ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff'
   },
   header: {
-    backgroundColor: '#ffffff',
     paddingHorizontal: 20,
-    paddingBottom: 10
+    paddingBottom: 10,
   },
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9fafb',
     borderRadius: 24,
     padding: 20,
   },
@@ -151,88 +175,79 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#e2e8f0',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16
+    marginRight: 16,
   },
   profileInfo: {
-    flex: 1
+    flex: 1,
   },
   profileName: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1f2937',
     marginBottom: 4,
-    letterSpacing: -0.5
+    letterSpacing: -0.5,
   },
   profileEmail: {
     fontSize: 13,
-    color: '#64748b',
-    fontWeight: '500'
+    fontWeight: '500',
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 10
+    paddingTop: 10,
   },
   sectionLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#94a3b8',
     marginBottom: 8,
     marginLeft: 12,
     textTransform: 'uppercase',
-    letterSpacing: 1.2
+    letterSpacing: 1.2,
   },
   sectionContainer: {
-    backgroundColor: '#f9fafb',
     borderRadius: 24,
     paddingVertical: 8,
-    marginBottom: 24
+    marginBottom: 24,
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 14,
-    paddingHorizontal: 16
+    paddingHorizontal: 16,
   },
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1
+    flex: 1,
   },
   settingIcon: {
-    marginRight: 14
+    marginRight: 14,
   },
   iconCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#e2e8f0',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14
+    marginRight: 14,
   },
   stepContent: {
     flex: 1,
-    paddingRight: 10
+    paddingRight: 10,
   },
   settingTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#1f2937',
     letterSpacing: -0.2,
-    marginBottom: 2
+    marginBottom: 2,
   },
   settingValue: {
     fontSize: 13,
-    color: '#9ca3af'
   },
   divider: {
     height: 1,
-    backgroundColor: '#f1f5f9',
-    marginHorizontal: 16
-  }
+    marginHorizontal: 16,
+  },
 });

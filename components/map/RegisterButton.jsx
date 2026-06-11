@@ -9,7 +9,9 @@ import {
   Modal,
   ScrollView,
   Vibration,
-  DeviceEventEmitter
+  DeviceEventEmitter,
+  Animated,
+  TouchableWithoutFeedback
 } from
   'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -41,6 +43,75 @@ import { registerStyles, registerStylesDark } from './RegisterButtonStyles';
 const API_URL = getApiEndpoint('/api');
 const NOTIF_DIARIA_KEY = '@notif_asistencia_disponible';
 
+const mStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: 24,
+    borderWidth: 1,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 16,
+  },
+  topStripe: {
+    height: 4,
+    width: '100%',
+  },
+  body: {
+    padding: 28,
+    alignItems: 'center',
+  },
+  iconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 18,
+    marginTop: 4,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 10,
+    letterSpacing: -0.3,
+  },
+  message: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 21,
+    marginBottom: 24,
+  },
+  alertActions: {
+    width: '100%',
+    gap: 10,
+  },
+  btn: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+});
+
 export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
   const [loading, setLoading] = useState(true);
   const [registrando, setRegistrando] = useState(false);
@@ -71,6 +142,37 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
   const [omisionesGlobales, setOmisionesGlobales] = useState(null);
   const [usandoEstadoBackend, setUsandoEstadoBackend] = useState(false);
   const [diaFestivo, setDiaFestivo] = useState(null);
+
+  // Modal de alerta personalizado
+  const [alertModal, setAlertModal] = useState({ visible: false, icon: 'alert-circle', iconColor: '#ef4444', title: '', message: '', actions: [] });
+  const alertAnim = useRef(new Animated.Value(0)).current;
+
+  const showCustomAlert = (title, message, actions = [{ text: 'OK', onPress: null }]) => {
+    let icon = 'information-circle';
+    let iconColor = '#2563eb';
+    const lowerTitle = title.toLowerCase();
+
+    if (lowerTitle.includes('error') || lowerTitle.includes('fall') || lowerTitle.includes('insuficiente') || lowerTitle.includes('bloqueo') || lowerTitle.includes('sin acceso') || lowerTitle.includes('no disponible') || lowerTitle.includes('no verificada')) {
+      icon = 'alert-circle';
+      iconColor = '#ef4444';
+    } else if (lowerTitle.includes('exitoso') || lowerTitle.includes('completada')) {
+      icon = 'checkmark-circle';
+      iconColor = '#10b981';
+    } else if (lowerTitle.includes('aviso') || lowerTitle.includes('pendiente') || lowerTitle.includes('festivo') || lowerTitle.includes('requerida') || lowerTitle.includes('seguridad')) {
+      icon = 'warning';
+      iconColor = '#f59e0b';
+    }
+
+    setAlertModal({ visible: true, icon, iconColor, title, message, actions });
+    Animated.spring(alertAnim, { toValue: 1, tension: 120, friction: 12, useNativeDriver: true }).start();
+  };
+
+  const hideCustomAlert = (cb) => {
+    Animated.timing(alertAnim, { toValue: 0, duration: 150, useNativeDriver: true }).start(() => {
+      setAlertModal(prev => ({ ...prev, visible: false }));
+      if (typeof cb === 'function') cb();
+    });
+  };
 
   const datosRegistroRef = useRef({
     ubicacion: null,
@@ -184,9 +286,10 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         const creds = await sqliteManager.getAllCredenciales();
         const misCreds = creds.filter((c) => c.empleado_id === userData.empleado_id);
 
-        const tienePin = misCreds.some((c) => c.pin_hash);
-        const tieneDactilar = misCreds.some((c) => c.dactilar_template);
-        const tieneFacial = misCreds.some((c) => c.facial_descriptor);
+        const esValido = (val) => val && val !== 'false' && val !== '0' && val !== 0 && val !== 'null';
+        const tienePin = misCreds.some((c) => esValido(c.pin_hash));
+        const tieneDactilar = misCreds.some((c) => esValido(c.dactilar_template));
+        const tieneFacial = misCreds.some((c) => esValido(c.facial_descriptor));
 
         const offlineCreds = {
           tiene_pin: tienePin,
@@ -232,9 +335,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
     } catch (e) {
       (function () { })('Error verificando biometría local:', e);
     }
-    const tieneFacialEnBD = credenciales?._offlineMode
-      ? true
-      : (credenciales?.tiene_facial || false);
+    const tieneFacialEnBD = credenciales?.tiene_facial || false;
 
     const dactilarDisponible = tieneFacialEnBD && biometricSupported;
 
@@ -309,7 +410,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       }
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
       const response = await fetch(
         `${API_URL}/asistencias/estado/${empleadoId}`,
         {
@@ -586,11 +687,12 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       const ahoraMinsNow = horaActual.getHours() * 60 + horaActual.getMinutes();
 
       if (!bloqueProximo) {
-        setPuedeRegistrar(false);
+        // Se permite registrar un turno extra manual (ej. offline o no programado)
+        setPuedeRegistrar(true);
         setTipoSiguienteRegistro('entrada');
-        setEstadoHorario('bloque_completo');
-        setJornadaCompletada(true);
-        setMensajeEspera('Has completado tus turnos programados de hoy.');
+        setEstadoHorario('turno_extra');
+        setJornadaCompletada(false);
+        setMensajeEspera('Has completado tus turnos de hoy. Puedes registrar un turno extra si es necesario.');
         return;
       }
 
@@ -624,8 +726,19 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
     const POSTERIOR_SALIDA_LOCAL = horarioInfo?.tolerancias?.posteriorSalida ?? 0;
     const numSalidasOffline = (registrosHoyTodos || []).filter(r => r.tipo === 'salida').length;
     const totalBloques = horarioInfo?.bloques?.length || 0;
-    const bloqueIdxSalida = totalBloques > 0 ? Math.min(numSalidasOffline, totalBloques - 1) : 0;
-    const bloqueActualSalida = horarioInfo?.bloques?.[bloqueIdxSalida];
+    
+    // Si ya completó los bloques locales pero necesita salir de nuevo (ej. turno extra del admin),
+    // o si no tiene bloques configurados, permitimos la salida libremente.
+    if (numSalidasOffline >= totalBloques || totalBloques === 0) {
+      setPuedeRegistrar(true);
+      setTipoSiguienteRegistro('salida');
+      setEstadoHorario(ultimoEstado);
+      setJornadaCompletada(false);
+      setMensajeEspera('Turno extra o horario libre detectado.');
+      return;
+    }
+
+    const bloqueActualSalida = horarioInfo?.bloques?.[numSalidasOffline];
 
     if (bloqueActualSalida) {
       const ahoraMinsNow = horaActual.getHours() * 60 + horaActual.getMinutes();
@@ -649,38 +762,6 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         setMensajeEspera('Ha superado el tiempo límite permitido para registrar la salida.');
         return;
       }
-    } else if (totalBloques > 0) {
-      // Índice fuera de rango — usar el último bloque como referencia (NUNCA habilitar sin validación)
-      const bloqueRef = horarioInfo.bloques[totalBloques - 1];
-      const ahoraMinsNow = horaActual.getHours() * 60 + horaActual.getMinutes();
-      const inicioVentanaSalida = bloqueRef.salida - ANTICIPO_SALIDA_LOCAL;
-      const finVentanaSalida = bloqueRef.salida + POSTERIOR_SALIDA_LOCAL;
-
-      if (ahoraMinsNow < inicioVentanaSalida) {
-        setPuedeRegistrar(false);
-        setTipoSiguienteRegistro('salida');
-        setEstadoHorario('fuera_horario');
-        setJornadaCompletada(false);
-        setMensajeEspera('Aún no es hora de registrar tu salida.');
-        return;
-      }
-
-      if (POSTERIOR_SALIDA_LOCAL > 0 && ahoraMinsNow > finVentanaSalida) {
-        setPuedeRegistrar(false);
-        setTipoSiguienteRegistro('salida');
-        setEstadoHorario('fuera_horario');
-        setJornadaCompletada(false);
-        setMensajeEspera('Ha superado el tiempo límite permitido para registrar la salida.');
-        return;
-      }
-    } else {
-      // Sin bloques configurados — bloquear por defecto
-      setPuedeRegistrar(false);
-      setTipoSiguienteRegistro('salida');
-      setEstadoHorario('fuera_horario');
-      setJornadaCompletada(false);
-      setMensajeEspera('No hay horario configurado para validar la salida.');
-      return;
     }
 
     setPuedeRegistrar(true);
@@ -1278,7 +1359,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
 
       if (resultado.success) {
         setRegistrando(false);
-        Alert.alert(
+        showCustomAlert(
           'Doble Seguridad',
           'Huella verificada localmente.\n\nPor favor, realiza el reconocimiento facial para completar tu registro.',
           [{ text: 'Continuar a Cámara', onPress: () => setMostrarCapturaFacial(true) }]
@@ -1297,7 +1378,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         mensaje = error.message;
       }
 
-      Alert.alert(
+      showCustomAlert(
         'Error de Autenticación',
         mensaje,
         [{ text: 'OK' }]
@@ -1312,7 +1393,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       setMostrarAutenticacion(false);
       setMostrarCapturaFacial(true);
     } catch (error) {
-      Alert.alert(
+      showCustomAlert(
         'Error',
         error.message || 'No se pudo iniciar la captura facial',
         [{ text: 'OK' }]
@@ -1336,7 +1417,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
 
       if (!validation.isValid) {
         (function () { })('️ Validación de calidad falló:', validation.errors);
-        Alert.alert(
+        showCustomAlert(
           'Calidad insuficiente',
           validation.errors.join('\n') + '\n\n¿Deseas intentar de nuevo?',
           [
@@ -1369,7 +1450,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
 
         if (!response.ok || !verification.success) {
           (function () { })(' Verificación facial falló en el servidor:', verification);
-          Alert.alert(
+          showCustomAlert(
             'Identidad no verificada',
             verification.message || 'El rostro capturado no coincide con tu registro.',
             [
@@ -1389,7 +1470,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       await procederConRegistro();
     } catch (error) {
       (function () { })(' Error en autenticación facial:', error);
-      Alert.alert(
+      showCustomAlert(
         'Error de Autenticación',
         error.message || 'No se pudo verificar tu identidad',
         [{ text: 'OK' }]
@@ -1491,80 +1572,104 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       let success = false;
       let data = null;
 
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-        const response = await fetch(`${API_URL}/asistencias/registrar`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userData.token}`
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
+      const MAX_RETRIES = 5;
+      let attempt = 0;
 
-        const responseText = await response.text();
-
-        if (response.status === 502 || response.status === 500) {
-          throw new Error('Server Error');
-        }
-
+      while (attempt < MAX_RETRIES && !success) {
+        attempt++;
         try {
-          data = responseText ? JSON.parse(responseText) : {};
-        } catch (parseError) {
-          throw new Error('Error del servidor: respuesta inválida');
-        }
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s por intento
 
-        if (!response.ok) {
-          const errorMsg = data.message || data.error || `Error del servidor (${response.status})`;
-
-          if (data.noPuedeRegistrar === true && data.estadoHorario === 'espera') {
-            data.noPuedeRegistrar = false;
-            data.estadoHorario = 'activo';
-          }
-
-          if (data.noPuedeRegistrar === true) {
-            setPuedeRegistrar(false);
-            if (data.estadoHorario) setEstadoHorario(data.estadoHorario);
-            setMensajeEspera(data.mensaje || '');
-            return;
-          }
-          throw new Error(errorMsg);
-        }
-
-        success = true;
-
-        try {
-          await saveOnlineAsistenciaToCache({
-            id: data?.data?.id || `local_online_${Date.now()}`,
-            empleado_id: payload.empleado_id,
-            tipo: data?.data?.tipo || tipoActual,
-            estado: data?.data?.estado || (tipoActual === 'salida' ? 'salida_puntual' : 'pendiente'),
-            fecha_registro: getTrustedDate().toISOString(),
-            dispositivo_origen: 'movil',
-            departamento_id: payload.departamento_id
+          const response = await fetch(`${API_URL}/asistencias/registrar`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${userData.token}`
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal
           });
-        } catch (cacheErr) {
-          (function () { })('No crítico: no se pudo cachear registro online:', cacheErr.message);
+          clearTimeout(timeoutId);
+
+          const responseText = await response.text();
+
+          if (response.status === 502 || response.status === 500) {
+            throw new Error('Server Error');
+          }
+
+          try {
+            data = responseText ? JSON.parse(responseText) : {};
+          } catch (parseError) {
+            throw new Error('Error del servidor: respuesta inválida');
+          }
+
+          if (!response.ok) {
+            const errorMsg = data.message || data.error || `Error del servidor (${response.status})`;
+
+            const isDuplicateError = errorMsg.toLowerCase().includes('minuto') || 
+                                     errorMsg.toLowerCase().includes('reciente') ||
+                                     data.estadoHorario === 'espera';
+
+            // Si estamos en un reintento y el servidor nos dice que ya registramos muy rápido,
+            // significa que el intento anterior sí se guardó pero la red falló.
+            if (attempt > 1 && isDuplicateError) {
+              success = true;
+              data = { data: { tipo: tipoActual, estado: 'registrado' } };
+              break;
+            }
+
+            if (data.noPuedeRegistrar === true && data.estadoHorario === 'espera') {
+              data.noPuedeRegistrar = false;
+              data.estadoHorario = 'activo';
+            }
+
+            if (data.noPuedeRegistrar === true) {
+              setPuedeRegistrar(false);
+              if (data.estadoHorario) setEstadoHorario(data.estadoHorario);
+              setMensajeEspera(data.mensaje || '');
+              return;
+            }
+            throw new Error(errorMsg);
+          }
+
+          success = true;
+
+          try {
+            await saveOnlineAsistenciaToCache({
+              id: data?.data?.id || `local_online_${Date.now()}`,
+              empleado_id: payload.empleado_id,
+              tipo: data?.data?.tipo || tipoActual,
+              estado: data?.data?.estado || (tipoActual === 'salida' ? 'salida_puntual' : 'pendiente'),
+              fecha_registro: getTrustedDate().toISOString(),
+              dispositivo_origen: 'movil',
+              departamento_id: payload.departamento_id
+            });
+          } catch (cacheErr) {
+            (function () { })('No crítico: no se pudo cachear registro online:', cacheErr.message);
+          }
+
+        } catch (e) {
+          const esErrorDeRed =
+            e.message === 'Server Error' ||
+            e.message.includes('Network request failed') ||
+            e.message.includes('Failed to fetch') ||
+            e.message.includes('Timeout') ||
+            e.message.includes('network') ||
+            e.name === 'AbortError';
+
+          if (!esErrorDeRed) {
+            throw e; // Si es error del usuario o 4xx, salir inmediatamente
+          }
+
+          if (attempt < MAX_RETRIES) {
+            (function () { })(`Intento ${attempt} fallido, reintentando en 3s...`, e.message);
+            await new Promise(res => setTimeout(res, 3000));
+          } else {
+            (function () { })(`Error de red tras ${MAX_RETRIES} intentos, guardando offline:`, e.message);
+          }
         }
-
-      } catch (e) {
-        const esErrorDeRed =
-          e.message === 'Server Error' ||
-          e.message.includes('Network request failed') ||
-          e.message.includes('Failed to fetch') ||
-          e.message.includes('Timeout') ||
-          e.message.includes('network') ||
-          e.name === 'AbortError';
-
-
-        if (!esErrorDeRed) {
-          throw e;
-        }
-        (function () { })('Error de red, guardando offline:', e.message);
       }
 
       if (!success) {
@@ -1635,7 +1740,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       Vibration.vibrate(500);
 
       if (esOffline) {
-        Alert.alert(
+        showCustomAlert(
           'Pendiente a revisar',
           `Departamento: ${departamento.nombre}\n\nHora: ${horaStr}\n\nUna vez que haya conexión a internet, el sistema analizará y clasificará tu asistencia automáticamente.`,
           [{ text: 'Entendido' }]
@@ -1653,7 +1758,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         } else {
           estadoTexto = estadoRegistrado?.replace(/_/g, ' ') || 'registrado';
         }
-        Alert.alert(
+        showCustomAlert(
           'Registro Exitoso',
           `${tipoMayuscula}: ${estadoTexto}\n\nDepartamento: ${departamento.nombre}\n\nHora: ${horaStr}`,
           [{ text: 'OK' }]
@@ -1665,7 +1770,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         onRegistroExitoso(data);
       }
     } catch (err) {
-      Alert.alert('Error', err.message || 'No se pudo registrar', [{ text: 'OK' }]);
+      showCustomAlert('Error', err.message || 'No se pudo registrar', [{ text: 'OK' }]);
     } finally {
       setRegistrando(false);
     }
@@ -1677,7 +1782,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
 
     // Bloqueo inmediato en día festivo — antes de cualquier otra validación
     if (diaFestivo) {
-      Alert.alert(
+      showCustomAlert(
         'Día Festivo',
         `Hoy es ${diaFestivo.nombre}.\n\nEl registro de asistencia no está disponible en días festivos obligatorios.`,
         [{ text: 'Entendido' }]
@@ -1686,17 +1791,17 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
     }
 
     if (!userData || !userData.empleado_id || !userData.token) {
-      Alert.alert('Error', 'No se pudo identificar tu información de usuario. Intenta cerrar sesión y volver a iniciar.');
+      showCustomAlert('Error', 'No se pudo identificar tu información de usuario. Intenta cerrar sesión y volver a iniciar.');
       return;
     }
 
     if (!userData.es_empleado) {
-      Alert.alert('Sin acceso', 'Solo empleados pueden registrar asistencia. Tu cuenta no está asociada a un empleado.', [{ text: 'Entendido' }]);
+      showCustomAlert('Sin acceso', 'Solo empleados pueden registrar asistencia. Tu cuenta no está asociada a un empleado.', [{ text: 'Entendido' }]);
       return;
     }
 
     if (!horarioInfo) {
-      Alert.alert('Error', 'No tienes un horario configurado. Contacta al administrador.', [{ text: 'OK' }]);
+      showCustomAlert('Error', 'No tienes un horario configurado. Contacta al administrador.', [{ text: 'OK' }]);
       return;
     }
 
@@ -1710,7 +1815,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         } else if (!departamentoSeleccionado) {
           mensaje = 'Selecciona un departamento para registrar';
         } else if (estadoHorario === 'falta_previa') {
-          Alert.alert(
+          showCustomAlert(
             'Aviso de Falta',
             'Tu entrada anterior fue marcada como falta. Se recomienda esperar a tu siguiente turno, ¿deseas continuar con un nuevo registro?',
             [
@@ -1733,17 +1838,17 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         } else if (!horarioInfo.trabaja) {
           mensaje = 'No tienes horario configurado para hoy';
         }
-        Alert.alert('No disponible', mensaje, [{ text: 'Entendido' }]);
+        showCustomAlert('No disponible', mensaje, [{ text: 'Entendido' }]);
         return;
       }
 
       if (!ubicacionActual || !ubicacionActual.lat || !ubicacionActual.lng) {
-        Alert.alert('Error', 'No se pudo obtener tu ubicación. Verifica que el GPS esté activado.');
+        showCustomAlert('Error', 'No se pudo obtener tu ubicación. Verifica que el GPS esté activado.');
         return;
       }
 
       if (ubicacionActual.mocked) {
-        Alert.alert(
+        showCustomAlert(
           'Bloqueo de Seguridad',
           'Se ha detectado el uso de una aplicación para simular la ubicación (GPS Fake). Por políticas de seguridad, no podras registrar tu asistencia.',
           [{ text: 'Entendido' }]
@@ -1752,7 +1857,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       }
 
       if (!credencialesUsuario?.tiene_pin && !credencialesUsuario?.tiene_dactilar) {
-        Alert.alert(
+        showCustomAlert(
           'Configuración Requerida',
           'Debes configurar al menos un método de autenticación (PIN o Huella) antes de registrar asistencias.\n\nVe a Configuración > Seguridad para configurar.',
           [{ text: 'Entendido' }]
@@ -1803,6 +1908,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
     if (estadoHorario === 'dia_festivo' || diaFestivo) return diaFestivo ? `Día festivo: ${diaFestivo.nombre}` : 'Día festivo';
     if (estadoHorario === 'falta_previa') return 'Falta registrada — turno cerrado';
     if (estadoHorario === 'bloque_completo') return 'Bloque completado';
+    if (estadoHorario === 'turno_extra') return 'Turno extra disponible';
     if (!dentroDelArea) return 'Fuera del área';
     if (!puedeRegistrar) return 'Fuera de horario';
     if (!tipoSiguienteRegistro) return 'Calculando estado...';
@@ -1918,7 +2024,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
             </View>
           }
 
-          {!loading && departamentos.length > 0 &&
+          {!loading &&
             <>
               {departamentosDisponibles.length > 0 || tieneOmisionGps ?
                 <TouchableOpacity
@@ -1950,7 +2056,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
 
               {internetReachable ?
                 <TouchableOpacity
-                  style={[styles.viewMapButton, !usandoEstadoBackend && { backgroundColor: darkMode ? 'rgba(245, 158, 11, 0.15)' : '#fffbeb' }]}
+                  style={styles.viewMapButton}
                   onPress={() => {
                     setMostrarMapa(true);
                     setForzarUbicacion(true);
@@ -1958,12 +2064,12 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
                   activeOpacity={0.7}>
 
                   <Ionicons
-                    name={usandoEstadoBackend ? "map-outline" : "cloud-offline-outline"}
+                    name="map-outline"
                     size={16}
-                    color={usandoEstadoBackend ? (darkMode ? "#60a5fa" : "#2563eb") : (darkMode ? "#fbbf24" : "#d97706")}
+                    color={darkMode ? "#60a5fa" : "#2563eb"}
                   />
-                  <Text style={[styles.viewMapText, !usandoEstadoBackend && { color: darkMode ? "#fbbf24" : "#d97706" }]}>
-                    {usandoEstadoBackend ? "Ver mapa" : "Mapa (Servidor Caído)"}
+                  <Text style={styles.viewMapText}>
+                    Ver mapa
                   </Text>
                 </TouchableOpacity> :
 
@@ -2004,21 +2110,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
             }
           </TouchableOpacity>
 
-          {ultimoRegistroHoy &&
-            <View style={styles.lastRegisterContainer}>
-              <View style={styles.lastRegisterIcon}>
-                <Ionicons
-                  name={ultimoRegistroHoy.tipo === 'entrada' ? 'log-in' : 'log-out'}
-                  size={12}
-                  color="#9ca3af" />
 
-              </View>
-              <Text style={styles.lastRegisterText}>
-                Último: {ultimoRegistroHoy.tipo === 'entrada' ? 'Entrada' : 'Salida'} · {ultimoRegistroHoy.hora}
-                {ultimoRegistroHoy.estado && ` · ${ultimoRegistroHoy.estado}`}
-              </Text>
-            </View>
-          }
         </View>
       </View>
 
@@ -2197,6 +2289,58 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
 
         </Modal>
       }
+
+      {/* Modal de Alerta Custom */}
+      <Modal visible={alertModal.visible} transparent animationType="none" onRequestClose={() => hideCustomAlert()}>
+        <TouchableWithoutFeedback onPress={() => hideCustomAlert()}>
+          <View style={mStyles.backdrop}>
+            <TouchableWithoutFeedback>
+              <Animated.View style={[
+                mStyles.card,
+                { backgroundColor: darkMode ? '#1e293b' : '#ffffff', borderColor: darkMode ? '#334155' : '#e2e8f0' },
+                {
+                  opacity: alertAnim,
+                  transform: [{ scale: alertAnim.interpolate({ inputRange: [0, 1], outputRange: [0.88, 1] }) }]
+                }
+              ]}>
+                <View style={[mStyles.topStripe, { backgroundColor: alertModal.iconColor }]} />
+                <View style={mStyles.body}>
+                  <View style={[mStyles.iconCircle, { backgroundColor: `${alertModal.iconColor}1A` }]}>
+                    <Ionicons name={alertModal.icon} size={36} color={alertModal.iconColor} />
+                  </View>
+                  <Text style={[mStyles.title, { color: darkMode ? '#f1f5f9' : '#111827' }]}>{alertModal.title}</Text>
+                  <Text style={[mStyles.message, { color: darkMode ? '#94a3b8' : '#4b5563' }]}>{alertModal.message}</Text>
+
+                  <View style={mStyles.alertActions}>
+                    {alertModal.actions.map((action, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={[
+                          mStyles.btn,
+                          action.style === 'cancel' ? { backgroundColor: darkMode ? '#334155' : '#f1f5f9' } : { backgroundColor: alertModal.iconColor }
+                        ]}
+                        onPress={() => {
+                          hideCustomAlert(() => {
+                            if (action.onPress) action.onPress();
+                          });
+                        }}
+                        activeOpacity={0.85}>
+                        <Text style={[
+                          mStyles.btnText,
+                          action.style === 'cancel' && { color: darkMode ? '#f1f5f9' : '#111827' }
+                        ]}>
+                          {action.text}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </Animated.View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
     </>);
 
 };

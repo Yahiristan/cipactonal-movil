@@ -267,6 +267,12 @@ const baseStyles = {
   dayInitialInactive: {
     color: '#94a3b8'
   },
+  dayIconToday: {
+    backgroundColor: '#2563eb'
+  },
+  dayInitialToday: {
+    color: '#ffffff'
+  },
   scheduleLeft: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -329,7 +335,7 @@ const baseStyles = {
     fontWeight: '600'
   },
   scheduleItemToday: {
-    backgroundColor: '#eff6ff'
+    backgroundColor: '#dbeafe'
   },
   scheduleItemInactive: {
     opacity: 0.6
@@ -576,7 +582,7 @@ export const scheduleStylesDark = StyleSheet.create({
   },
   scheduleItemToday: {
     ...baseStyles.scheduleItemToday,
-    backgroundColor: '#172554'
+    backgroundColor: '#1e3a8a'
   },
   dayIconActive: {
     ...baseStyles.dayIconActive,
@@ -589,6 +595,14 @@ export const scheduleStylesDark = StyleSheet.create({
   dayInitialActive: {
     ...baseStyles.dayInitialActive,
     color: '#60a5fa'
+  },
+  dayIconToday: {
+    ...baseStyles.dayIconToday,
+    backgroundColor: '#3b82f6'
+  },
+  dayInitialToday: {
+    ...baseStyles.dayInitialToday,
+    color: '#ffffff'
   },
   scheduleDay: {
     ...baseStyles.scheduleDay,
@@ -643,11 +657,19 @@ export const scheduleStylesDark = StyleSheet.create({
   },
   modalTurnoTitle: {
     ...baseStyles.modalTurnoTitle,
+    color: '#94a3b8'
+  },
+  modalTurnoLabel: {
+    ...baseStyles.modalTurnoLabel,
     color: '#f1f5f9'
   },
   modalTurnoTime: {
     ...baseStyles.modalTurnoTime,
     color: '#f1f5f9'
+  },
+  modalTurnoDivider: {
+    ...baseStyles.modalTurnoDivider,
+    backgroundColor: '#334155'
   },
   modalTurnoNumber: {
     ...baseStyles.modalTurnoNumber,

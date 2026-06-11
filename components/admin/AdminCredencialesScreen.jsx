@@ -22,13 +22,19 @@ import {
   guardarDactilar,
   guardarFacial,
   eliminarCredencial
-} from
-  '../../services/credencialesService';
-import {
-  checkBiometricSupport
-} from
-  '../../services/biometricservice';
+} from '../../services/credencialesService';
+import { checkBiometricSupport } from '../../services/biometricservice';
 import { PinInputModal } from '../settingsPages/PinModal';
+import { Header } from '../ui/Header';
+import getApiEndpoint from '../../config/api';
+import { Image } from 'react-native';
+
+const obtenerUrlFotoPerfil = (foto) => {
+  if (!foto) return null;
+  if (foto.startsWith('data:image/') || foto.startsWith('http')) return foto;
+  const BASE_URL = getApiEndpoint('');
+  return `${BASE_URL}${foto.startsWith('/') ? '' : '/'}${foto}`;
+};
 
 
 const ESTADOS = {
@@ -56,6 +62,7 @@ export const AdminCredencialesScreen = ({ empleado, userData, darkMode, onBack }
   const [showFacialCapture, setShowFacialCapture] = useState(false);
 
   const styles = darkMode ? darkStyles : lightStyles;
+  const fotoUrl = empleado.foto ? obtenerUrlFotoPerfil(empleado.foto) : null;
 
   const cargarCredenciales = useCallback(async () => {
     try {
@@ -192,19 +199,21 @@ export const AdminCredencialesScreen = ({ empleado, userData, darkMode, onBack }
     <View style={styles.container}>
       
 
-      { }
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-        <View style={styles.headerText}>
-          <Text style={styles.headerTitle} numberOfLines={1}>{empleado.nombre}</Text>
-          <Text style={styles.headerSubtitle} numberOfLines={1}>{empleado.correo}</Text>
-        </View>
-        <TouchableOpacity onPress={cargarCredenciales} style={styles.backBtn}>
-          <Ionicons name="refresh" size={20} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      {/* Header unificado */}
+      <Header
+        darkMode={darkMode}
+        title="Credenciales"
+        leftComponent={
+          <TouchableOpacity onPress={onBack} style={{ padding: 8, marginLeft: -8 }}>
+            <Ionicons name="arrow-back" size={24} color={darkMode ? '#f8fafc' : '#0f172a'} />
+          </TouchableOpacity>
+        }
+        rightComponent={
+          <TouchableOpacity onPress={cargarCredenciales} style={{ padding: 8, marginRight: -8 }}>
+            <Ionicons name="refresh" size={24} color={darkMode ? '#f8fafc' : '#0f172a'} />
+          </TouchableOpacity>
+        }
+      />
 
       {loading ?
         <View style={styles.centered}>
@@ -213,39 +222,63 @@ export const AdminCredencialesScreen = ({ empleado, userData, darkMode, onBack }
         </View> :
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          
+          <View style={styles.profileCard}>
+            <View style={styles.profileGradient}>
+              <View style={styles.profileHeader}>
+                <View style={styles.avatarContainer}>
+                  {fotoUrl ?
+                  <Image source={{ uri: fotoUrl }} style={styles.avatarImage} /> :
+                  <View style={styles.avatarPlaceholder}>
+                      <Ionicons name="person" size={40} color="#fff" />
+                    </View>
+                  }
+                </View>
+                <View style={styles.profileInfo}>
+                  <Text style={styles.profileName} numberOfLines={1}>{empleado.nombre}</Text>
+                  <Text style={styles.profileUsername} numberOfLines={1}>{empleado.correo || 'No registrado'}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
           <Text style={styles.sectionLabel}>Credenciales registradas</Text>
 
-          { }
-          <CredencialCard
-            tipo="dactilar"
-            label="Huella Dactilar"
-            icono="finger-print"
-            tiene={hasFingerprint}
-            procesando={procesandoHuella}
-            onRegistrar={handleRegistrarHuella}
-            onEliminar={handleEliminar} />
+          <View style={styles.sectionContainer}>
+            { }
+            <CredencialCard
+              tipo="dactilar"
+              label="Huella Dactilar"
+              icono="finger-print"
+              tiene={hasFingerprint}
+              procesando={procesandoHuella}
+              onRegistrar={handleRegistrarHuella}
+              onEliminar={handleEliminar} />
 
+            <View style={styles.divider} />
 
-          { }
-          <CredencialCard
-            tipo="facial"
-            label="Facial"
-            icono="scan"
-            tiene={hasFacial}
-            procesando={procesandoFacial}
-            onRegistrar={handleRegistrarFacial}
-            onEliminar={handleEliminar} />
+            { }
+            <CredencialCard
+              tipo="facial"
+              label="Facial"
+              icono="scan"
+              tiene={hasFacial}
+              procesando={procesandoFacial}
+              onRegistrar={handleRegistrarFacial}
+              onEliminar={handleEliminar} />
 
+            <View style={styles.divider} />
 
-          { }
-          <CredencialCard
-            tipo="pin"
-            label="PIN"
-            icono="keypad"
-            tiene={hasPin}
-            procesando={procesandoPin}
-            onRegistrar={handleRegistrarPin}
-            onEliminar={handleEliminar} />
+            { }
+            <CredencialCard
+              tipo="pin"
+              label="PIN"
+              icono="keypad"
+              tiene={hasPin}
+              procesando={procesandoPin}
+              onRegistrar={handleRegistrarPin}
+              onEliminar={handleEliminar} />
+          </View>
         </ScrollView>
       }
 
@@ -265,28 +298,70 @@ export const AdminCredencialesScreen = ({ empleado, userData, darkMode, onBack }
 
 const baseStyles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    paddingTop: Platform.OS === 'android' ? 16 : 50,
-    paddingBottom: 16, paddingHorizontal: 16,
-    flexDirection: 'row', alignItems: 'center', gap: 12
+  scrollContent: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 80 },
+  profileCard: {
+    borderRadius: 24,
+    marginBottom: 28,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f1f5f9'
   },
-  backBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    justifyContent: 'center', alignItems: 'center'
+  profileGradient: {
+    padding: 20
   },
-  headerText: { flex: 1 },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#fff' },
-  headerSubtitle: { fontSize: 12, color: '#bfdbfe', marginTop: 1 },
-  scrollContent: { padding: 16, paddingBottom: 80 },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  avatarContainer: {
+    marginRight: 16
+  },
+  avatarImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#f1f5f9'
+  },
+  avatarPlaceholder: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#3b82f6',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  profileInfo: {
+    flex: 1
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 4
+  },
+  profileUsername: {
+    fontSize: 13,
+    color: '#6b7280'
+  },
   sectionLabel: {
-    fontSize: 12, fontWeight: '600', textTransform: 'uppercase',
-    letterSpacing: 0.6, marginBottom: 12
+    fontSize: 12, fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1.2,
+    marginBottom: 8, marginLeft: 12
+  },
+  sectionContainer: {
+    backgroundColor: '#f1f5f9',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    overflow: 'hidden'
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e2e8f0',
+    marginHorizontal: 16
   },
   credCard: {
-    borderRadius: 16, padding: 16, marginBottom: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 6, elevation: 2
+    padding: 16
   },
   credHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 14, gap: 12 },
   credIconWrap: {
@@ -324,9 +399,12 @@ const baseStyles = StyleSheet.create({
 const lightStyles = StyleSheet.create({
   ...baseStyles,
   container: { ...baseStyles.container, backgroundColor: '#f8fafc' },
-  header: { ...baseStyles.header, backgroundColor: '#2563eb' },
-  sectionLabel: { ...baseStyles.sectionLabel, color: '#6b7280' },
-  credCard: { ...baseStyles.credCard, backgroundColor: '#ffffff' },
+  sectionLabel: { ...baseStyles.sectionLabel, color: '#94a3b8' },
+  sectionContainer: { ...baseStyles.sectionContainer, backgroundColor: '#f1f5f9', borderColor: '#e2e8f0' },
+  divider: { ...baseStyles.divider, backgroundColor: '#e2e8f0' },
+  profileCard: { ...baseStyles.profileCard, backgroundColor: '#f1f5f9', borderColor: '#e2e8f0' },
+  profileName: { ...baseStyles.profileName, color: '#1f2937' },
+  profileUsername: { ...baseStyles.profileUsername, color: '#6b7280' },
   credLabel: { ...baseStyles.credLabel, color: '#111827' },
   infoBox: { ...baseStyles.infoBox, backgroundColor: '#ffffff', borderColor: '#e5e7eb' },
   infoText: { ...baseStyles.infoText, color: '#4b5563' },
@@ -336,9 +414,12 @@ const lightStyles = StyleSheet.create({
 const darkStyles = StyleSheet.create({
   ...baseStyles,
   container: { ...baseStyles.container, backgroundColor: '#0f172a' },
-  header: { ...baseStyles.header, backgroundColor: '#1e40af' },
   sectionLabel: { ...baseStyles.sectionLabel, color: '#9ca3af' },
-  credCard: { ...baseStyles.credCard, backgroundColor: '#1f2937' },
+  sectionContainer: { ...baseStyles.sectionContainer, backgroundColor: '#1e293b', borderWidth: 0 },
+  divider: { ...baseStyles.divider, backgroundColor: '#334155' },
+  profileCard: { ...baseStyles.profileCard, backgroundColor: '#1e293b', borderWidth: 0 },
+  profileName: { ...baseStyles.profileName, color: '#f9fafb' },
+  profileUsername: { ...baseStyles.profileUsername, color: '#9ca3af' },
   credLabel: { ...baseStyles.credLabel, color: '#f9fafb' },
   actionBtnDanger: { ...baseStyles.actionBtnDanger, backgroundColor: '#3b1a1a' },
   infoBox: { ...baseStyles.infoBox, backgroundColor: '#1e293b', borderColor: '#334155' },

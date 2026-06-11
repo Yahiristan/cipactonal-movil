@@ -188,31 +188,42 @@ export const TermsAndConditionsScreen = ({ darkMode, onBack }) => {
           ))}
         </View>
 
-        {}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.acceptButton}
-            onPress={onAccept}
-            activeOpacity={0.85}>
-            
-            <View style={styles.buttonGradient}>
-              <Ionicons name="checkmark-circle" size={22} color="#fff" />
-              <Text style={styles.buttonTitle}>Aceptar y Continuar</Text>
-              <Ionicons name="arrow-forward" size={20} color="#fff" />
-            </View>
-          </TouchableOpacity>
+        {/* Botones de acción o estado de aceptado */}
+        {!acceptedTerms ? (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.acceptButton}
+              onPress={onAccept}
+              activeOpacity={0.85}>
+              
+              <View style={styles.buttonGradient}>
+                <Ionicons name="checkmark-circle" size={22} color="#fff" />
+                <Text style={styles.buttonTitle}>Aceptar y Continuar</Text>
+                <Ionicons name="arrow-forward" size={20} color="#fff" />
+              </View>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.declineButton}
-            onPress={onDecline}
-            activeOpacity={0.7}>
-            
-            <View style={styles.declineContent}>
-              <Ionicons name="close-circle-outline" size={22} color="#ef4444" />
-              <Text style={styles.declineButtonText}>Rechazar</Text>
+            <TouchableOpacity
+              style={styles.declineButton}
+              onPress={onDecline}
+              activeOpacity={0.7}>
+              
+              <View style={styles.declineContent}>
+                <Ionicons name="close-circle-outline" size={22} color="#ef4444" />
+                <Text style={styles.declineButtonText}>Rechazar</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.buttonContainer}>
+            <View style={[styles.acceptButton, { backgroundColor: '#10b981', opacity: 0.9 }]}>
+              <View style={styles.buttonGradient}>
+                <Ionicons name="checkmark-done-circle" size={24} color="#fff" />
+                <Text style={styles.buttonTitle}>Términos Aceptados</Text>
+              </View>
             </View>
-          </TouchableOpacity>
-        </View>
+          </View>
+        )}
 
         {}
         <View style={styles.footer}>

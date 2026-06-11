@@ -143,10 +143,11 @@ export const MetodoAutenticacionModal = ({
             const creds = await sqliteManager.getAllCredenciales();
             const misCreds = creds.filter((c) => c.empleado_id === empleadoId);
 
+            const esValido = (val) => val && val !== 'false' && val !== '0' && val !== 0 && val !== 'null';
             setCredenciales({
-              tiene_dactilar: misCreds.some((c) => c.dactilar_template),
-              tiene_facial: misCreds.some((c) => c.facial_descriptor),
-              tiene_pin: misCreds.some((c) => c.pin_hash),
+              tiene_dactilar: misCreds.some((c) => esValido(c.dactilar_template)),
+              tiene_facial: misCreds.some((c) => esValido(c.facial_descriptor)),
+              tiene_pin: misCreds.some((c) => esValido(c.pin_hash)),
               _offlineMode: true
             });
           } catch (offlineErr) {
@@ -386,6 +387,17 @@ export const MetodoAutenticacionModal = ({
         userData?.empleado?.id || userData?.empleado_id || userData?.id;
 
       await guardarPin(empleadoId, pin, userData.token);
+      
+      // FIX: Save PIN locally so it works in offline mode
+      try {
+         await sqliteManager.upsertCredenciales([{
+           id: `local_${empleadoId}`,
+           empleado_id: empleadoId,
+           pin_hash: pin 
+         }]);
+      } catch (e) {
+         (function(){})('Error guardando PIN localmente:', e);
+      }
 
       setCredenciales((prev) => ({ ...prev, tiene_pin: true }));
 

@@ -420,7 +420,7 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
 
           { }
           <Text style={styles.sectionLabel}>HORARIO SEMANAL</Text>
-          <View style={[styles.sectionContainer, { borderRadius: 0, paddingVertical: 0 }]}>
+          <View style={[styles.sectionContainer, { paddingVertical: 0, overflow: 'hidden' }]}>
             {scheduleData.map((schedule, index) => {
               const isLast = index === scheduleData.length - 1;
               const diasSemana = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
@@ -458,12 +458,14 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
                   <View style={styles.scheduleLeft}>
                     <View style={[
                       styles.dayIconContainer,
-                      schedule.active ? styles.dayIconActive : styles.dayIconInactive]
-                    }>
+                      schedule.active ? styles.dayIconActive : styles.dayIconInactive,
+                      isToday && styles.dayIconToday
+                    ]}>
                       <Text style={[
                         styles.dayInitialText,
-                        schedule.active ? styles.dayInitialActive : styles.dayInitialInactive]
-                      }>
+                        schedule.active ? styles.dayInitialActive : styles.dayInitialInactive,
+                        isToday && styles.dayInitialToday
+                      ]}>
                         {getDayInitial(schedule.day)}
                       </Text>
                     </View>
@@ -475,9 +477,7 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
                         }>
                           {schedule.day}
                         </Text>
-                        {isToday &&
-                          <View style={styles.todayDot} />
-                        }
+                        {/* todayDot removido */}
                       </View>
 
                       {tieneMasTurnos &&

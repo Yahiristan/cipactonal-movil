@@ -44,7 +44,7 @@ const EmpresaCard = ({ item, index, onSelect, darkMode }) => {
               <Image
                 source={{ uri: obtenerUrlLogo(item.logo) }}
                 style={styles.avatarImg}
-                resizeMode="contain"
+                resizeMode="cover"
               />
             ) : (
               <Text style={[styles.avatarInitials, darkMode && { color: '#f9fafb' }]}>

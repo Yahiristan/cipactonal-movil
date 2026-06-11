@@ -387,29 +387,10 @@ export const HistoryScreen = ({ darkMode, userData }) => {
 
 
   const renderSectionHeader = useCallback(({ section }) => {
-    const entradas = section.rawRegistros.filter((r) => r.tipo === 'entrada');
-    const totalRegistros = section.rawRegistros.length;
-    const tieneProblema = entradas.some((r) =>
-    r.estado === 'falta' || r.estado === 'falta_por_retardo'
-    );
-    const tieneRetardo = !tieneProblema && entradas.some((r) =>
-    r.estado === 'retardo_a' || r.estado === 'retardo_b' || r.estado === 'retardo'
-    );
-
     return (
       <View style={styles.sectionHeader}>
-        <View style={[
-        styles.sectionDot,
-        {
-          backgroundColor: tieneProblema ? '#ef4444' :
-          tieneRetardo ? '#f59e0b' :
-          entradas.length > 0 ? '#10b981' :
-          '#94a3b8'
-        }]
-        } />
         <Text style={styles.sectionTitle}>{formatearTituloDia(section.fecha)}</Text>
       </View>);
-
   }, [styles, formatearTituloDia]);
 
   const keyExtractor = useCallback((item, index) => item.id?.toString() || index.toString(), []);
@@ -671,12 +652,17 @@ const historyStyles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginTop: 4
+    paddingHorizontal: 20,
+    marginBottom: 8,
+    marginTop: 16
   },
-  sectionDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
-  sectionTitle: { flex: 1, fontSize: 14, fontWeight: '700', color: '#374151' },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: 1.1
+  },
   sectionCount: { fontSize: 12, color: '#9ca3af' },
 
 
@@ -766,7 +752,7 @@ const historyStylesDark = StyleSheet.create({
   statLabel: { ...historyStyles.statLabel, color: '#94a3b8' },
   recordsTitle: { ...historyStyles.recordsTitle, color: '#f1f5f9' },
   recordsCount: { ...historyStyles.recordsCount, color: '#94a3b8' },
-  sectionTitle: { ...historyStyles.sectionTitle, color: '#cbd5e1' },
+  sectionTitle: { ...historyStyles.sectionTitle, color: '#94a3b8' },
   sectionCount: { ...historyStyles.sectionCount, color: '#64748b' },
   recordItem: { ...historyStyles.recordItem, backgroundColor: '#1e293b', borderColor: 'transparent', shadowColor: '#000000' },
   recordItemPair: { ...historyStyles.recordItemPair, backgroundColor: '#1e293b', borderColor: 'transparent', shadowColor: '#000000' },

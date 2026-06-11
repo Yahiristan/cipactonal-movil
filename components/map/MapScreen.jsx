@@ -81,12 +81,15 @@ const MapaZonasPermitidas = ({
       ? departamentos
       : departamento ? [departamento] : [];
 
-    if (userLat == null || userLng == null) return base; // sin GPS: orden original
+    const initLat = ubicacionInicialRef.current?.lat;
+    const initLng = ubicacionInicialRef.current?.lng;
+
+    if (initLat == null || initLng == null) return base; // sin GPS: orden original
 
     return [...base].sort((a, b) =>
-      distanciaAlDepto(a, userLat, userLng) - distanciaAlDepto(b, userLat, userLng)
+      distanciaAlDepto(a, initLat, initLng) - distanciaAlDepto(b, initLat, initLng)
     );
-  }, [departamentos, departamento, userLat, userLng]);
+  }, [departamentos, departamento]);
 
   useEffect(() => {
     if (!listaDepartamentos.length) return;
@@ -225,8 +228,19 @@ const MapaZonasPermitidas = ({
       }
     });
 
-    const centerLat = totalLat / totalPuntos;
-    const centerLng = totalLng / totalPuntos;
+    let centerLat = totalPuntos > 0 ? totalLat / totalPuntos : NaN;
+    let centerLng = totalPuntos > 0 ? totalLng / totalPuntos : NaN;
+
+    if (isNaN(centerLat) || isNaN(centerLng)) {
+      if (userLocation) {
+        centerLat = userLocation.lat;
+        centerLng = userLocation.lng;
+      } else {
+        // Default to Mexico City if no user location and no zones
+        centerLat = 19.4326;
+        centerLng = -99.1332;
+      }
+    }
 
     return `
 <!DOCTYPE html>
@@ -448,7 +462,6 @@ const MapaZonasPermitidas = ({
   // El HTML del mapa solo se regenera cuando cambian las zonas o el departamento;
   // las actualizaciones de GPS se propagan via postMessage sin recargar el WebView.
   const htmlContent = useMemo(() => {
-    if (zonasData.length === 0) return '';
     // Leer del ref para obtener la ubicación más reciente sin hacer que
     // ubicacionActual sea dependencia (lo que recargaría el WebView cada 5s).
     const ubicacionParaHTML = ubicacionActualRef.current ?? ubicacionInicialRef.current;
@@ -465,18 +478,6 @@ const MapaZonasPermitidas = ({
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#3b82f6" />
         <Text style={styles.loadingText}>Cargando mapa...</Text>
-      </SafeAreaView>);
-
-  }
-
-  if (zonasData.length === 0) {
-    return (
-      <SafeAreaView style={styles.errorContainer}>
-        <Ionicons name="map-outline" size={64} color="#9ca3af" />
-        <Text style={styles.errorText}>No se pudo cargar el mapa</Text>
-        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Text style={styles.closeButtonText}>Cerrar</Text>
-        </TouchableOpacity>
       </SafeAreaView>);
 
   }
@@ -537,7 +538,7 @@ const MapaZonasPermitidas = ({
       </View>
 
       {/* Selector de departamentos */}
-      {listaDepartamentos.length > 1 &&
+      {listaDepartamentos.length > 0 &&
         <View style={styles.departamentosContainer}>
           <Text style={styles.departamentosTitle}>DEPARTAMENTO</Text>
           <ScrollView
@@ -578,21 +579,7 @@ const MapaZonasPermitidas = ({
         </View>
       }
 
-      {/* Botón mi ubicación (1 solo depto) */}
-      {listaDepartamentos.length === 1 && ubicacionActual &&
-        <View style={styles.singleLocationContainer}>
-          <TouchableOpacity
-            style={[styles.departamentoChip, mostrandoMiUbicacion && styles.departamentoChipActivo]}
-            onPress={handleFocusUserLocation}
-            activeOpacity={0.7}>
-            <Ionicons name="navigate" size={14} color={mostrandoMiUbicacion ? '#10b981' : (darkMode ? '#9ca3af' : '#6b7280')} />
-            <Text style={[styles.departamentoChipText, mostrandoMiUbicacion && styles.departamentoChipTextActivo]}>
-              Mi ubicación
-            </Text>
-            {mostrandoMiUbicacion && <View style={styles.activeDot} />}
-          </TouchableOpacity>
-        </View>
-      }
+
 
       {/* Leyenda */}
       <View style={styles.legend}>
@@ -875,6 +862,5 @@ const mapStylesDark = StyleSheet.create({
   },
   legendText: { ...mapStyles.legendText, color: '#94a3b8' }
 });
-
 
 export default MapaZonasPermitidas;

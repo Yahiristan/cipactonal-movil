@@ -9,18 +9,20 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  ScrollView,
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
   Image,
-  Platform } from
-'react-native';
+  Platform
+} from
+  'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getEmpleados } from '../../services/empleadoServices';
 import { AdminCredencialesScreen } from './AdminCredencialesScreen';
 import syncManager from '../../services/offline/syncManager.mjs';
+import { Header } from '../ui/Header';
 
 const BASE_URL = getApiEndpoint('');
 
@@ -33,8 +35,8 @@ const fotoUrl = (foto) => {
 const Avatar = ({ nombre, foto, size = 44 }) => {
   const url = fotoUrl(foto);
   const initials = nombre ?
-  nombre.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase() :
-  '?';
+    nombre.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase() :
+    '?';
 
   if (url) {
     return (
@@ -50,9 +52,9 @@ const Avatar = ({ nombre, foto, size = 44 }) => {
         width: size, height: size, borderRadius: size / 2,
         backgroundColor: '#dbeafe', justifyContent: 'center', alignItems: 'center'
       }}>
-      
-            <Text style={{ fontSize: size * 0.36, fontWeight: '700', color: '#2563eb' }}>{initials}</Text>
-        </View>);
+
+      <Text style={{ fontSize: size * 0.36, fontWeight: '700', color: '#2563eb' }}>{initials}</Text>
+    </View>);
 
 };
 
@@ -94,9 +96,9 @@ export const UsuariosCredencialesScreen = ({ userData, darkMode, onBack }) => {
     if (!q) return empleados;
     return empleados.filter(
       (e) =>
-      e.nombre?.toLowerCase().includes(q) ||
-      e.correo?.toLowerCase().includes(q) ||
-      e.rfc?.toLowerCase().includes(q)
+        e.nombre?.toLowerCase().includes(q) ||
+        e.correo?.toLowerCase().includes(q) ||
+        e.rfc?.toLowerCase().includes(q)
     );
   }, [busqueda, empleados]);
 
@@ -113,121 +115,110 @@ export const UsuariosCredencialesScreen = ({ userData, darkMode, onBack }) => {
 
   return (
     <View style={styles.container}>
-            
-      
 
-            {}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={onBack} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    <Ionicons name="arrow-back" size={22} color="#fff" />
-                </TouchableOpacity>
-                <View style={styles.headerText}>
-                    <Text style={styles.headerTitle}>Credenciales</Text>
-                    <Text style={styles.headerSubtitle}>Selecciona un usuario</Text>
-                </View>
-                <TouchableOpacity onPress={cargarEmpleados} style={styles.refreshBtn}>
-                    <Ionicons name="refresh" size={20} color="#fff" />
-                </TouchableOpacity>
-            </View>
 
-            {}
-            <View style={styles.searchWrap}>
-                <Ionicons name="search" size={18} color={darkMode ? '#9ca3af' : '#6b7280'} style={styles.searchIcon} />
-                <TextInput
+
+      {/* Header unificado */}
+      <Header
+        darkMode={darkMode}
+        title="Credenciales"
+        subtitle="Selecciona un usuario"
+        leftComponent={
+          <TouchableOpacity onPress={onBack} style={{ padding: 8, marginLeft: -8 }}>
+            <Ionicons name="arrow-back" size={24} color={darkMode ? '#f8fafc' : '#0f172a'} />
+          </TouchableOpacity>
+        }
+        rightComponent={
+          <TouchableOpacity onPress={cargarEmpleados} style={{ padding: 8, marginRight: -8 }}>
+            <Ionicons name="refresh" size={24} color={darkMode ? '#f8fafc' : '#0f172a'} />
+          </TouchableOpacity>
+        }
+      />
+
+      { }
+      <View style={styles.searchWrap}>
+        <Ionicons name="search" size={18} color={darkMode ? '#9ca3af' : '#6b7280'} style={styles.searchIcon} />
+        <TextInput
           style={styles.searchInput}
           placeholder="Buscar por nombre, correo o RFC..."
           placeholderTextColor={darkMode ? '#6b7280' : '#9ca3af'}
           value={busqueda}
           onChangeText={setBusqueda}
           autoCorrect={false} />
-        
-                {busqueda.length > 0 &&
-        <TouchableOpacity onPress={() => setBusqueda('')}>
-                        <Ionicons name="close-circle" size={18} color={darkMode ? '#6b7280' : '#9ca3af'} />
-                    </TouchableOpacity>
+
+        {busqueda.length > 0 &&
+          <TouchableOpacity onPress={() => setBusqueda('')}>
+            <Ionicons name="close-circle" size={18} color={darkMode ? '#6b7280' : '#9ca3af'} />
+          </TouchableOpacity>
         }
-            </View>
+      </View>
 
-            {}
-            {loading ?
-      <View style={styles.centered}>
-                    <ActivityIndicator size="large" color="#2563eb" />
-                    <Text style={styles.loadingText}>Cargando empleados...</Text>
-                </View> :
-      error ?
-      <View style={styles.centered}>
-                    <Ionicons name="cloud-offline-outline" size={48} color={darkMode ? '#4b5563' : '#d1d5db'} />
-                    <Text style={styles.errorText}>{error}</Text>
-                    <TouchableOpacity style={styles.retryBtn} onPress={cargarEmpleados}>
-                        <Text style={styles.retryText}>Reintentar</Text>
-                    </TouchableOpacity>
-                </View> :
-
-      <FlatList
-        data={filtrados}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
+      { }
+      {loading ?
         <View style={styles.centered}>
-                            <Ionicons name="people-outline" size={48} color={darkMode ? '#4b5563' : '#d1d5db'} />
-                            <Text style={styles.emptyText}>
-                                {busqueda ? 'Sin resultados para tu búsqueda' : 'No hay empleados registrados'}
-                            </Text>
-                        </View>
-        }
-        renderItem={({ item }) =>
-        <TouchableOpacity
-          style={styles.userRow}
-          activeOpacity={0.7}
-          onPress={() => setUsuarioSeleccionado(item)}>
-          
-                            <Avatar nombre={item.nombre} foto={item.foto} size={46} />
-                            <View style={styles.userInfo}>
-                                <Text style={styles.userName} numberOfLines={1}>{item.nombre}</Text>
-                                <Text style={styles.userEmail} numberOfLines={1}>{item.correo}</Text>
-                            </View>
-                            <Ionicons
-            name="chevron-forward"
-            size={18}
-            color={darkMode ? '#6b7280' : '#9ca3af'} />
-          
-                        </TouchableOpacity>
-        } />
+          <ActivityIndicator size="large" color="#2563eb" />
+          <Text style={styles.loadingText}>Cargando empleados...</Text>
+        </View> :
+        error ?
+          <View style={styles.centered}>
+            <Ionicons name="cloud-offline-outline" size={48} color={darkMode ? '#4b5563' : '#d1d5db'} />
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity style={styles.retryBtn} onPress={cargarEmpleados}>
+              <Text style={styles.retryText}>Reintentar</Text>
+            </TouchableOpacity>
+          </View> :
 
+          <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
+
+            {filtrados.length === 0 ? (
+              <View style={styles.centered}>
+                <Ionicons name="people-outline" size={48} color={darkMode ? '#4b5563' : '#d1d5db'} />
+                <Text style={styles.emptyText}>
+                  {busqueda ? 'Sin resultados para tu búsqueda' : 'No hay empleados registrados'}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.sectionContainer}>
+                {filtrados.map((item, index) => (
+                  <View key={item.id}>
+                    <TouchableOpacity
+                      style={styles.settingItem}
+                      activeOpacity={0.7}
+                      onPress={() => setUsuarioSeleccionado(item)}>
+
+                      <View style={styles.settingLeft}>
+                        <Avatar nombre={item.nombre} foto={item.foto} size={40} />
+                        <View style={styles.userInfo}>
+                          <Text style={styles.userName} numberOfLines={1}>{item.nombre}</Text>
+                          <Text style={styles.userEmail} numberOfLines={1}>{item.correo}</Text>
+                        </View>
+                      </View>
+                      <Ionicons
+                        name="chevron-forward"
+                        size={18}
+                        color={darkMode ? '#6b7280' : '#9ca3af'} />
+                    </TouchableOpacity>
+                    {index < filtrados.length - 1 && <View style={styles.divider} />}
+                  </View>
+                ))}
+              </View>
+            )}
+          </ScrollView>
       }
-        </View>);
+    </View>
+  );
 
 };
 
 
 const base = StyleSheet.create({
+  listContent: { paddingHorizontal: 20, paddingVertical: 16, paddingBottom: 80 },
   container: { flex: 1 },
-  header: {
-    paddingTop: Platform.OS === 'android' ? 16 : 50,
-    paddingBottom: 16,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12
-  },
-  backBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    justifyContent: 'center', alignItems: 'center'
-  },
-  refreshBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    justifyContent: 'center', alignItems: 'center'
-  },
-  headerText: { flex: 1 },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
-  headerSubtitle: { fontSize: 12, color: '#bfdbfe', marginTop: 1 },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 12,
-    marginHorizontal: 16,
+    marginHorizontal: 20,
     marginVertical: 12,
     paddingHorizontal: 12,
     paddingVertical: 9,
@@ -235,17 +226,39 @@ const base = StyleSheet.create({
   },
   searchIcon: { marginRight: 2 },
   searchInput: { flex: 1, fontSize: 14, padding: 0 },
-  listContent: { paddingHorizontal: 16, paddingBottom: 80, flexGrow: 1 },
-  userRow: {
-    flexDirection: 'row', alignItems: 'center',
-    padding: 16, gap: 14,
-    borderRadius: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 6,
-    elevation: 2
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#072146',
+    marginBottom: 8,
+    marginTop: 8,
+    marginLeft: 12
+  },
+  sectionContainer: {
+    backgroundColor: '#f1f5f9',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    overflow: 'hidden',
+    marginBottom: 24
+  },
+  settingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16
+  },
+  settingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    flex: 1
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e2e8f0',
+    marginLeft: 54
   },
   userInfo: { flex: 1 },
   userName: { fontSize: 15, fontWeight: '600', marginBottom: 2 },
@@ -264,10 +277,11 @@ const base = StyleSheet.create({
 const lightStyles = StyleSheet.create({
   ...base,
   container: { ...base.container, backgroundColor: '#f8fafc' },
-  header: { ...base.header, backgroundColor: '#2563eb' },
   searchWrap: { ...base.searchWrap, backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 1 },
   searchInput: { ...base.searchInput, color: '#111827' },
-  userRow: { ...base.userRow, backgroundColor: '#fff' },
+  sectionContainer: { ...base.sectionContainer, backgroundColor: '#f1f5f9', borderColor: '#e2e8f0' },
+  sectionLabel: { ...base.sectionLabel, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1.2, marginLeft: 12 },
+  divider: { ...base.divider, backgroundColor: '#e2e8f0' },
   userName: { ...base.userName, color: '#111827' },
   userEmail: { ...base.userEmail, color: '#6b7280' },
   loadingText: { ...base.loadingText, color: '#6b7280' },
@@ -278,10 +292,11 @@ const lightStyles = StyleSheet.create({
 const darkStyles = StyleSheet.create({
   ...base,
   container: { ...base.container, backgroundColor: '#0f172a' },
-  header: { ...base.header, backgroundColor: '#1e40af' },
   searchWrap: { ...base.searchWrap, backgroundColor: '#1f2937' },
   searchInput: { ...base.searchInput, color: '#f9fafb' },
-  userRow: { ...base.userRow, backgroundColor: '#1f2937' },
+  sectionContainer: { ...base.sectionContainer, backgroundColor: '#1e293b', borderWidth: 0 },
+  sectionLabel: { ...base.sectionLabel, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1.2, marginLeft: 12 },
+  divider: { ...base.divider, backgroundColor: '#334155' },
   userName: { ...base.userName, color: '#f9fafb' },
   userEmail: { ...base.userEmail, color: '#9ca3af' },
   loadingText: { ...base.loadingText, color: '#9ca3af' },

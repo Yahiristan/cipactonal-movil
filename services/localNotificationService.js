@@ -213,17 +213,25 @@ export const detectarCambiosIncidencias = async (incidenciasActuales) => {
   try {
     const stored = await AsyncStorage.getItem(STORAGE_KEYS.LAST_INCIDENCIAS_ESTADOS);
     const estadosPrevios = stored ? JSON.parse(stored) : {};
-    const estadosActuales = {};
+    
+    const nuevosEstados = { ...estadosPrevios };
+    let hayNuevos = false;
+
     for (const inc of incidenciasActuales) {
       if (inc.id && !inc.is_offline) {
-        estadosActuales[inc.id] = inc.estado;
+        nuevosEstados[inc.id] = inc.estado;
       }
     }
+
+    // Para evitar crecimiento infinito, podríamos limpiar si hay muchísimos, pero 
+    // como son IDs y strings cortos, tomaría años llenar el AsyncStorage.
     await AsyncStorage.setItem(
       STORAGE_KEYS.LAST_INCIDENCIAS_ESTADOS,
-      JSON.stringify(estadosActuales)
+      JSON.stringify(nuevosEstados)
     );
+
     if (Object.keys(estadosPrevios).length === 0) return;
+
     for (const inc of incidenciasActuales) {
       if (!inc.id || inc.is_offline) continue;
       const estadoPrevio = estadosPrevios[inc.id];
@@ -243,18 +251,43 @@ export const detectarAvisosNuevos = async (avisosActuales) => {
   try {
     const stored = await AsyncStorage.getItem(STORAGE_KEYS.LAST_AVISOS_IDS);
     const idsPrevios = stored ? JSON.parse(stored) : [];
-    const idsActuales = avisosActuales.map((a) => a.id).filter(Boolean);
+    const prevSet = new Set(idsPrevios);
+    
+    const nuevos = [];
+    const nuevosIds = [];
+
+    for (const a of avisosActuales) {
+      if (a.id && !prevSet.has(a.id)) {
+        nuevos.push(a);
+        nuevosIds.push(a.id);
+      }
+    }
+
+    const todosLosIds = [...idsPrevios, ...nuevosIds];
+    
+    // Evitar que crezca infinitamente, guardamos los últimos 500
+    if (todosLosIds.length > 500) {
+      todosLosIds.splice(0, todosLosIds.length - 500);
+    }
+
     await AsyncStorage.setItem(
       STORAGE_KEYS.LAST_AVISOS_IDS,
-      JSON.stringify(idsActuales)
+      JSON.stringify(todosLosIds)
     );
-    if (idsPrevios.length === 0) return;
-    const prevSet = new Set(idsPrevios);
-    const nuevos = avisosActuales.filter((a) => a.id && !prevSet.has(a.id));
+
+    if (idsPrevios.length === 0) return; // No notificar en la primera carga
 
     for (const aviso of nuevos) {
       await notificarAviso(aviso.titulo || 'Tienes un nuevo aviso');
     }
+  } catch (error) {
+  }
+};
+
+export const clearNotificationHistory = async () => {
+  try {
+    await AsyncStorage.removeItem(STORAGE_KEYS.LAST_INCIDENCIAS_ESTADOS);
+    await AsyncStorage.removeItem(STORAGE_KEYS.LAST_AVISOS_IDS);
   } catch (error) {
   }
 };
@@ -266,5 +299,6 @@ export default {
   notificarIncidencia,
   notificarAviso,
   detectarCambiosIncidencias,
-  detectarAvisosNuevos
+  detectarAvisosNuevos,
+  clearNotificationHistory
 };

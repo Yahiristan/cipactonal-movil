@@ -469,22 +469,32 @@ export async function upsertCredenciales(credenciales) {
   if (!db) await initDatabase();
   try {
     for (const cred of credenciales) {
+      const pinToSave = cred.pin_hash || cred.pin || null;
+      const dactilarToSave = cred.dactilar_template || cred.dactilar || null;
+      const facialToSave = cred.facial_descriptor || cred.facial || null;
+      
+      // Solo actualizamos pin_hash si trae un PIN real (más de 1 caracter), para no sobreescribir el PIN local
+      // con un simple 'true', '1' o boolean que suele mandar el servidor por seguridad.
+      const isDummyPin = pinToSave === true || pinToSave === false || pinToSave === 1 || pinToSave === 0 || pinToSave === '1' || pinToSave === '0' || pinToSave === 'true' || pinToSave === 'false';
+      const finalPin = isDummyPin ? undefined : pinToSave;
+
       await db.runAsync(
         `INSERT INTO cache_credenciales (id, empleado_id, pin_hash, dactilar_template, facial_descriptor, updated_at)
          VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))
          ON CONFLICT(id) DO UPDATE SET
            empleado_id = excluded.empleado_id,
-           pin_hash = excluded.pin_hash,
+           pin_hash = COALESCE(?, pin_hash),
            dactilar_template = excluded.dactilar_template,
            facial_descriptor = excluded.facial_descriptor,
            updated_at = excluded.updated_at`,
         [
           cred.id,
           cred.empleado_id,
-          cred.pin_hash || cred.pin || null,
-          cred.dactilar_template || cred.dactilar || null,
-          cred.facial_descriptor || cred.facial || null]
-
+          finalPin,
+          dactilarToSave,
+          facialToSave,
+          finalPin
+        ]
       );
     }
   } catch (error) {

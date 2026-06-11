@@ -27,7 +27,8 @@ import {
   notificarEstadoAsistencia,
   notificarRegistro,
   detectarCambiosIncidencias,
-  detectarAvisosNuevos
+  detectarAvisosNuevos,
+  clearNotificationHistory
 } from
   './services/localNotificationService';
 import { getApiEndpoint } from './config/api';
@@ -587,10 +588,9 @@ export default function App() {
             }
 
             if (dispositivoEnBD.existe && dispositivoEnBD.activo) {
-              (function () { })(' [App] Dispositivo activo en servidor. Onboarding OK.');
               setDeviceRegistered(true);
-            } else {
-              (function () { })('️ [App] Dispositivo no encontrado o inactivo en servidor. Mostrando DeviceDisabledScreen.');
+            } else if (dispositivoEnBD.existe && !dispositivoEnBD.activo) {
+              // Existe pero está deshabilitado por admin
               await AsyncStorage.multiRemove([
                 STORAGE_KEYS.ONBOARDING_COMPLETED,
                 STORAGE_KEYS.SOLICITUD_ID,
@@ -598,6 +598,20 @@ export default function App() {
               );
               setDeviceRegistered(false);
               setDeviceDisabled(true);
+              if (storedUserData && storedToken) {
+                const parsedForLogin = JSON.parse(storedUserData);
+                setUserData(parsedForLogin);
+                setIsLoggedIn(true);
+              }
+            } else {
+              // No existe → empleado nuevo, ir a onboarding de afiliación
+              await AsyncStorage.multiRemove([
+                STORAGE_KEYS.ONBOARDING_COMPLETED,
+                STORAGE_KEYS.SOLICITUD_ID,
+                STORAGE_KEYS.TOKEN_SOLICITUD]
+              );
+              setDeviceRegistered(false);
+              setDeviceDisabled(false);
               if (storedUserData && storedToken) {
                 const parsedForLogin = JSON.parse(storedUserData);
                 setUserData(parsedForLogin);
@@ -693,8 +707,6 @@ export default function App() {
 
 
           if (dispositivoEnBD.existe && dispositivoEnBD.activo) {
-            (function () { })(' [App] Dispositivo verificado en nube y ACTIVO');
-
 
             if (dispositivoEnBD.token) {
               await AsyncStorage.setItem(STORAGE_KEYS.TOKEN_SOLICITUD, dispositivoEnBD.token);
@@ -707,18 +719,29 @@ export default function App() {
             setDeviceRegistered(true);
             setIsLoggedIn(true);
             return;
+          } else if (dispositivoEnBD.existe && !dispositivoEnBD.activo) {
+            // Dispositivo existe pero fue DESHABILITADO por el admin → Nodo Deshabilitado
+            await AsyncStorage.multiRemove([
+              STORAGE_KEYS.ONBOARDING_COMPLETED,
+              STORAGE_KEYS.SOLICITUD_ID,
+              STORAGE_KEYS.TOKEN_SOLICITUD
+            ]);
+            setDeviceDisabled(true);
+            setDeviceRegistered(false);
+            setIsLoggedIn(true);
+            return;
           } else {
-              (function () { })(' [App] Dispositivo INACTIVO o NO ENCONTRADO en nube. Mostrando DeviceDisabledScreen.');
-              await AsyncStorage.multiRemove([
-                STORAGE_KEYS.ONBOARDING_COMPLETED,
-                STORAGE_KEYS.SOLICITUD_ID,
-                STORAGE_KEYS.TOKEN_SOLICITUD
-              ]);
-              setDeviceDisabled(true);
-              setDeviceRegistered(false);
-              setIsLoggedIn(true);
-              return;
-            }
+            // Dispositivo NO EXISTE → empleado nuevo o empresa nueva → ir a afiliación
+            await AsyncStorage.multiRemove([
+              STORAGE_KEYS.ONBOARDING_COMPLETED,
+              STORAGE_KEYS.SOLICITUD_ID,
+              STORAGE_KEYS.TOKEN_SOLICITUD
+            ]);
+            setDeviceDisabled(false);
+            setDeviceRegistered(false);
+            setIsLoggedIn(true);
+            return;
+          }
 
         } catch (error) {
           (function () { })(' [App] Error verificando en nube:', error);
@@ -826,7 +849,8 @@ export default function App() {
 
     await Promise.all([
       AsyncStorage.removeItem(STORAGE_KEYS.USER_TOKEN),
-      AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA)]
+      AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA),
+      clearNotificationHistory()]
     );
 
     setIsLoggedIn(false);
@@ -906,6 +930,7 @@ export default function App() {
         <OnboardingNavigator
           onComplete={handleOnboardingComplete}
           userData={userData}
+          darkMode={darkMode}
           onLogout={handleLogout} />
 
       </SafeAreaProvider>);
