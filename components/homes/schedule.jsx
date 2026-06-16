@@ -21,6 +21,7 @@ import {
   getInfoDiaActual
 } from
   '../../services/horariosService';
+import { getAsistenciasEmpleado } from '../../services/asistenciasService';
 import { IncidenciasScreen } from '../settingsPages/IncidentScreen';
 import sqliteManager from '../../services/offline/sqliteManager.mjs';
 import syncManager from '../../services/offline/syncManager.mjs';
@@ -116,12 +117,40 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
 
       let horario = null;
       const online = await syncManager.isOnline() && !syncManager.getIsBackendDown();
-
+      
+      const now = new Date();
+      const fechaInicio = new Date(now.setDate(now.getDate() - now.getDay() + 1)).toISOString().split('T')[0];
+      const fechaFin = new Date(now.setDate(now.getDate() + 6)).toISOString().split('T')[0];
+      let asistenciasSemana = [];
+        
       if (online) {
         try {
           horario = await getHorarioPorEmpleado(empleadoId, userData?.token);
+          
+          try {
+             const asisData = await getAsistenciasEmpleado(empleadoId, userData?.token, { fecha_inicio: fechaInicio, fecha_fin: fechaFin });
+             if (asisData && asisData.data) {
+                asistenciasSemana = asisData.data;
+             }
+           } catch(e) {
+             console.log("Error fetching asistencias online", e.message);
+           }
+           
+           try {
+               const offlinePending = await sqliteManager.getPendingAsistencias();
+               const misPending = offlinePending.filter(a => a.empleado_id === empleadoId && a.fecha_registro >= fechaInicio && a.fecha_registro <= fechaFin + 'T23:59:59');
+               
+               const onlineTiempos = new Set(asistenciasSemana.map(a => a.fecha_registro));
+               misPending.forEach(p => {
+                   if (!onlineTiempos.has(p.fecha_registro)) {
+                       asistenciasSemana.push(p);
+                   }
+               });
+           } catch(e) {
+               console.log("Error sumando offline pending:", e.message);
+           }
         } catch (e) {
-          (function () { })('Online fetch failed for schedule:', e.message);
+          console.log('Online fetch failed for schedule:', e.message);
         }
       }
 
@@ -140,9 +169,113 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
       }
 
       const horarioParsed = parsearHorario(horario);
-
       setScheduleData(horarioParsed);
-      setResumen(calcularResumenSemanal(horarioParsed));
+      
+      const resumenCalculado = calcularResumenSemanal(horarioParsed);
+      
+      let horasCumplidas = 0;
+      try {
+        const now = new Date();
+        const tzOffset = now.getTimezoneOffset() * 60000;
+        
+        const primerDia = new Date(now.getTime());
+        const diaSemana = now.getDay(); 
+        const diffLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+        primerDia.setDate(now.getDate() + diffLunes);
+        primerDia.setHours(0, 0, 0, 0);
+        
+        const ultimoDia = new Date(primerDia.getTime());
+        ultimoDia.setDate(primerDia.getDate() + 6);
+        ultimoDia.setHours(23, 59, 59, 999);
+        
+        const fI = new Date(primerDia.getTime() - tzOffset).toISOString().split('T')[0];
+        const fF = new Date(ultimoDia.getTime() - tzOffset).toISOString().split('T')[0];
+        
+        const fechaInicio = fI + ' 00:00:00';
+        const fechaFin = fF + ' 23:59:59';
+        
+        let asistenciasSemana = [];
+        
+        if (online) {
+           try {
+             const asisData = await getAsistenciasEmpleado(empleadoId, userData?.token, { fecha_inicio: fechaInicio, fecha_fin: fechaFin });
+             if (asisData && asisData.data) {
+                asistenciasSemana = asisData.data;
+             }
+           } catch(e) {
+             console.log("Error fetching asistencias online", e.message);
+           }
+           
+           try {
+               const offlinePending = await sqliteManager.getPendingAsistencias();
+               const misPending = offlinePending.filter(a => {
+                   if (a.empleado_id !== empleadoId) return false;
+                   const fechaSoloDia = (a.fecha_registro || '').substring(0, 10);
+                   return fechaSoloDia >= fI && fechaSoloDia <= fF;
+               });
+               
+               const onlineTiempos = new Set(asistenciasSemana.map(a => a.fecha_registro));
+               misPending.forEach(p => {
+                   if (!onlineTiempos.has(p.fecha_registro)) {
+                       asistenciasSemana.push(p);
+                   }
+               });
+           } catch(e) {
+               console.log("Error sumando offline pending:", e.message);
+           }
+        } else {
+           const mesKey = fI.substring(0, 7);
+           const mesKeyFin = fF.substring(0, 7);
+           let cached = await sqliteManager.getAsistenciasMesLocal(empleadoId, mesKey);
+           if (mesKey !== mesKeyFin) {
+               const cachedFin = await sqliteManager.getAsistenciasMesLocal(empleadoId, mesKeyFin);
+               cached = [...(cached || []), ...(cachedFin || [])];
+           }
+           const offlinePending = await sqliteManager.getPendingAsistencias();
+           const misPending = offlinePending.filter(a => a.empleado_id === empleadoId);
+           
+           const todas = [...(cached || []), ...misPending];
+           asistenciasSemana = todas.filter(a => {
+               const fechaSoloDia = (a.fecha_registro || '').substring(0, 10);
+               return fechaSoloDia >= fI && fechaSoloDia <= fF;
+           });
+        }
+        
+        if (asistenciasSemana.length > 0) {
+            const sorted = [...asistenciasSemana].sort((a, b) => {
+                const da = new Date((a.fecha_registro || '').replace(' ', 'T'));
+                const db = new Date((b.fecha_registro || '').replace(' ', 'T'));
+                return da - db;
+            });
+            
+            let currentEntrada = null;
+            sorted.forEach(registro => {
+               const rTipo = String(registro.tipo || '').toLowerCase().trim();
+               if (rTipo === 'entrada') {
+                   currentEntrada = new Date((registro.fecha_registro || '').replace(' ', 'T'));
+               } else if (rTipo === 'salida' && currentEntrada) {
+                   const salida = new Date((registro.fecha_registro || '').replace(' ', 'T'));
+                   const diff = (salida - currentEntrada) / (1000 * 60 * 60);
+                   if (diff > 0 && diff < 24) {
+                       horasCumplidas += diff;
+                   }
+                   currentEntrada = null;
+               }
+            });
+            
+            if (currentEntrada) {
+                const ahora = new Date();
+                const diff = (ahora - currentEntrada) / (1000 * 60 * 60);
+                if (diff > 0 && diff < 16) { 
+                    horasCumplidas += diff;
+                }
+            }
+        }
+      } catch (e) {
+          console.log("Error calculando horas cumplidas:", e.message);
+      }
+
+      setResumen({ ...resumenCalculado, horasCumplidas });
       setInfoHoy(obtenerInfoHoyMejorada(horarioParsed));
 
       const tzDate = new Date();
@@ -292,9 +425,9 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: 80 + insets.bottom }]
+            { flexGrow: 1, paddingBottom: 80 + insets.bottom }]
           }
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={true}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -363,7 +496,7 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
 
                       <Ionicons name="albums-outline" size={18} color={darkMode ? "#60a5fa" : "#2563eb"} />
                       <Text style={styles.moreTurnsText}>
-                        {infoHoy.turnos.length} turnos hoy - Ver todos
+                        Ver tus {infoHoy.turnos.length} turnos de hoy
                       </Text>
                       <Ionicons name="chevron-forward" size={18} color={darkMode ? "#60a5fa" : "#2563eb"} />
                     </TouchableOpacity>
@@ -409,12 +542,53 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
 
             <View style={styles.settingItem}>
               <View style={styles.settingLeft}>
+                <Ionicons name="checkmark-circle-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+                <Text style={styles.settingTitle}>Horas Cumplidas</Text>
+              </View>
+              <View style={styles.settingRight}>
+                <Text style={styles.settingValue}>{(resumen.horasCumplidas || 0).toFixed(1)}h</Text>
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.settingItem}>
+              <View style={styles.settingLeft}>
                 <Ionicons name="calendar-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
                 <Text style={styles.settingTitle}>Días Laborales</Text>
               </View>
               <View style={styles.settingRight}>
                 <Text style={styles.settingValue}>{resumen.diasLaborales}</Text>
               </View>
+            </View>
+          </View>
+
+          <Text style={styles.sectionLabel}>PROGRESO SEMANAL</Text>
+          <View style={styles.sectionContainer}>
+            <View style={[styles.settingItem, { flexDirection: 'column', alignItems: 'stretch' }]}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <View style={styles.settingLeft}>
+                  <Ionicons name="stats-chart" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} style={styles.settingIcon} />
+                  <Text style={styles.settingTitle}>Progreso actual</Text>
+                </View>
+                <View style={styles.settingRight}>
+                  <Text style={styles.settingValue}>
+                    {(resumen.horasCumplidas || 0).toFixed(1)} <Text style={styles.settingTitleSecondary}>/ {resumen.horasTotales}h</Text>
+                  </Text>
+                </View>
+              </View>
+              
+              <View style={{ height: 8, backgroundColor: darkMode ? '#334155' : '#e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
+                 <View style={{
+                   height: '100%',
+                   backgroundColor: '#2563eb',
+                   borderRadius: 4,
+                   width: `${Math.min(100, ((resumen.horasCumplidas || 0) / (parseFloat(resumen.horasTotales) || 1)) * 100)}%`
+                 }} />
+              </View>
+              <Text style={[styles.settingTitleSecondary, { textAlign: 'right', marginTop: 8, fontSize: 12 }]}>
+                 {Math.min(100, ((resumen.horasCumplidas || 0) / (parseFloat(resumen.horasTotales) || 1)) * 100).toFixed(0)}% completado
+              </Text>
             </View>
           </View>
 
@@ -477,14 +651,12 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
                         }>
                           {schedule.day}
                         </Text>
-                        {/* todayDot removido */}
                       </View>
 
                       {tieneMasTurnos &&
-                        <View style={styles.multipleTurnsBadge}>
-                          <Ionicons name="albums-outline" size={10} color={darkMode ? "#60a5fa" : "#2563eb"} />
-                          <Text style={styles.multipleTurnsText}>{schedule.turnos.length} turnos</Text>
-                        </View>
+                        <Text style={{ fontSize: 12, color: darkMode ? '#9ca3af' : '#64748b', marginTop: 2 }}>
+                          {schedule.turnos.length} turnos en total
+                        </Text>
                       }
                     </View>
                   </View>
@@ -589,16 +761,22 @@ export const ScheduleScreen = ({ darkMode, userData }) => {
                   <View key={idx} style={styles.modalTurnoBlock}>
                     <Text style={styles.modalTurnoTitle}>Turno {idx + 1}</Text>
                     <View style={styles.modalTurnoDetails}>
-                      <View style={styles.modalTurnoRow}>
-                        <Ionicons name="log-in-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} />
+                      <View style={styles.modalTurnoTimeContainer}>
+                        <View style={[styles.modalTurnoIconWrapper, { backgroundColor: darkMode ? '#334155' : '#f1f5f9' }]}>
+                           <Ionicons name="log-in-outline" size={20} color={darkMode ? '#cbd5e1' : '#475569'} />
+                        </View>
                         <Text style={styles.modalTurnoLabel}>Entrada</Text>
                         <Text style={styles.modalTurnoTime}>{turno.entrada}</Text>
                       </View>
 
-                      <View style={styles.modalTurnoDivider} />
+                      <View style={styles.modalTurnoArrow}>
+                        <Ionicons name="arrow-forward" size={20} color={darkMode ? '#ffffff' : '#000000'} />
+                      </View>
 
-                      <View style={styles.modalTurnoRow}>
-                        <Ionicons name="log-out-outline" size={20} color={darkMode ? '#9ca3af' : '#4b5563'} />
+                      <View style={styles.modalTurnoTimeContainer}>
+                        <View style={[styles.modalTurnoIconWrapper, { backgroundColor: darkMode ? '#334155' : '#f1f5f9' }]}>
+                           <Ionicons name="log-out-outline" size={20} color={darkMode ? '#cbd5e1' : '#475569'} />
+                        </View>
                         <Text style={styles.modalTurnoLabel}>Salida</Text>
                         <Text style={styles.modalTurnoTime}>{turno.salida}</Text>
                       </View>

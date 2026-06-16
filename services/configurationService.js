@@ -100,8 +100,18 @@ export const updateConfiguracion = async (configId, configuracionData, token) =>
       body: JSON.stringify(configuracionData)
     });
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || 'Error al actualizar configuración');
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { error: 'Error al actualizar configuración' };
+      }
+      const errorMsg = errorData.message || errorData.error || 'Error al actualizar configuración';
+      const error = new Error(errorMsg);
+      if (errorData.code) {
+        error.code = errorData.code;
+      }
+      throw error;
     }
     const data = await response.json();
     return { success: true, data };

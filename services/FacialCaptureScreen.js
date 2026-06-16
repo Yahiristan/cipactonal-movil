@@ -13,6 +13,7 @@ import {
   Modal
 } from
   'react-native';
+import { CustomAlert } from '../components/ui/CustomAlert';
 import { Camera as VisionCamera, useCameraDevice } from 'react-native-vision-camera';
 import { Camera } from 'react-native-vision-camera-face-detector';
 import { Ionicons } from '@expo/vector-icons';
@@ -58,6 +59,11 @@ export const FacialCaptureScreen = ({
   const textColor = dm ? '#f1f5f9' : '#374151';
   const closeBtnBg = dm ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
   const closeIconClr = dm ? '#f1f5f9' : '#1f2937';
+
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', actions: [] });
+  const showCustomAlert = (title, message, actions = [{ text: 'OK', onPress: null }]) => {
+    setAlertModal({ visible: true, title, message, actions });
+  };
   const tipBg = dm ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)';
   const closeTop = Platform.OS === 'ios' ?
     50 :
@@ -314,7 +320,7 @@ export const FacialCaptureScreen = ({
         setIsValidating(false);
         setIsProcessing(false);
         setCountdown(null);
-        Alert.alert(
+        showCustomAlert(
           ' No se detectó rostro',
           'No se detectó ningún rostro en el momento de la captura.\n\nPor favor:\n• Asegúrate de que tu rostro esté visible\n• Verifica que haya buena iluminación\n• Posiciónate dentro del óvalo',
           [{ text: 'Tomar otra foto', onPress: () => setInstruction('Centra tu rostro dentro del óvalo') }]
@@ -325,7 +331,7 @@ export const FacialCaptureScreen = ({
         setIsValidating(false);
         setIsProcessing(false);
         setCountdown(null);
-        Alert.alert(
+        showCustomAlert(
           '️ Rostro fuera del óvalo',
           'Tu rostro no estaba centrado en el óvalo al momento de capturar.\n\nPor favor posiciona tu rostro dentro del óvalo e inténtalo de nuevo.',
           [{ text: 'Reintentar', onPress: () => setInstruction('Centra tu rostro dentro del óvalo') }]
@@ -341,7 +347,7 @@ export const FacialCaptureScreen = ({
         setIsValidating(false);
         setIsProcessing(false);
         setCountdown(null);
-        Alert.alert(
+        showCustomAlert(
           '️ Calidad insuficiente',
           'Se detectó un rostro pero la calidad no es suficiente.\n\n' + (
             leftEyeOpen < 0.2 || rightEyeOpen < 0.2 ? '• Mantén los ojos abiertos\n' : '') + (
@@ -382,7 +388,7 @@ export const FacialCaptureScreen = ({
       setIsValidating(false);
       setIsProcessing(false);
       setCountdown(null);
-      Alert.alert(
+      showCustomAlert(
         ' Error de captura',
         error.message || 'No se pudo capturar o analizar la foto correctamente.',
         [{ text: 'Reintentar', onPress: () => setInstruction('Centra tu rostro en el óvalo') }]
@@ -560,9 +566,17 @@ export const FacialCaptureScreen = ({
                   `Capturando en ${countdown}...` :
                   faceDetected && livenessCompletedRef.current ?
                     'Iniciando captura...' :
-                    'Completa la prueba de vida para capturar'}
+                    ''}
           </Text>
         </View>
+        <CustomAlert
+          visible={alertModal.visible}
+          title={alertModal.title}
+          message={alertModal.message}
+          actions={alertModal.actions}
+          darkMode={darkMode}
+          onClose={() => setAlertModal(prev => ({ ...prev, visible: false }))}
+        />
       </View>
     </Modal>);
 };

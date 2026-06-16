@@ -5,7 +5,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  useColorScheme
+  useColorScheme,
+  ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,56 +31,58 @@ export const ApprovedScreen = ({ email, empresaNombre, deviceInfo, onComplete })
         </View>
       </View>
 
-      <View style={styles.content}>
-        <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Detalles de la vinculación</Text>
-        <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
-          <View style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Ionicons name="business-outline" size={20} color="#10b981" style={styles.settingIcon} />
-              <View style={{ flex: 1, paddingRight: 10 }}>
-                <Text style={[styles.settingTitle, { color: t.textPrimary }]}>Empresa</Text>
-                <Text style={[styles.settingValue, { color: t.textMuted }]}>{empresaNombre || 'Empresa vinculada'}</Text>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={true}>
+        <View style={styles.content}>
+          <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Detalles de la vinculación</Text>
+          <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
+            <View style={styles.settingItem}>
+              <View style={styles.settingLeft}>
+                <Ionicons name="business-outline" size={20} color="#10b981" style={styles.settingIcon} />
+                <View style={{ flex: 1, paddingRight: 10 }}>
+                  <Text style={[styles.settingTitle, { color: t.textPrimary }]}>Empresa</Text>
+                  <Text style={[styles.settingValue, { color: t.textMuted }]}>{empresaNombre || 'Empresa vinculada'}</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={[styles.divider, { backgroundColor: t.divider }]} />
+
+            <View style={styles.settingItem}>
+              <View style={styles.settingLeft}>
+                <Ionicons name="mail-outline" size={20} color="#10b981" style={styles.settingIcon} />
+                <View style={{ flex: 1, paddingRight: 10 }}>
+                  <Text style={[styles.settingTitle, { color: t.textPrimary }]}>Correo Verificado</Text>
+                  <Text style={[styles.settingValue, { color: t.textMuted }]}>{email}</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={[styles.divider, { backgroundColor: t.divider }]} />
+
+            <View style={styles.settingItem}>
+              <View style={styles.settingLeft}>
+                <Ionicons name="phone-portrait-outline" size={20} color="#10b981" style={styles.settingIcon} />
+                <View style={{ flex: 1, paddingRight: 10 }}>
+                  <Text style={[styles.settingTitle, { color: t.textPrimary }]}>Dispositivo</Text>
+                  <Text style={[styles.settingValue, { color: t.textMuted }]}>{deviceInfo?.model || 'Dispositivo móvil'}</Text>
+                </View>
               </View>
             </View>
           </View>
 
-          <View style={[styles.divider, { backgroundColor: t.divider }]} />
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Ionicons name="mail-outline" size={20} color="#10b981" style={styles.settingIcon} />
-              <View style={{ flex: 1, paddingRight: 10 }}>
-                <Text style={[styles.settingTitle, { color: t.textPrimary }]}>Correo Verificado</Text>
-                <Text style={[styles.settingValue, { color: t.textMuted }]}>{email}</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={[styles.divider, { backgroundColor: t.divider }]} />
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Ionicons name="phone-portrait-outline" size={20} color="#10b981" style={styles.settingIcon} />
-              <View style={{ flex: 1, paddingRight: 10 }}>
-                <Text style={[styles.settingTitle, { color: t.textPrimary }]}>Dispositivo</Text>
-                <Text style={[styles.settingValue, { color: t.textMuted }]}>{deviceInfo?.model || 'Dispositivo móvil'}</Text>
+          <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Información</Text>
+          <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
+            <View style={styles.settingItem}>
+              <View style={styles.settingLeft}>
+                <Ionicons name="information-circle-outline" size={20} color={t.iconColor} style={styles.settingIcon} />
+                <View style={{ flex: 1, paddingRight: 10 }}>
+                  <Text style={[styles.settingValue, { lineHeight: 18, color: t.textMuted }]}>Tu dispositivo ha sido vinculado exitosamente y está listo para usarse.</Text>
+                </View>
               </View>
             </View>
           </View>
         </View>
-
-        <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Información</Text>
-        <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
-          <View style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Ionicons name="information-circle-outline" size={20} color={t.iconColor} style={styles.settingIcon} />
-              <View style={{ flex: 1, paddingRight: 10 }}>
-                <Text style={[styles.settingValue, { lineHeight: 18, color: t.textMuted }]}>Tu dispositivo ha sido vinculado exitosamente y está listo para usarse.</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      </View>
+      </ScrollView>
 
       <View style={[styles.footer, { backgroundColor: t.bg, paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 20) : insets.bottom + 16 }]}>
         <TouchableOpacity

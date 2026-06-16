@@ -243,10 +243,10 @@ export const PinInputModal = ({
             }
           ]}>
           <ScrollView
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={true}
             bounces={false}
             contentContainerStyle={styles.scrollContent}
-            scrollEnabled={false}>
+            scrollEnabled={true}>
             
             <PinHeader
               styles={styles}

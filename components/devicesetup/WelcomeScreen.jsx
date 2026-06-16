@@ -6,7 +6,8 @@ import {
   StyleSheet,
   Platform,
   Image,
-  useColorScheme
+  useColorScheme,
+  ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,54 +47,58 @@ export const WelcomeScreen = ({ onNext, onCancel }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: t.bg }]}>
-      <View style={[styles.header, { backgroundColor: t.bg, paddingTop: Platform.OS === 'android' ? insets.top + 16 : insets.top + 8 }]}>
-        <View style={[styles.profileCard, { backgroundColor: t.card }]}>
-          <View style={[styles.avatarPlaceholder, { backgroundColor: t.avatarBg }]}>
-            <Image source={require('../../assets/icon.png')} style={{ width: 32, height: 32, resizeMode: 'contain' }} />
-          </View>
-          <View style={styles.profileInfo}>
-            <Text style={[styles.profileName, { color: t.textPrimary }]} numberOfLines={2}>{welcome.title}</Text>
-            <Text style={[styles.profileEmail, { color: t.textSecondary }]} numberOfLines={2}>{welcome.subtitle}</Text>
+      <ScrollView
+        showsVerticalScrollIndicator={true}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}>
+        <View style={[styles.header, { backgroundColor: t.bg, paddingTop: Platform.OS === 'android' ? insets.top + 16 : insets.top + 8 }]}>
+          <View style={[styles.profileCard, { backgroundColor: t.card }]}>
+            <View style={[styles.avatarPlaceholder, { backgroundColor: t.avatarBg }]}>
+              <Image source={require('../../assets/icon.png')} style={{ width: 32, height: 32, resizeMode: 'contain' }} />
+            </View>
+            <View style={styles.profileInfo}>
+              <Text style={[styles.profileName, { color: t.textPrimary }]} numberOfLines={2}>{welcome.title}</Text>
+              <Text style={[styles.profileEmail, { color: t.textSecondary }]} numberOfLines={2}>{welcome.subtitle}</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.content}>
-        <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Pasos de Configuración</Text>
-        <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
-          {welcome.steps.map((step, index) => (
-            <React.Fragment key={step.number}>
-              <View style={styles.settingItem}>
-                <View style={styles.settingLeft}>
-                  <View style={[styles.iconCircle, { backgroundColor: t.iconCircleBg }]}>
-                    <Ionicons name={step.icon} size={20} color={t.iconColor} />
+        <View style={styles.content}>
+          <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Pasos de Configuración</Text>
+          <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
+            {welcome.steps.map((step, index) => (
+              <React.Fragment key={step.number}>
+                <View style={styles.settingItem}>
+                  <View style={styles.settingLeft}>
+                    <View style={[styles.iconCircle, { backgroundColor: t.iconCircleBg }]}>
+                      <Ionicons name={step.icon} size={20} color={t.iconColor} />
+                    </View>
+                    <View style={stepContent}>
+                      <Text style={[styles.settingTitle, { color: t.textPrimary }]}>{step.title}</Text>
+                      <Text style={[styles.settingValue, { color: t.textMuted }]}>{step.description}</Text>
+                    </View>
                   </View>
-                  <View style={styles.stepContent}>
-                    <Text style={[styles.settingTitle, { color: t.textPrimary }]}>{step.title}</Text>
-                    <Text style={[styles.settingValue, { color: t.textMuted }]}>{step.description}</Text>
+                  <View style={[styles.stepBadge, { backgroundColor: t.badgeBg }]}>
+                    <Text style={[styles.stepBadgeText, { color: t.textPrimary }]}>{step.number}</Text>
                   </View>
                 </View>
-                <View style={[styles.stepBadge, { backgroundColor: t.badgeBg }]}>
-                  <Text style={[styles.stepBadgeText, { color: t.textPrimary }]}>{step.number}</Text>
-                </View>
-              </View>
-              {index < welcome.steps.length - 1 && <View style={[styles.divider, { backgroundColor: t.divider }]} />}
-            </React.Fragment>
-          ))}
-        </View>
+                {index < welcome.steps.length - 1 && <View style={[styles.divider, { backgroundColor: t.divider }]} />}
+              </React.Fragment>
+            ))}
+          </View>
 
-        <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Información</Text>
-        <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
-          <View style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Ionicons name="information-circle-outline" size={20} color={t.iconColor} style={styles.settingIcon} />
-              <View style={{ flex: 1, paddingRight: 10 }}>
-                <Text style={[styles.settingValue, { marginRight: 0, lineHeight: 18, color: t.textMuted }]}>{welcome.note}</Text>
+          <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Información</Text>
+          <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
+            <View style={styles.settingItem}>
+              <View style={styles.settingLeft}>
+                <Ionicons name="information-circle-outline" size={20} color={t.iconColor} style={styles.settingIcon} />
+                <View style={{ flex: 1, paddingRight: 10 }}>
+                  <Text style={[styles.settingValue, { marginRight: 0, lineHeight: 18, color: t.textMuted }]}>{welcome.note}</Text>
+                </View>
               </View>
             </View>
           </View>
         </View>
-      </View>
+      </ScrollView>
 
       <View style={[styles.footer, { backgroundColor: t.bg, paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 20) : insets.bottom + 16 }]}>
         <View style={styles.buttonRow}>

@@ -95,7 +95,7 @@ export const SeleccionEmpresaScreen = ({ empresasList, onSelect, onCancel, darkM
             <FlatList
               data={empresasOrdenadas}
               keyExtractor={(item) => item.empresa_id.toString()}
-              showsVerticalScrollIndicator={false}
+              showsVerticalScrollIndicator={true}
               ItemSeparatorComponent={() => <View style={[styles.divider, darkMode && styles.dividerDark]} />}
               renderItem={({ item, index }) => (
                 <EmpresaCard item={item} index={index} onSelect={onSelect} darkMode={darkMode} />

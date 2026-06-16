@@ -14,12 +14,18 @@ import {
   TextInput,
   Platform,
   KeyboardAvoidingView,
-  FlatList
+  FlatList,
+  Linking,
+  Image,
+  StatusBar
 } from 'react-native';
+import { CustomAlert } from '../ui/CustomAlert';
 import {
   getIncidenciasEmpleado,
   createIncidencia
 } from '../../services/incidenciasService';
+import { getApiEndpoint } from '../../config/api';
+import { WebView } from 'react-native-webview';
 
 
 
@@ -33,6 +39,11 @@ import { Header } from '../ui/Header';
 export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
   const [incidencias, setIncidencias] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', actions: [] });
+  const showCustomAlert = (title, message, actions = [{ text: 'OK', onPress: null }]) => {
+    setAlertModal({ visible: true, title, message, actions });
+  };
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [creando, setCreando] = useState(false);
@@ -46,28 +57,42 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
   const [expandedCard, setExpandedCard] = useState(null);
   const [modalFiltroVisible, setModalFiltroVisible] = useState(false);
   const [modalFiltroTipoVisible, setModalFiltroTipoVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedDocument, setSelectedDocument] = useState(null);
 
   const styles = darkMode ? incidenciasStylesDark : incidenciasStyles;
 
+  const isImageFile = (url) => {
+    if (typeof url !== 'string') return false;
+    const lowerUrl = url.toLowerCase().trim();
+    return (
+      lowerUrl.endsWith('.jpg') ||
+      lowerUrl.endsWith('.jpeg') ||
+      lowerUrl.endsWith('.png') ||
+      lowerUrl.endsWith('.gif') ||
+      lowerUrl.endsWith('.webp') ||
+      lowerUrl.endsWith('.bmp')
+    );
+  };
+
 
   const tiposIncidencia = [
-    { value: 'retardo', label: 'Retardo', icon: 'time', color: '#f59e0b' },
-    { value: 'justificante', label: 'Justificante', icon: 'document-text', color: '#3b82f6' },
-    { value: 'permiso', label: 'Permiso', icon: 'calendar', color: '#8b5cf6' },
-    { value: 'vacaciones', label: 'Vacaciones', icon: 'airplane', color: '#10b981' },
-    { value: 'falta_justificada', label: 'Falta Justificada', icon: 'medkit', color: '#ec4899' }];
+    { value: 'retardo', label: 'Retardo', icon: 'time-outline', color: '#f59e0b' },
+    { value: 'justificante', label: 'Justificante', icon: 'document-text-outline', color: '#3b82f6' },
+    { value: 'permiso', label: 'Permiso', icon: 'calendar-outline', color: '#8b5cf6' },
+    { value: 'vacaciones', label: 'Vacaciones', icon: 'airplane-outline', color: '#10b981' }];
 
 
   const filtrosEstado = [
-    { value: 'todos', label: 'Todos', icon: 'list' },
-    { value: 'pendiente', label: 'Pendientes', icon: 'time', color: '#f59e0b' },
-    { value: 'aprobado', label: 'Aprobadas', icon: 'checkmark-circle', color: '#10b981' },
-    { value: 'rechazado', label: 'Rechazadas', icon: 'close-circle', color: '#ef4444' }];
+    { value: 'todos', label: 'Todos', icon: 'list-outline' },
+    { value: 'pendiente', label: 'Pendientes', icon: 'time-outline', color: '#f59e0b' },
+    { value: 'aprobado', label: 'Aprobadas', icon: 'checkmark-circle-outline', color: '#10b981' },
+    { value: 'rechazado', label: 'Rechazadas', icon: 'close-circle-outline', color: '#ef4444' }];
 
 
 
   const filtrosTipo = [
-    { value: 'todos', label: 'Todos los tipos', icon: 'apps', color: '#6b7280' },
+    { value: 'todos', label: 'Todos los tipos', icon: 'apps-outline', color: '#6b7280' },
     ...tiposIncidencia];
 
 
@@ -148,11 +173,11 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
 
 
       if (!cargoOnline && datos.length === 0) {
-        Alert.alert('Sin conexión', 'No se pudieron cargar las incidencias. Revisa tu conexión.');
+        showCustomAlert('Sin conexión', 'No se pudieron cargar las incidencias. Revisa tu conexión.');
       }
     } catch (error) {
       (function () { })('Error cargando incidencias:', error);
-      Alert.alert('Error', 'No se pudieron cargar las incidencias');
+      showCustomAlert('Error', 'No se pudieron cargar las incidencias');
     } finally {
       setLoading(false);
     }
@@ -177,12 +202,12 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
 
   const getEstadoIcon = (estado) => {
     switch (estado?.toLowerCase()) {
-      case 'pendiente': return 'time';
-      case 'aprobado': return 'checkmark-circle';
-      case 'rechazado': return 'close-circle';
+      case 'pendiente': return 'time-outline';
+      case 'aprobado': return 'checkmark-circle-outline';
+      case 'rechazado': return 'close-circle-outline';
       case 'cancelado': return 'ban';
-      case 'pendiente_sync': return 'cloud-offline';
-      default: return 'help-circle';
+      case 'pendiente_sync': return 'cloud-offline-outline';
+      default: return 'help-circle-outline';
     }
   };
 
@@ -341,7 +366,7 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
         { }
         <View style={styles.monthSelector}>
           <TouchableOpacity onPress={() => cambiarMes(-1)} style={styles.monthButton}>
-            <Ionicons name="chevron-back" size={24} color={styles.monthButtonText.color} />
+            <Ionicons name="chevron-back" size={24} color={darkMode ? '#f1f5f9' : '#1f2937'} />
           </TouchableOpacity>
 
           <Text style={styles.monthText}>
@@ -349,7 +374,7 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
           </Text>
 
           <TouchableOpacity onPress={() => cambiarMes(1)} style={styles.monthButton}>
-            <Ionicons name="chevron-forward" size={24} color={styles.monthButtonText.color} />
+            <Ionicons name="chevron-forward" size={24} color={darkMode ? '#f1f5f9' : '#1f2937'} />
           </TouchableOpacity>
         </View>
 
@@ -474,10 +499,20 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
                 <Text style={styles.tipoText}>
                   {tiposIncidencia.find((t) => t.value === incidencia.tipo)?.label || incidencia.tipo}
                 </Text>
-                <Text style={styles.fechaText}>
-                  {formatearFecha(incidencia.fecha_inicio)}
-                  {incidencia.fecha_fin && ` - ${formatearFecha(incidencia.fecha_fin)}`}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>
+                  <Text style={styles.fechaText}>
+                    {formatearFecha(incidencia.fecha_inicio)}
+                    {incidencia.fecha_fin && ` - ${formatearFecha(incidencia.fecha_fin)}`}
+                  </Text>
+                  {incidencia.is_offline && (
+                    <>
+                      <Text style={[styles.fechaText, { color: darkMode ? '#64748b' : '#94a3b8' }]}>•</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: darkMode ? '#818cf8' : '#4f46e5' }}>
+                        Pendiente de enviar
+                      </Text>
+                    </>
+                  )}
+                </View>
               </View>
             </View>
 
@@ -492,13 +527,6 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
 
             </View>
           </View>
-
-          {incidencia.is_offline &&
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, backgroundColor: '#eef2ff', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, alignSelf: 'flex-start', gap: 4 }}>
-              <Ionicons name="cloud-offline" size={14} color="#6366f1" />
-              <Text style={{ fontSize: 12, fontWeight: '600', color: '#6366f1' }}>Pendiente de enviar</Text>
-            </View>
-          }
 
           <Text style={[styles.motivoText, { marginTop: 12 }]} numberOfLines={isExpanded ? undefined : 2}>
             {incidencia.motivo}
@@ -537,6 +565,58 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
                   </Text>
                 </View>
               )}
+
+              {incidencia.archivo_url && (
+                <View style={[styles.detailRow, { marginTop: 12, flexDirection: 'column', alignItems: 'flex-start' }]}>
+                  <Text style={styles.detailLabel}>Evidencia(s):</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8, width: '100%' }}>
+                    {(Array.isArray(incidencia.archivo_url) 
+                        ? incidencia.archivo_url 
+                        : typeof incidencia.archivo_url === 'string' && incidencia.archivo_url.includes(',')
+                          ? incidencia.archivo_url.split(',')
+                          : [incidencia.archivo_url]
+                    ).map((url, idx) => {
+                      const cleanUrl = url.trim();
+                      const fullUrl = getApiEndpoint(cleanUrl);
+                      const isImg = isImageFile(cleanUrl);
+
+                      if (isImg) {
+                        return (
+                          <TouchableOpacity
+                            key={idx}
+                            style={styles.evidenceImageContainer}
+                            onPress={() => setSelectedImage(fullUrl)}
+                            activeOpacity={0.9}
+                          >
+                            <IncidentImage
+                              uri={fullUrl}
+                              style={styles.evidenceImage}
+                              darkMode={darkMode}
+                            />
+                            <View style={styles.evidenceImageBadge}>
+                              <Ionicons name="scan-outline" size={14} color="#ffffff" />
+                              <Text style={styles.evidenceImageBadgeText}>Ver imagen</Text>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      }
+
+                      return (
+                        <TouchableOpacity
+                          key={idx}
+                          style={styles.evidenceButton}
+                          onPress={() => setSelectedDocument(fullUrl)}
+                        >
+                          <Ionicons name="document-attach" size={16} color={darkMode ? '#60a5fa' : '#4f46e5'} />
+                          <Text style={styles.evidenceButtonText}>
+                            Ver Archivo {idx + 1}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
             </View>
           )}
         </TouchableOpacity>
@@ -559,7 +639,7 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
             setModoRango(false);
           }}>
 
-          <Ionicons name="list" size={20} color={vistaActual === 'lista' ? '#2563eb' : '#6b7280'} />
+          <Ionicons name="list" size={20} color={vistaActual === 'lista' ? (darkMode ? '#60a5fa' : '#2563eb') : (darkMode ? '#94a3b8' : '#6b7280')} />
           <Text style={[styles.viewButtonText, vistaActual === 'lista' && styles.viewButtonTextActive]}>Lista</Text>
         </TouchableOpacity>
 
@@ -567,7 +647,7 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
           style={[styles.viewButton, vistaActual === 'calendario' && styles.viewButtonActive]}
           onPress={() => setVistaActual('calendario')}>
 
-          <Ionicons name="calendar" size={20} color={vistaActual === 'calendario' ? '#2563eb' : '#6b7280'} />
+          <Ionicons name="calendar" size={20} color={vistaActual === 'calendario' ? (darkMode ? '#60a5fa' : '#2563eb') : (darkMode ? '#94a3b8' : '#6b7280')} />
           <Text style={[styles.viewButtonText, vistaActual === 'calendario' && styles.viewButtonTextActive]}>Calendario</Text>
         </TouchableOpacity>
       </View>
@@ -575,7 +655,7 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
       {vistaActual === 'lista' &&
         <View style={styles.filtrosContainer}>
           <TouchableOpacity style={styles.filtroChip} onPress={() => setModalFiltroVisible(true)}>
-            <Ionicons name={filtrosEstado.find((f) => f.value === filtroEstado)?.icon || 'list'} size={16} color="#2563eb" />
+            <Ionicons name={filtrosEstado.find((f) => f.value === filtroEstado)?.icon || 'list'} size={16} color={darkMode ? '#60a5fa' : '#2563eb'} />
             <Text style={styles.filtroChipText}>{filtrosEstado.find((f) => f.value === filtroEstado)?.label || 'Todos'}</Text>
             <View style={styles.filtroChipBadge}>
               <Text style={styles.filtroChipBadgeText}>
@@ -608,7 +688,7 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <TouchableOpacity onPress={() => { setRangoInicio(null); setRangoFin(null); setModoRango(false); }}>
-              <Text style={{ fontSize: 12, fontWeight: '600', color: '#2563eb' }}>Ver todas</Text>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: darkMode ? '#60a5fa' : '#2563eb' }}>Ver todas</Text>
             </TouchableOpacity>
             <Text style={styles.sectionCount}>
               {incidenciasFiltradas.length} {incidenciasFiltradas.length === 1 ? 'registro' : 'registros'}
@@ -622,7 +702,7 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
 
   const ListEmpty = () => (
     <View style={styles.emptyContainer}>
-      <Ionicons name="document-text-outline" size={64} color="#cbd5e1" />
+      <Ionicons name="document-text-outline" size={64} color={darkMode ? '#334155' : '#cbd5e1'} />
       <Text style={styles.emptyTitle}>No hay incidencias</Text>
       <Text style={styles.emptyText}>
         {filtroEstado === 'todos' && filtroTipo === 'todos' ?
@@ -671,7 +751,7 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
       ListEmptyComponent={ListEmpty}
       ListFooterComponent={<View style={{ height: 100 }} />}
       contentContainerStyle={seccionesFiltradas.length === 0 ? { flexGrow: 1 } : undefined}
-      showsVerticalScrollIndicator={false}
+      showsVerticalScrollIndicator={true}
       initialNumToRender={10}
       maxToRenderPerBatch={10}
       windowSize={5}
@@ -680,8 +760,8 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          tintColor="#3b82f6"
-          colors={['#3b82f6']} />
+          tintColor={darkMode ? '#60a5fa' : '#2563eb'}
+          colors={[darkMode ? '#60a5fa' : '#2563eb']} />
       } />
   ), [seccionesFiltradas, expandedCard, refreshing, styles, darkMode, currentMonth, vistaActual, filtroEstado, filtroTipo, rangoInicio, rangoFin]);
 
@@ -699,7 +779,7 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
         />
 
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#3b82f6" />
+          <ActivityIndicator size="large" color={darkMode ? '#60a5fa' : '#2563eb'} />
         </View>
       </View>);
 
@@ -842,7 +922,7 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
                   <Ionicons
                     name={filtro.icon}
                     size={22}
-                    color={filtroEstado === filtro.value ? '#2563eb' : '#6b7280'} />
+                    color={filtroEstado === filtro.value ? (darkMode ? '#60a5fa' : '#2563eb') : (darkMode ? '#94a3b8' : '#6b7280')} />
 
                   <Text style={[
                     styles.modalListItemText,
@@ -877,7 +957,220 @@ export const IncidenciasScreen = ({ userData, darkMode, onBack }) => {
           darkMode={darkMode}
         />
       )}
+
+      {/* Modal para Visualizar Imagen */}
+      <FullScreenViewer
+        visible={!!selectedImage}
+        uri={selectedImage}
+        onClose={() => setSelectedImage(null)}
+        darkMode={darkMode}
+      />
+
+      {/* Modal para Visualizar Documento */}
+      <DocumentViewer
+        visible={!!selectedDocument}
+        uri={selectedDocument}
+        onClose={() => setSelectedDocument(null)}
+        darkMode={darkMode}
+      />
+
+      <CustomAlert
+        visible={alertModal.visible}
+        title={alertModal.title}
+        message={alertModal.message}
+        actions={alertModal.actions}
+        darkMode={darkMode}
+        onClose={() => setAlertModal(prev => ({ ...prev, visible: false }))}
+      />
     </View>
+  );
+};
+
+const IncidentImage = ({ uri, style, darkMode }) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  return (
+    <View style={[style, { justifyContent: 'center', alignItems: 'center', backgroundColor: darkMode ? '#1e293b' : '#f1f5f9', overflow: 'hidden' }]}>
+      {loading && (
+        <ActivityIndicator
+          size="small"
+          color={darkMode ? '#60a5fa' : '#2563eb'}
+          style={{ position: 'absolute', zIndex: 1 }}
+        />
+      )}
+      {error ? (
+        <View style={{ alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <Ionicons name="image-outline" size={32} color={darkMode ? '#475569' : '#94a3b8'} />
+          <Text style={{ fontSize: 11, color: darkMode ? '#64748b' : '#94a3b8', marginTop: 4 }}>
+            No se pudo cargar la imagen
+          </Text>
+        </View>
+      ) : (
+        <Image
+          source={{
+            uri: uri,
+            cache: 'force-cache',
+          }}
+          style={{ width: '100%', height: '100%' }}
+          resizeMode="cover"
+          onLoadStart={() => setLoading(true)}
+          onLoadEnd={() => setLoading(false)}
+          onError={() => {
+            setError(true);
+            setLoading(false);
+          }}
+        />
+      )}
+    </View>
+  );
+};
+
+const FullScreenViewer = ({ uri, visible, onClose, darkMode }) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      setLoading(true);
+      setError(false);
+    }
+  }, [visible, uri]);
+
+  return (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' }}>
+        <TouchableOpacity
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+          activeOpacity={1}
+          onPress={onClose}
+        >
+          <View style={{ flex: 1 }} />
+        </TouchableOpacity>
+        
+        <View style={{ width: '90%', height: '80%', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+          <TouchableOpacity
+            style={{ position: 'absolute', top: -45, right: 10, zIndex: 10, padding: 8 }}
+            onPress={onClose}
+            activeOpacity={0.6}
+          >
+            <Ionicons name="close" size={32} color="#fff" />
+          </TouchableOpacity>
+
+          {loading && (
+            <ActivityIndicator
+              size="large"
+              color="#60a5fa"
+              style={{ position: 'absolute', zIndex: 1 }}
+            />
+          )}
+
+          {error ? (
+            <View style={{ alignItems: 'center' }}>
+              <Ionicons name="alert-circle-outline" size={48} color="#ef4444" />
+              <Text style={{ color: '#fff', marginTop: 8, fontSize: 14 }}>
+                Error al abrir la imagen
+              </Text>
+            </View>
+          ) : (
+            uri && (
+              <Image
+                source={{ uri: uri, cache: 'force-cache' }}
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="contain"
+                onLoadStart={() => setLoading(true)}
+                onLoadEnd={() => setLoading(false)}
+                onError={() => {
+                  setError(true);
+                  setLoading(false);
+                }}
+              />
+            )
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+const DocumentViewer = ({ uri, visible, onClose, darkMode }) => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (visible) {
+      setLoading(true);
+    }
+  }, [visible, uri]);
+
+  const viewerUrl = Platform.OS === 'android' && uri && uri.toLowerCase().endsWith('.pdf')
+    ? `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(uri)}`
+    : uri;
+
+  return (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={{ flex: 1, backgroundColor: darkMode ? '#0f172a' : '#ffffff' }}>
+        <View style={{ 
+          paddingTop: Platform.OS === 'ios' ? 45 : (StatusBar.currentHeight || 24),
+          paddingBottom: 8,
+          backgroundColor: darkMode ? '#0f172a' : '#ffffff'
+        }}>
+          <Header
+            darkMode={darkMode}
+            title="Vista de Documento"
+            leftComponent={
+              <TouchableOpacity onPress={onClose} style={{ padding: 8, marginLeft: -8 }} activeOpacity={0.6}>
+                <Ionicons name="arrow-back" size={24} color={darkMode ? '#f8fafc' : '#0f172a'} />
+              </TouchableOpacity>
+            }
+          />
+        </View>
+
+        <View style={{ height: 1, backgroundColor: darkMode ? '#1e293b' : '#e2e8f0' }} />
+
+        <View style={{ flex: 1, position: 'relative' }}>
+          {uri ? (
+            <WebView
+              source={{ uri: viewerUrl }}
+              style={{ flex: 1 }}
+              onLoadStart={() => setLoading(true)}
+              onLoadEnd={() => setLoading(false)}
+            />
+          ) : (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ color: darkMode ? '#94a3b8' : '#64748b' }}>No se pudo cargar el documento</Text>
+            </View>
+          )}
+
+          {loading && (
+            <View style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+            }}>
+              <ActivityIndicator size="large" color={darkMode ? '#60a5fa' : '#2563eb'} />
+              <Text style={{ marginTop: 12, color: darkMode ? '#94a3b8' : '#64748b', fontSize: 14 }}>
+                Cargando vista previa...
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+    </Modal>
   );
 };
 

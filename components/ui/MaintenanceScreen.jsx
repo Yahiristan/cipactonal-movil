@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, Animated,
-  TouchableOpacity, ActivityIndicator } from
+  TouchableOpacity, ActivityIndicator, ScrollView } from
 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -77,100 +76,106 @@ const MaintenanceScreen = ({ onRetry, onLogout, darkMode = false }) => {
             
       
 
-            <Animated.View style={[
-      styles.card,
-      {
-        backgroundColor: colors.card,
-        borderColor: colors.cardBorder,
-        opacity: fadeAnim,
-        transform: [{ translateY: slideAnim }]
-      }]
-      }>
-                {}
-                <View style={styles.topBar} />
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 24 }}
+        showsVerticalScrollIndicator={true}
+        style={{ width: '100%' }}>
 
-                {}
-                <View style={[styles.stripesContainer, { backgroundColor: colors.stripeBg }]}>
-                    {[...Array(20)].map((_, i) =>
-          <View key={i} style={[styles.stripe, {
-            left: -10 + i * 20,
-            backgroundColor: colors.stripeColor
-          }]} />
-          )}
-                </View>
+        <Animated.View style={[
+          styles.card,
+          {
+            backgroundColor: colors.card,
+            borderColor: colors.cardBorder,
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }]
+          }]
+        }>
+          {}
+          <View style={styles.topBar} />
 
-                {}
-                <View style={styles.cardBody}>
-                    {}
-                    <View style={styles.iconWrapper}>
-                        <View style={[styles.iconCircle, dm && styles.iconCircleDark]}>
-                            <Ionicons name="construct" size={38} color="#f59e0b" />
-                        </View>
-                        {}
-                        <View style={[styles.iconBadge, {
-              borderColor: colors.card,
-              backgroundColor: dm ? '#374151' : '#ffffff'
-            }]}>
-                            <Ionicons name="hammer" size={14} color={dm ? '#fbbf24' : '#d97706'} />
-                        </View>
-                    </View>
+          {}
+          <View style={[styles.stripesContainer, { backgroundColor: colors.stripeBg }]}>
+            {[...Array(20)].map((_, i) =>
+              <View key={i} style={[styles.stripe, {
+                left: -10 + i * 20,
+                backgroundColor: colors.stripeColor
+              }]} />
+            )}
+          </View>
 
-                    {}
-                    <Text style={[styles.title, { color: colors.title }]}>
-                        Sistema en Mantenimiento
-                    </Text>
-                    <Text style={[styles.subtitle, { color: colors.subtitle }]}>
-                        Estamos realizando tareas programadas de actualización para asegurar el óptimo funcionamiento de la plataforma.{'\n\n'}El servicio se restablecerá en breve.
-                    </Text>
-
-                    {}
-                    <View style={[styles.statusRow, { backgroundColor: colors.statusBg, borderColor: colors.statusBorder }]}>
-                        <Animated.View style={{ transform: [{ rotate: isRetrying ? spin : '0deg' }] }}>
-                            <Ionicons name="refresh" size={18} color={colors.statusText} />
-                        </Animated.View>
-                        <Text style={[styles.statusText, { color: colors.statusText }]}>
-                            {isRetrying ?
-              'Espere un momento...' :
-              'La pantalla se actualizará automáticamente'}
-                        </Text>
-                    </View>
-
-                    {}
-                    <TouchableOpacity
-            style={[styles.retryBtn, {
-              backgroundColor: colors.retryBg,
-              borderColor: colors.retryBorder
-            }]}
-            onPress={handleRetry}
-            activeOpacity={0.7}
-            disabled={isRetrying}>
-            
-                        <Ionicons name="refresh-outline" size={16} color={colors.retryText} />
-                        <Text style={[styles.retryText, { color: colors.retryText }]}>
-                            Reintentar ahora
-                        </Text>
-                    </TouchableOpacity>
-
-                    {/* Return Home Button */}
-                    {onLogout && (
-                      <TouchableOpacity
-                        style={[styles.homeBtn, { marginTop: 12, borderColor: colors.retryBorder }]}
-                        onPress={onLogout}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons name="log-out-outline" size={16} color={colors.subtitle} />
-                        <Text style={[styles.homeText, { color: colors.subtitle }]}>
-                          Regresar al inicio
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                </View>
-            </Animated.View>
+          {}
+          <View style={styles.cardBody}>
+            {}
+            <View style={styles.iconWrapper}>
+              <View style={[styles.iconCircle, dm && styles.iconCircleDark]}>
+                <Ionicons name="construct" size={38} color="#f59e0b" />
+              </View>
+              {}
+              <View style={[styles.iconBadge, {
+                borderColor: colors.card,
+                backgroundColor: dm ? '#374151' : '#ffffff'
+              }]}>
+                <Ionicons name="hammer" size={14} color={dm ? '#fbbf24' : '#d97706'} />
+              </View>
+            </View>
 
             {}
-            <Animated.Text style={[styles.footer, { color: colors.footer, opacity: fadeAnim }]}>
-                FASITLAC  {new Date().getFullYear()}
-            </Animated.Text>
+            <Text style={[styles.title, { color: colors.title }]}>
+              Sistema en Mantenimiento
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.subtitle }]}>
+              Estamos realizando tareas programadas de actualización para asegurar el óptimo funcionamiento de la plataforma.{'\n\n'}El servicio se restablecerá en breve.
+            </Text>
+
+            {}
+            <View style={[styles.statusRow, { backgroundColor: colors.statusBg, borderColor: colors.statusBorder }]}>
+              <Animated.View style={{ transform: [{ rotate: isRetrying ? spin : '0deg' }] }}>
+                <Ionicons name="refresh" size={18} color={colors.statusText} />
+              </Animated.View>
+              <Text style={[styles.statusText, { color: colors.statusText }]}>
+                {isRetrying ?
+                  'Espere un momento...' :
+                  'La pantalla se actualizará automáticamente'}
+              </Text>
+            </View>
+
+            {}
+            <TouchableOpacity
+              style={[styles.retryBtn, {
+                backgroundColor: colors.retryBg,
+                borderColor: colors.retryBorder
+              }]}
+              onPress={handleRetry}
+              activeOpacity={0.7}
+              disabled={isRetrying}>
+
+              <Ionicons name="refresh-outline" size={16} color={colors.retryText} />
+              <Text style={[styles.retryText, { color: colors.retryText }]}>
+                Reintentar ahora
+              </Text>
+            </TouchableOpacity>
+
+            {/* Return Home Button */}
+            {onLogout && (
+              <TouchableOpacity
+                style={[styles.homeBtn, { marginTop: 12, borderColor: colors.retryBorder }]}
+                onPress={onLogout}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="log-out-outline" size={16} color={colors.subtitle} />
+                <Text style={[styles.homeText, { color: colors.subtitle }]}>
+                  Regresar al inicio
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </Animated.View>
+
+        {}
+        <Animated.Text style={[styles.footer, { color: colors.footer, opacity: fadeAnim, position: 'relative', bottom: 0, marginTop: 24 }]}>
+          FASITLAC  {new Date().getFullYear()}
+        </Animated.Text>
+      </ScrollView>
         </View>);
 
 };

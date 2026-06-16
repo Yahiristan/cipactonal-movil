@@ -158,7 +158,7 @@ export const HomeScreen = ({ userData, darkMode, onOpenAvisos, onOpenProfile }) 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={true}>
 
         {esEmpleado &&
           <View style={styles.infoBloques}>
@@ -314,6 +314,7 @@ const homeStyles = StyleSheet.create({
     flex: 1
   },
   scrollContent: {
+    flexGrow: 1,
     paddingBottom: 100
   },
 

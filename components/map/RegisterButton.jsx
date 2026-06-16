@@ -726,7 +726,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
     const POSTERIOR_SALIDA_LOCAL = horarioInfo?.tolerancias?.posteriorSalida ?? 0;
     const numSalidasOffline = (registrosHoyTodos || []).filter(r => r.tipo === 'salida').length;
     const totalBloques = horarioInfo?.bloques?.length || 0;
-    
+
     // Si ya completó los bloques locales pero necesita salir de nuevo (ej. turno extra del admin),
     // o si no tiene bloques configurados, permitimos la salida libremente.
     if (numSalidasOffline >= totalBloques || totalBloques === 0) {
@@ -807,8 +807,39 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
                 new Date(r.fecha_registro).toDateString() === hoy
               );
 
-              if (registrosHoy.length > 0) {
+              // Obtener también los registros offline pendientes de sincronizar de hoy
+              let pendingOffline = [];
+              try {
+                pendingOffline = await sqliteManager.getPendingOfflineRegistrosHoy(empleadoId);
+              } catch (e) { }
 
+              const listOnline = registrosHoy.map(r => ({
+                id: r.id,
+                tipo: r.tipo,
+                estado: r.estado,
+                fecha_registro: r.fecha_registro,
+                dispositivo_origen: r.dispositivo_origen,
+                departamento_id: r.departamento_id
+              }));
+
+              const listOfflinePending = (pendingOffline || []).map(r => ({
+                id: r.server_id || `offline_${r.local_id}`,
+                tipo: r.tipo,
+                estado: r.estado,
+                fecha_registro: r.fecha_registro,
+                dispositivo_origen: r.dispositivo_origen,
+                departamento_id: r.departamento_id,
+                isPendingOffline: true
+              }));
+
+              // Filtrar duplicados: si ya está en la lista del servidor (por diferencia < 5s), no lo duplicamos
+              const uniqueOffline = listOfflinePending.filter(off =>
+                !listOnline.some(on => on.id === off.id || Math.abs(new Date(on.fecha_registro).getTime() - new Date(off.fecha_registro).getTime()) < 5000)
+              );
+
+              const merged = [...listOnline, ...uniqueOffline];
+
+              if (merged.length > 0) {
                 Promise.all(registrosHoy.map((r) =>
                   saveOnlineAsistenciaToCache({
                     id: r.id,
@@ -821,7 +852,10 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
                   })
                 )).catch(() => { });
 
-                const ultimoRaw = registrosHoy[0];
+                // Ordenar por fecha descendente para obtener el último
+                const mergedSortedDesc = [...merged].sort((a, b) => new Date(b.fecha_registro) - new Date(a.fecha_registro));
+                const ultimoRaw = mergedSortedDesc[0];
+
                 const ultimo = {
                   tipo: ultimoRaw.tipo,
                   estado: ultimoRaw.estado,
@@ -829,10 +863,10 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
                   hora: new Date(ultimoRaw.fecha_registro).toLocaleTimeString('es-MX', {
                     hour: '2-digit', minute: '2-digit'
                   }),
-                  totalRegistrosHoy: registrosHoy.length
+                  totalRegistrosHoy: merged.length
                 };
 
-                const todos = [...registrosHoy].
+                const todos = [...merged].
                   sort((a, b) => new Date(a.fecha_registro) - new Date(b.fecha_registro)).
                   map((r) => ({
                     tipo: r.tipo,
@@ -930,7 +964,12 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       if (!toleranciasSqlite) {
         try { toleranciasSqlite = await sqliteManager.getTolerancia(empleadoId); } catch (_e) { }
       }
-      if (!horario?.configuracion) return { trabaja: false, numTurnos: 0, entrada: null, salida: null };
+      if (!horario) return null;
+      const hId = horario.horario_id || horario.id || null;
+
+      if (!horario?.configuracion) {
+        return { trabaja: false, numTurnos: 0, entrada: null, salida: null, id: hId, horario_id: hId };
+      }
 
       let config = typeof horario.configuracion === 'string' ?
         JSON.parse(horario.configuracion) :
@@ -993,6 +1032,8 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
 
       const minToHHMM = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
       return {
+        id: hId,
+        horario_id: hId,
         trabaja: true,
         numBloques: bloques.length,
         bloques,
@@ -1406,7 +1447,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
     setRegistrando(true);
 
     try {
-      (function () { })(' Captura facial completada para autenticación de registro');
+      (function () { })('🤖 [VERIFICACIÓN FACIAL] Captura facial completada para autenticación de registro');
 
       if (!captureData.faceDetectionUsed || !captureData.validated) {
         throw new Error('No se detectó un rostro válido en la captura');
@@ -1416,7 +1457,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       const validation = validateFaceQuality(faceFeatures);
 
       if (!validation.isValid) {
-        (function () { })('️ Validación de calidad falló:', validation.errors);
+        (function () { })('🤖 [VERIFICACIÓN FACIAL] ⚠️ Validación de calidad falló:', validation.errors);
         showCustomAlert(
           'Calidad insuficiente',
           validation.errors.join('\n') + '\n\n¿Deseas intentar de nuevo?',
@@ -1429,7 +1470,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         return;
       }
 
-      (function () { })(' Validación facial detectó rostro de calidad, enviando imagen al servidor para verificar identidad...');
+      (function () { })('🤖 [VERIFICACIÓN FACIAL] Validación facial detectó rostro de calidad, enviando imagen al servidor para verificar identidad...');
 
       const empleadoId = userData?.empleado?.id || userData?.empleado_id || userData?.id;
 
@@ -1446,10 +1487,19 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
           })
         });
 
+        // Si hay un error del servidor (500, 502, 503, etc.), no bloqueamos al usuario.
+        // Guardamos offline y dejamos que el servidor valide cuando se sincronice la asistencia.
+        if (response.status >= 500) {
+          (function () { })(`🤖 [VERIFICACIÓN FACIAL] Error de servidor/puerta de enlace (${response.status}). Procediendo a guardado local offline.`);
+          datosRegistroRef.current.payloadBiometrico = captureData.photoBase64;
+          await procederConRegistro(true);
+          return;
+        }
+
         const verification = await response.json();
 
         if (!response.ok || !verification.success) {
-          (function () { })(' Verificación facial falló en el servidor:', verification);
+          (function () { })('🤖 [VERIFICACIÓN FACIAL] Falló en el servidor:', verification);
           showCustomAlert(
             'Identidad no verificada',
             verification.message || 'El rostro capturado no coincide con tu registro.',
@@ -1461,15 +1511,18 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
           return;
         }
 
-        (function () { })(` Identidad verificada (${verification.data?.matchScore || 100}% similitud), procediendo con el registro`);
+        (function () { })(`🤖 [VERIFICACIÓN FACIAL] Identidad verificada (${verification.data?.matchScore || 100}% similitud), procediendo con el registro`);
       } catch (networkError) {
-        (function () { })(' Error de red en verificación facial. El servidor validará cuando esté disponible.');
+        (function () { })('🤖 [VERIFICACIÓN FACIAL] Error de red en verificación facial. El servidor/guardado local se encargará.', networkError);
+        datosRegistroRef.current.payloadBiometrico = captureData.photoBase64;
+        await procederConRegistro(true);
+        return;
       }
 
       datosRegistroRef.current.payloadBiometrico = captureData.photoBase64;
       await procederConRegistro();
     } catch (error) {
-      (function () { })(' Error en autenticación facial:', error);
+      (function () { })('🤖 [VERIFICACIÓN FACIAL] Error en autenticación facial:', error);
       showCustomAlert(
         'Error de Autenticación',
         error.message || 'No se pudo verificar tu identidad',
@@ -1484,7 +1537,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
     setRegistrando(false);
   };
 
-  const procederConRegistro = async () => {
+  const procederConRegistro = async (forzarOffline = false) => {
     try {
       const departamento = datosRegistroRef.current.departamento;
       let ubicacionFinal = datosRegistroRef.current.ubicacion;
@@ -1558,9 +1611,17 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         (function () { })('No se pudo obtener la IP local:', netErr);
       }
 
+      const activeEmpresaId = userData?.empresa_id || userData?.empleado?.empresa_id || userData?.empleadoInfo?.empresa_id || null;
+      const activeHorarioId = horarioInfoRef.current?.id || horarioInfoRef.current?.horario_id || horarioInfo?.id || horarioInfo?.horario_id || null;
+      const idempotencyKey = `idemp_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+
       const payload = {
+        id: idempotencyKey,
+        idempotency_key: idempotencyKey,
         empleado_id: userData.empleado_id,
-        empresa_id: userData.empresa_id,
+        empresa_id: activeEmpresaId,
+        horario_id: activeHorarioId,
+        tipo: tipoActual,
         dispositivo_origen: 'movil',
         ubicacion: [ubicacionFinal.lat, ubicacionFinal.lng],
         departamento_id: departamento.id,
@@ -1573,7 +1634,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       let data = null;
 
 
-      const MAX_RETRIES = 5;
+      const MAX_RETRIES = forzarOffline ? 1 : 5;
       let attempt = 0;
 
       while (attempt < MAX_RETRIES && !success) {
@@ -1608,9 +1669,9 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
           if (!response.ok) {
             const errorMsg = data.message || data.error || `Error del servidor (${response.status})`;
 
-            const isDuplicateError = errorMsg.toLowerCase().includes('minuto') || 
-                                     errorMsg.toLowerCase().includes('reciente') ||
-                                     data.estadoHorario === 'espera';
+            const isDuplicateError = errorMsg.toLowerCase().includes('minuto') ||
+              errorMsg.toLowerCase().includes('reciente') ||
+              data.estadoHorario === 'espera';
 
             // Si estamos en un reintento y el servidor nos dice que ya registramos muy rápido,
             // significa que el intento anterior sí se guardó pero la red falló.
@@ -1664,18 +1725,19 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
           }
 
           if (attempt < MAX_RETRIES) {
-            (function () { })(`Intento ${attempt} fallido, reintentando en 3s...`, e.message);
+            (function () { })(`🤖 [REGISTRO] Intento ${attempt} fallido, reintentando en 3s...`, e.message);
             await new Promise(res => setTimeout(res, 3000));
           } else {
-            (function () { })(`Error de red tras ${MAX_RETRIES} intentos, guardando offline:`, e.message);
+            (function () { })(`🤖 [REGISTRO] Error de red tras ${MAX_RETRIES} intentos, guardando offline:`, e.message);
           }
         }
       }
 
       if (!success) {
-        (function () { })('Saving offline attendance...');
+        (function () { })('🤖 [REGISTRO] Guardando asistencia offline...');
         await sqliteManager.saveOfflineAsistencia({
           ...payload,
+          idempotency_key: idempotencyKey,
           tipo: tipoActual,
           estado: 'pendiente',
           metodo_registro: datosRegistroRef.current.metodo || 'PIN',
@@ -1685,6 +1747,10 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
           wifi: networkWifi || null,
           payload_biometrico: datosRegistroRef.current.payloadBiometrico
         });
+
+        // Intentar sincronizar inmediatamente en segundo plano para evitar retrasos
+        syncManager.performSync('post-register').catch(() => { });
+
         data = {
           data: {
             tipo: tipoActual,

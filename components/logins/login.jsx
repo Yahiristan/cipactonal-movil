@@ -14,6 +14,7 @@ import {
   Animated
 } from
   'react-native';
+import { CustomAlert } from '../ui/CustomAlert';
 import NetInfo from '@react-native-community/netinfo';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -58,6 +59,11 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
   const [empresasList, setEmpresasList] = useState([]);
   const [isOfflineMode, setIsOfflineMode] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', actions: [] });
+  const showCustomAlert = (title, message, actions = [{ text: 'OK', onPress: null }]) => {
+    setAlertModal({ visible: true, title, message, actions });
+  };
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       setIsWifiConnected(state.isConnected && (state.isInternetReachable === true || state.isInternetReachable === null));
@@ -188,11 +194,11 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
 
     if (!usuario || !password) {
       if (!usuario && !password) {
-        Alert.alert('Advertencia', 'El usuario y la contraseña son requeridos');
+        showCustomAlert('Advertencia', 'El usuario y la contraseña son requeridos');
       } else if (!usuario) {
-        Alert.alert('Advertencia', 'El usuario o correo es requerido');
+        showCustomAlert('Advertencia', 'El usuario o correo es requerido');
       } else {
-        Alert.alert('Advertencia', 'La contraseña es requerida');
+        showCustomAlert('Advertencia', 'La contraseña es requerida');
       }
       return;
     }
@@ -226,7 +232,7 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
           onLoginSuccess(offlineResult.data, true);
           return;
         } else {
-          Alert.alert('Error', offlineResult.error || 'Credenciales inválidas (offline)');
+          showCustomAlert('Error', offlineResult.error || 'Credenciales inválidas (offline)');
           setIsLoading(false);
           Animated.sequence([
             Animated.timing(pulseAnim, { toValue: 1.2, duration: 100, useNativeDriver: true }),
@@ -235,7 +241,7 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
           return;
         }
       } catch (err) {
-        Alert.alert('Error', 'Error al iniciar sesión offline');
+        showCustomAlert('Error', 'Error al iniciar sesión offline');
         setIsLoading(false);
         return;
       }
@@ -449,9 +455,9 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
           ).start();
         }
       } else if (msg.includes('401') || msg.includes('credentials') || msg.includes('Credenciales')) {
-        Alert.alert('Error', 'Usuario o contraseña incorrectos');
+        showCustomAlert('Error', 'Usuario o contraseña incorrectos');
       } else {
-        Alert.alert('Error', error.message || 'Error al iniciar sesión');
+        showCustomAlert('Error', error.message || 'Error al iniciar sesión');
       }
     } finally {
       setIsLoading(false);
@@ -473,10 +479,10 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
               if (cached.empresa_id && String(cached.empresa_id) !== String(selectedEmpresaId)) {
                 // El perfil cacheado es de otra empresa — mostrar aviso popup
                 setIsOfflineMode(false);
-                Alert.alert(
+                showCustomAlert(
                   'Sin datos offline',
                   'No tienes información guardada para esta empresa en este dispositivo.\n\nConectáte a internet e inicia sesión primero para sincronizar tu perfil.',
-                  [{ text: 'Entendido', style: 'default' }]
+                  [{ text: 'Entendido' }]
                 );
                 return;
               }
@@ -508,7 +514,7 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
 
           <ScrollView
             contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={true}
             keyboardShouldPersistTaps="handled"
             bounces={false}
             overScrollMode="never">
@@ -602,6 +608,14 @@ export const LoginScreen = ({ onLoginSuccess, darkMode }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      <CustomAlert
+        visible={alertModal.visible}
+        title={alertModal.title}
+        message={alertModal.message}
+        actions={alertModal.actions}
+        darkMode={darkMode}
+        onClose={() => setAlertModal(prev => ({ ...prev, visible: false }))}
+      />
     </View>);
 
 };

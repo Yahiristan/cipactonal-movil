@@ -13,7 +13,8 @@ import {
   Modal,
   Image,
   Animated,
-  useColorScheme
+  useColorScheme,
+  ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -239,84 +240,86 @@ export const CompanyAffiliationScreen = ({ onNext, onPrevious, initialEmpresaId,
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-          <View style={styles.content}>
-            <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Identificador</Text>
-            <View style={[styles.sectionContainer, { backgroundColor: t.card, paddingVertical: 20 }]}>
-              <View style={[styles.settingItem, { flexDirection: 'column', alignItems: 'stretch', paddingHorizontal: 24 }]}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={true} keyboardShouldPersistTaps="handled">
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <View style={styles.content}>
+              <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Identificador</Text>
+              <View style={[styles.sectionContainer, { backgroundColor: t.card, paddingVertical: 20 }]}>
+                <View style={[styles.settingItem, { flexDirection: 'column', alignItems: 'stretch', paddingHorizontal: 24 }]}>
 
-                <View style={{ alignItems: 'center', marginBottom: 20 }}>
-                  <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: isVerified ? (isDark ? '#064e3b' : '#d1fae5') : t.iconCircleBg, justifyContent: 'center', alignItems: 'center', marginBottom: 12, overflow: 'hidden' }}>
-                    {isVerified && (verifiedCompanyLogo || initialEmpresaLogo) ? (
-                      <Image
-                        source={{ uri: obtenerUrlLogo(verifiedCompanyLogo || initialEmpresaLogo) }}
-                        style={{ width: '100%', height: '100%', borderRadius: 32, resizeMode: 'cover' }}
-                      />
-                    ) : (
-                      <Ionicons name="business" size={32} color={isVerified ? '#10b981' : t.iconColor} />
-                    )}
+                  <View style={{ alignItems: 'center', marginBottom: 20 }}>
+                    <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: isVerified ? (isDark ? '#064e3b' : '#d1fae5') : t.iconCircleBg, justifyContent: 'center', alignItems: 'center', marginBottom: 12, overflow: 'hidden' }}>
+                      {isVerified && (verifiedCompanyLogo || initialEmpresaLogo) ? (
+                        <Image
+                          source={{ uri: obtenerUrlLogo(verifiedCompanyLogo || initialEmpresaLogo) }}
+                          style={{ width: '100%', height: '100%', borderRadius: 32, resizeMode: 'cover' }}
+                        />
+                      ) : (
+                        <Ionicons name="business" size={32} color={isVerified ? '#10b981' : t.iconColor} />
+                      )}
+                    </View>
+                    <Text style={{ fontSize: 15, color: t.textSecondary, textAlign: 'center', fontWeight: '500' }}>
+                      Ingresa el código único proporcionado por tu empresa
+                    </Text>
                   </View>
-                  <Text style={{ fontSize: 15, color: t.textSecondary, textAlign: 'center', fontWeight: '500' }}>
-                    Ingresa el código único proporcionado por tu empresa
-                  </Text>
-                </View>
 
-                <View style={{ position: 'relative' }}>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      {
-                        fontSize: dynamicFontSize,
-                        letterSpacing: dynamicLetterSpacing,
-                        paddingVertical: 20,
-                        paddingRight: initialEmpresaIdentificador && !isVerified ? 52 : 16,
-                        borderRadius: 20,
-                        backgroundColor: isVerified ? (isDark ? '#064e3b' : '#f0fdf4') : t.inputBg,
-                        borderColor: isVerified ? '#10b981' : t.inputBorder,
-                        color: t.textPrimary,
-                      }
-                    ]}
-                    placeholder="CÓDIGO"
-                    placeholderTextColor={t.placeholder}
-                    value={companyCode}
-                    onChangeText={(text) => {
-                      setCompanyCode(text.replace(/\s/g, ''));
-                      setIsVerified(false);
-                    }}
-                    autoCapitalize="none"
-                    editable={!isLoading && !isVerified && !initialEmpresaIdentificador}
-                  />
-                  {initialEmpresaIdentificador && !isVerified &&
-                    <View style={{ position: 'absolute', right: 16, top: 0, bottom: 0, justifyContent: 'center' }}>
-                      <Ionicons name="lock-closed" size={18} color={t.textMuted} />
+                  <View style={{ position: 'relative' }}>
+                    <TextInput
+                      style={[
+                        styles.input,
+                        {
+                          fontSize: dynamicFontSize,
+                          letterSpacing: dynamicLetterSpacing,
+                          paddingVertical: 20,
+                          paddingRight: initialEmpresaIdentificador && !isVerified ? 52 : 16,
+                          borderRadius: 20,
+                          backgroundColor: isVerified ? (isDark ? '#064e3b' : '#f0fdf4') : t.inputBg,
+                          borderColor: isVerified ? '#10b981' : t.inputBorder,
+                          color: t.textPrimary,
+                        }
+                      ]}
+                      placeholder="CÓDIGO"
+                      placeholderTextColor={t.placeholder}
+                      value={companyCode}
+                      onChangeText={(text) => {
+                        setCompanyCode(text.replace(/\s/g, ''));
+                        setIsVerified(false);
+                      }}
+                      autoCapitalize="none"
+                      editable={!isLoading && !isVerified && !initialEmpresaIdentificador}
+                    />
+                    {initialEmpresaIdentificador && !isVerified &&
+                      <View style={{ position: 'absolute', right: 16, top: 0, bottom: 0, justifyContent: 'center' }}>
+                        <Ionicons name="lock-closed" size={18} color={t.textMuted} />
+                      </View>
+                    }
+                  </View>
+
+                  {isVerified &&
+                    <View style={styles.verifiedContainer}>
+                      <Ionicons name="checkmark-circle" size={18} color="#10b981" />
+                      <Text style={[styles.verifiedText, { fontSize: 16 }]}>{verifiedCompanyName}</Text>
                     </View>
                   }
                 </View>
+              </View>
 
-                {isVerified &&
-                  <View style={styles.verifiedContainer}>
-                    <Ionicons name="checkmark-circle" size={18} color="#10b981" />
-                    <Text style={[styles.verifiedText, { fontSize: 16 }]}>{verifiedCompanyName}</Text>
+              <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Ayuda</Text>
+              <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
+                <TouchableOpacity style={styles.settingItem} onPress={handleSupportPress} activeOpacity={0.7}>
+                  <View style={styles.settingLeft}>
+                    <Ionicons name="help-circle-outline" size={20} color={t.iconColor} style={styles.settingIcon} />
+                    <View style={{ flex: 1, paddingRight: 10 }}>
+                      <Text style={[styles.settingTitle, { color: t.textPrimary }]}>{affiliation.helpText}</Text>
+                      <Text style={[styles.settingValue, { color: t.accentBlue }]}>{affiliation.supportText}</Text>
+                    </View>
                   </View>
-                }
+                  <Ionicons name="chevron-forward" size={20} color={t.textMuted} />
+                </TouchableOpacity>
               </View>
             </View>
-
-            <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Ayuda</Text>
-            <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
-              <TouchableOpacity style={styles.settingItem} onPress={handleSupportPress} activeOpacity={0.7}>
-                <View style={styles.settingLeft}>
-                  <Ionicons name="help-circle-outline" size={20} color={t.iconColor} style={styles.settingIcon} />
-                  <View style={{ flex: 1, paddingRight: 10 }}>
-                    <Text style={[styles.settingTitle, { color: t.textPrimary }]}>{affiliation.helpText}</Text>
-                    <Text style={[styles.settingValue, { color: t.accentBlue }]}>{affiliation.supportText}</Text>
-                  </View>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={t.textMuted} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
+          </TouchableWithoutFeedback>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       <View style={[styles.footer, { backgroundColor: t.bg, paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 20) : insets.bottom + 16 }]}>

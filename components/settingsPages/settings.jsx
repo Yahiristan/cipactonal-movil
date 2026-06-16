@@ -63,7 +63,7 @@ export const SettingsScreen = ({
     <View style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={true}>
 
         {/* Tarjeta de Perfil */}
         <View style={styles.profileCard}>
@@ -211,6 +211,7 @@ const settingsStyles = StyleSheet.create({
     paddingTop: 10
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingBottom: 80
   },

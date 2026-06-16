@@ -185,19 +185,24 @@ export async function pushIncidencias() {
       processedIds.add(inc.local_id);
 
       try {
+        const formData = new FormData();
+        formData.append('empleado_id', String(inc.empleado_id));
+        formData.append('tipo', String(inc.tipo));
+        if (inc.motivo) formData.append('motivo', String(inc.motivo));
+        
+        if (inc.fecha_inicio) {
+          formData.append('fecha_inicio', inc.fecha_inicio.split('T')[0]);
+        }
+        if (inc.fecha_fin) {
+          formData.append('fecha_fin', inc.fecha_fin.split('T')[0]);
+        }
+
         const response = await fetchTimeout(`${API_URL}/incidencias`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json'
+            'Authorization': `Bearer ${authToken}`
           },
-          body: JSON.stringify({
-            empleado_id: inc.empleado_id,
-            tipo: inc.tipo,
-            motivo: inc.motivo,
-            fecha_inicio: inc.fecha_inicio,
-            fecha_fin: inc.fecha_fin
-          })
+          body: formData
         });
 
         if (response.ok) {

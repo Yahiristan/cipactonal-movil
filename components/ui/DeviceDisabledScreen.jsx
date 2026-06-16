@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, Animated,
-  TouchableOpacity, ActivityIndicator
+  TouchableOpacity, ActivityIndicator, ScrollView
 } from
   'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -112,114 +111,120 @@ const DeviceDisabledScreen = ({ onReRequest, onReEnabled, onLogout, darkMode = f
       
 
 
-      <Animated.View style={[
-        styles.card,
-        {
-          backgroundColor: colors.card,
-          borderColor: colors.cardBorder,
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }]
-        }]
-      }>
-        { }
-        <View style={styles.topBar} />
-        { }
-        <View style={[styles.stripesContainer, { backgroundColor: colors.stripeBg }]}>
-          {[...Array(20)].map((_, i) =>
-            <View key={i} style={[styles.stripe, {
-              left: -10 + i * 20,
-              backgroundColor: colors.stripeColor
-            }]} />
-          )}
-        </View>
-        { }
-        <View style={styles.cardBody}>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 24 }}
+        showsVerticalScrollIndicator={true}
+        style={{ width: '100%' }}>
+
+        <Animated.View style={[
+          styles.card,
+          {
+            backgroundColor: colors.card,
+            borderColor: colors.cardBorder,
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }]
+          }]
+        }>
           { }
-          <View style={styles.iconWrapper}>
-            <View style={[styles.iconCircle, { backgroundColor: colors.iconBg }]}>
-              <Ionicons name="phone-portrait" size={38} color="#ef4444" />
-            </View>
-            { }
-            <View style={[styles.iconBadge, {
-              borderColor: colors.card,
-              backgroundColor: colors.badgeBg
-            }]}>
-              <Ionicons name="ban" size={14} color="#dc2626" />
-            </View>
+          <View style={styles.topBar} />
+          { }
+          <View style={[styles.stripesContainer, { backgroundColor: colors.stripeBg }]}>
+            {[...Array(20)].map((_, i) =>
+              <View key={i} style={[styles.stripe, {
+                left: -10 + i * 20,
+                backgroundColor: colors.stripeColor
+              }]} />
+            )}
           </View>
           { }
-          <Text style={[styles.title, { color: colors.title }]}>
-            Nodo Deshabilitado
-          </Text>
-          <Text style={[styles.subtitle, { color: colors.subtitle }]}>
-            Este dispositivo ha sido desactivado por el administrador del sistema y ya no cuenta con acceso autorizado.{'\n\n'}Contacta a tu administrador o solicita nuevamente el acceso.
-          </Text>
-          { }
-          {checkResult === 'enabled' &&
-            <View style={[styles.statusRow, { backgroundColor: colors.checkBg, borderColor: colors.checkBorder, marginBottom: 10 }]}>
-              <Ionicons name="checkmark-circle" size={18} color={colors.checkText} />
-              <Text style={[styles.statusText, { color: colors.checkText }]}>
-                Acceso restaurado
-              </Text>
+          <View style={styles.cardBody}>
+            { }
+            <View style={styles.iconWrapper}>
+              <View style={[styles.iconCircle, { backgroundColor: colors.iconBg }]}>
+                <Ionicons name="phone-portrait" size={38} color="#ef4444" />
+              </View>
+              { }
+              <View style={[styles.iconBadge, {
+                borderColor: colors.card,
+                backgroundColor: colors.badgeBg
+              }]}>
+                <Ionicons name="ban" size={14} color="#dc2626" />
+              </View>
             </View>
-          }
-          {checkResult === 'still_disabled' &&
-            <View style={[styles.statusRow, { backgroundColor: colors.statusBg, borderColor: colors.statusBorder, marginBottom: 10 }]}>
-              <Ionicons name="close-circle" size={18} color={colors.statusText} />
-              <Text style={[styles.statusText, { color: colors.statusText }]}>
-                Sigue deshabilitado.
-              </Text>
-            </View>
-          }
-          { }
-          <TouchableOpacity
-            style={[styles.checkBtn, { opacity: checking ? 0.75 : 1 }]}
-            onPress={handleCheckStatus}
-            activeOpacity={0.8}
-            disabled={checking || checkResult === 'enabled'}>
-
-            {checking ?
-              <ActivityIndicator size="small" color="#ffffff" /> :
-              <Ionicons name="cloud-download-outline" size={18} color="#ffffff" />
+            { }
+            <Text style={[styles.title, { color: colors.title }]}>
+              Nodo Deshabilitado
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.subtitle }]}>
+              Este dispositivo ha sido desactivado por el administrador del sistema y ya no cuenta con acceso autorizado.{'\n\n'}Contacta a tu administrador o solicita nuevamente el acceso.
+            </Text>
+            { }
+            {checkResult === 'enabled' &&
+              <View style={[styles.statusRow, { backgroundColor: colors.checkBg, borderColor: colors.checkBorder, marginBottom: 10 }]}>
+                <Ionicons name="checkmark-circle" size={18} color={colors.checkText} />
+                <Text style={[styles.statusText, { color: colors.checkText }]}>
+                  Acceso restaurado
+                </Text>
+              </View>
             }
-            <Text style={styles.checkBtnText}>
-              {checking ? 'Verificando...' : 'Actualizar estado'}
-            </Text>
-          </TouchableOpacity>
-
-          { }
-          <TouchableOpacity
-            style={[styles.retryBtn, { backgroundColor: colors.retryBg, opacity: confirming ? 0.7 : 1 }]}
-            onPress={handleReRequest}
-            activeOpacity={0.8}
-            disabled={confirming}>
-
-            <Ionicons name="refresh" size={18} color={colors.retryText} />
-            <Text style={[styles.retryText, { color: colors.retryText }]}>
-              {confirming ? 'Redirigiendo...' : 'Re-solicitar Acceso'}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Return Home Button */}
-          {onLogout && (
+            {checkResult === 'still_disabled' &&
+              <View style={[styles.statusRow, { backgroundColor: colors.statusBg, borderColor: colors.statusBorder, marginBottom: 10 }]}>
+                <Ionicons name="close-circle" size={18} color={colors.statusText} />
+                <Text style={[styles.statusText, { color: colors.statusText }]}>
+                  Sigue deshabilitado.
+                </Text>
+              </View>
+            }
+            { }
             <TouchableOpacity
-              style={[styles.homeBtn, { marginTop: 12, borderColor: colors.cardBorder }]}
-              onPress={onLogout}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="log-out-outline" size={16} color={colors.subtitle} />
-              <Text style={[styles.homeText, { color: colors.subtitle }]}>
-                Regresar al inicio
+              style={[styles.checkBtn, { opacity: checking ? 0.75 : 1 }]}
+              onPress={handleCheckStatus}
+              activeOpacity={0.8}
+              disabled={checking || checkResult === 'enabled'}>
+
+              {checking ?
+                <ActivityIndicator size="small" color="#ffffff" /> :
+                <Ionicons name="cloud-download-outline" size={18} color="#ffffff" />
+              }
+              <Text style={styles.checkBtnText}>
+                {checking ? 'Verificando...' : 'Actualizar estado'}
               </Text>
             </TouchableOpacity>
-          )}
-        </View>
-      </Animated.View>
 
-      { }
-      <Animated.Text style={[styles.footer, { color: colors.footer, opacity: fadeAnim }]}>
-        FASITLAC  {new Date().getFullYear()}
-      </Animated.Text>
+            { }
+            <TouchableOpacity
+              style={[styles.retryBtn, { backgroundColor: colors.retryBg, opacity: confirming ? 0.7 : 1 }]}
+              onPress={handleReRequest}
+              activeOpacity={0.8}
+              disabled={confirming}>
+
+              <Ionicons name="refresh" size={18} color={colors.retryText} />
+              <Text style={[styles.retryText, { color: colors.retryText }]}>
+                {confirming ? 'Redirigiendo...' : 'Re-solicitar Acceso'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Return Home Button */}
+            {onLogout && (
+              <TouchableOpacity
+                style={[styles.homeBtn, { marginTop: 12, borderColor: colors.cardBorder }]}
+                onPress={onLogout}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="log-out-outline" size={16} color={colors.subtitle} />
+                <Text style={[styles.homeText, { color: colors.subtitle }]}>
+                  Regresar al inicio
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </Animated.View>
+
+        { }
+        <Animated.Text style={[styles.footer, { color: colors.footer, opacity: fadeAnim, position: 'relative', bottom: 0, marginTop: 24 }]}>
+          FASITLAC  {new Date().getFullYear()}
+        </Animated.Text>
+      </ScrollView>
     </View>);
 
 };

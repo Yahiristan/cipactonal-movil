@@ -6,7 +6,8 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
-  useColorScheme
+  useColorScheme,
+  ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -81,50 +82,52 @@ export const PendingApprovalScreen = ({ tokenSolicitud, idSolicitud, onApproved,
         </View>
       </View>
 
-      <View style={styles.content}>
-        <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Estado Actual</Text>
-        <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
-          <View style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <View style={[styles.iconCircle, { backgroundColor: isDark ? '#1e3a5f' : '#eff6ff' }]}>
-                <Ionicons name="sync-outline" size={20} color={t.accentBlue} />
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={true}>
+        <View style={styles.content}>
+          <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Estado Actual</Text>
+          <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
+            <View style={styles.settingItem}>
+              <View style={styles.settingLeft}>
+                <View style={[styles.iconCircle, { backgroundColor: isDark ? '#1e3a5f' : '#eff6ff' }]}>
+                  <Ionicons name="sync-outline" size={20} color={t.accentBlue} />
+                </View>
+                <View style={styles.stepContent}>
+                  <Text style={[styles.settingTitle, { color: t.textPrimary }]}>En Revisión</Text>
+                  <Text style={[styles.settingValue, { color: t.textMuted }]}>El administrador revisará pronto.</Text>
+                </View>
               </View>
-              <View style={styles.stepContent}>
-                <Text style={[styles.settingTitle, { color: t.textPrimary }]}>En Revisión</Text>
-                <Text style={[styles.settingValue, { color: t.textMuted }]}>El administrador revisará pronto.</Text>
+              <View style={{ paddingRight: 8 }}>
+                <ActivityIndicator size="small" color={t.accentBlue} />
               </View>
             </View>
-            <View style={{ paddingRight: 8 }}>
-              <ActivityIndicator size="small" color={t.accentBlue} />
+          </View>
+
+          <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>¿Qué sigue?</Text>
+          <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
+            <View style={styles.settingItem}>
+              <View style={styles.settingLeft}>
+                <Ionicons name="notifications-outline" size={20} color={t.iconColor} style={styles.settingIcon} />
+                <View style={{ flex: 1, paddingRight: 10 }}>
+                  <Text style={[styles.settingTitle, { color: t.textPrimary }]}>Notificación</Text>
+                  <Text style={[styles.settingValue, { lineHeight: 18, color: t.textMuted }]}>Recibirás una respuesta cuando sea procesada.</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={[styles.divider, { backgroundColor: t.divider }]} />
+
+            <View style={styles.settingItem}>
+              <View style={styles.settingLeft}>
+                <Ionicons name="hand-left-outline" size={20} color={t.iconColor} style={styles.settingIcon} />
+                <View style={{ flex: 1, paddingRight: 10 }}>
+                  <Text style={[styles.settingTitle, { color: t.textPrimary }]}>No cierres</Text>
+                  <Text style={[styles.settingValue, { lineHeight: 18, color: t.textMuted }]}>Esta pantalla se actualizará automáticamente.</Text>
+                </View>
+              </View>
             </View>
           </View>
         </View>
-
-        <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>¿Qué sigue?</Text>
-        <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
-          <View style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Ionicons name="notifications-outline" size={20} color={t.iconColor} style={styles.settingIcon} />
-              <View style={{ flex: 1, paddingRight: 10 }}>
-                <Text style={[styles.settingTitle, { color: t.textPrimary }]}>Notificación</Text>
-                <Text style={[styles.settingValue, { lineHeight: 18, color: t.textMuted }]}>Recibirás una respuesta cuando sea procesada.</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={[styles.divider, { backgroundColor: t.divider }]} />
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <Ionicons name="hand-left-outline" size={20} color={t.iconColor} style={styles.settingIcon} />
-              <View style={{ flex: 1, paddingRight: 10 }}>
-                <Text style={[styles.settingTitle, { color: t.textPrimary }]}>No cierres</Text>
-                <Text style={[styles.settingValue, { lineHeight: 18, color: t.textMuted }]}>Esta pantalla se actualizará automáticamente.</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      </View>
+      </ScrollView>
     </View>
   );
 };

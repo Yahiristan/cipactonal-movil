@@ -1,12 +1,11 @@
 import * as SQLite from 'expo-sqlite';
-// UUID nativo via Hermes (React Native 0.71+) — sin dependencias externas
 const uuidv4 = () =>
   typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
     : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
-      });
+      const r = (Math.random() * 16) | 0;
+      return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+    });
 let db = null;
 let initializationPromise = null;
 const DB_NAME = 'checador_offline.db';
@@ -48,6 +47,7 @@ async function runMigrations() {
       server_id TEXT,
       empleado_id TEXT NOT NULL,
       empresa_id TEXT,
+      horario_id TEXT,
       tipo TEXT NOT NULL CHECK(tipo IN ('entrada', 'salida')),
       estado TEXT NOT NULL,
       dispositivo_origen TEXT DEFAULT 'movil',
@@ -262,7 +262,8 @@ async function runMigrations() {
   for (const col of [
     'ALTER TABLE cache_tolerancias ADD COLUMN minutos_anticipo_salida INTEGER DEFAULT 5',
     'ALTER TABLE cache_tolerancias ADD COLUMN minutos_posterior_salida INTEGER DEFAULT 0',
-    'ALTER TABLE offline_asistencias ADD COLUMN empresa_id TEXT']) {
+    'ALTER TABLE offline_asistencias ADD COLUMN empresa_id TEXT',
+    'ALTER TABLE offline_asistencias ADD COLUMN horario_id TEXT']) {
     try { await db.execAsync(col); } catch (e) { /* columna ya existe */ }
   }
   const tables = ['cache_empleados', 'cache_credenciales', 'cache_horarios', 'cache_tolerancias', 'cache_departamentos', 'cache_dias_festivos'];
@@ -273,7 +274,7 @@ async function runMigrations() {
 
 export async function saveOfflineAsistencia(data) {
   if (!db) await initDatabase();
-  const idempotencyKey = uuidv4();
+  const idempotencyKey = data.idempotency_key || uuidv4();
   let ubicacionStr = null;
   if (data.ubicacion) {
     ubicacionStr = typeof data.ubicacion === 'string' ?
@@ -289,13 +290,14 @@ export async function saveOfflineAsistencia(data) {
   try {
     const result = await db.runAsync(
       `INSERT INTO offline_asistencias
-        (idempotency_key, empleado_id, empresa_id, tipo, estado, dispositivo_origen, metodo_registro,
+        (idempotency_key, empleado_id, empresa_id, horario_id, tipo, estado, dispositivo_origen, metodo_registro,
          departamento_id, fecha_registro, payload_biometrico, ubicacion, ip, wifi)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         idempotencyKey,
         data.empleado_id,
         data.empresa_id || null,
+        data.horario_id || null,
         data.tipo,
         data.estado,
         data.dispositivo_origen || 'movil',
@@ -366,15 +368,43 @@ export async function getRegistrosHoy(empleadoId) {
   if (!db) await initDatabase();
   const hoy = new Date().toISOString().split('T')[0];
 
-  return await db.getAllAsync(
+  const offline = await db.getAllAsync(
     `SELECT tipo, estado, fecha_registro FROM offline_asistencias
-         WHERE empleado_id = ? AND fecha_registro LIKE ? || '%' AND is_synced != -1
-         UNION
-         SELECT tipo, estado, fecha_registro FROM cache_asistencias
-         WHERE empleado_id = ? AND fecha_registro LIKE ? || '%'
-         ORDER BY fecha_registro ASC`,
-    [empleadoId, hoy, empleadoId, hoy]
+     WHERE empleado_id = ? AND fecha_registro LIKE ? || '%' AND is_synced = 0`,
+    [empleadoId, hoy]
   );
+
+  const cache = await db.getAllAsync(
+    `SELECT tipo, estado, fecha_registro FROM cache_asistencias
+     WHERE empleado_id = ? AND fecha_registro LIKE ? || '%'`,
+    [empleadoId, hoy]
+  );
+
+  const combined = [];
+
+  for (const c of cache) {
+    combined.push({
+      tipo: c.tipo,
+      estado: c.estado,
+      fecha_registro: c.fecha_registro
+    });
+  }
+
+  for (const off of offline) {
+    const isDuplicate = combined.some(c =>
+      c.tipo === off.tipo &&
+      Math.abs(new Date(c.fecha_registro).getTime() - new Date(off.fecha_registro).getTime()) < 10000
+    );
+    if (!isDuplicate) {
+      combined.push({
+        tipo: off.tipo,
+        estado: off.estado,
+        fecha_registro: off.fecha_registro
+      });
+    }
+  }
+
+  return combined.sort((a, b) => new Date(a.fecha_registro) - new Date(b.fecha_registro));
 }
 
 export async function saveOnlineAsistenciaToCache(data) {
@@ -472,7 +502,7 @@ export async function upsertCredenciales(credenciales) {
       const pinToSave = cred.pin_hash || cred.pin || null;
       const dactilarToSave = cred.dactilar_template || cred.dactilar || null;
       const facialToSave = cred.facial_descriptor || cred.facial || null;
-      
+
       // Solo actualizamos pin_hash si trae un PIN real (más de 1 caracter), para no sobreescribir el PIN local
       // con un simple 'true', '1' o boolean que suele mandar el servidor por seguridad.
       const isDummyPin = pinToSave === true || pinToSave === false || pinToSave === 1 || pinToSave === 0 || pinToSave === '1' || pinToSave === '0' || pinToSave === 'true' || pinToSave === 'false';
@@ -505,10 +535,10 @@ export async function upsertCredenciales(credenciales) {
 
 export async function upsertHorario(empleadoId, horario) {
   if (!db) await initDatabase();
-  
+
   // Limpiar el horario anterior para evitar duplicados si el ID del servidor cambia
   await db.runAsync('DELETE FROM cache_horarios WHERE empleado_id = ?', [empleadoId]);
-  
+
   await db.runAsync(
     `INSERT INTO cache_horarios (horario_id, empleado_id, configuracion, es_activo, updated_at)
      VALUES (?, ?, ?, ?, datetime('now', 'localtime'))`,
@@ -721,10 +751,10 @@ export async function getDepartamento(empleadoId) {
 export async function upsertAsistenciasMes(empleadoId, mesKey, asistencias) {
   if (!db) await initDatabase();
   await db.withTransactionAsync(async () => {
-    
+
     // Limpiar mes completo para este empleado para evitar duplicar registros offline sincronizados
     await db.runAsync(
-      'DELETE FROM cache_asistencias WHERE empleado_id = ? AND mes_key = ?', 
+      'DELETE FROM cache_asistencias WHERE empleado_id = ? AND mes_key = ?',
       [empleadoId, mesKey]
     );
 

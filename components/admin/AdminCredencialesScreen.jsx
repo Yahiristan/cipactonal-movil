@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import {
   View,
@@ -10,7 +10,9 @@ import {
   ActivityIndicator,
   Platform,
   TextInput,
-  Modal
+  Modal,
+  Animated,
+  TouchableWithoutFeedback
 } from
   'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -64,6 +66,36 @@ export const AdminCredencialesScreen = ({ empleado, userData, darkMode, onBack }
   const styles = darkMode ? darkStyles : lightStyles;
   const fotoUrl = empleado.foto ? obtenerUrlFotoPerfil(empleado.foto) : null;
 
+  const [alertModal, setAlertModal] = useState({ visible: false, icon: 'alert-circle', iconColor: '#ef4444', title: '', message: '', actions: [] });
+  const alertAnim = useRef(new Animated.Value(0)).current;
+
+  const showCustomAlert = (title, message, actions = [{ text: 'OK', onPress: null }]) => {
+    let icon = 'information-circle';
+    let iconColor = '#2563eb';
+    const lowerTitle = title.toLowerCase();
+
+    if (lowerTitle.includes('error') || lowerTitle.includes('fall') || lowerTitle.includes('insuficiente') || lowerTitle.includes('bloqueo') || lowerTitle.includes('sin acceso') || lowerTitle.includes('no disponible') || lowerTitle.includes('denegada')) {
+      icon = 'alert-circle';
+      iconColor = '#ef4444';
+    } else if (lowerTitle.includes('exitoso') || lowerTitle.includes('completada') || lowerTitle.includes('éxito') || lowerTitle.includes('eliminado')) {
+      icon = 'checkmark-circle';
+      iconColor = '#10b981';
+    } else if (lowerTitle.includes('aviso') || lowerTitle.includes('pendiente') || lowerTitle.includes('eliminar') || lowerTitle.includes('advertencia') || lowerTitle.includes('seguridad')) {
+      icon = 'warning';
+      iconColor = '#f59e0b';
+    }
+
+    setAlertModal({ visible: true, icon, iconColor, title, message, actions });
+    Animated.spring(alertAnim, { toValue: 1, tension: 120, friction: 12, useNativeDriver: true }).start();
+  };
+
+  const hideCustomAlert = (cb) => {
+    Animated.timing(alertAnim, { toValue: 0, duration: 150, useNativeDriver: true }).start(() => {
+      setAlertModal(prev => ({ ...prev, visible: false }));
+      if (typeof cb === 'function') cb();
+    });
+  };
+
   const cargarCredenciales = useCallback(async () => {
     try {
       setLoading(true);
@@ -95,14 +127,14 @@ export const AdminCredencialesScreen = ({ empleado, userData, darkMode, onBack }
 
 
   const handleRegistrarHuella = async () => {
-    Alert.alert(
+    showCustomAlert(
       hasFingerprint ? 'Actualizar Huella' : 'Registro de Huella',
       'Las huellas dactilares únicamente se administran de forma segura desde la aplicación de Computadora (Desktop).\n\nEn la aplicación móvil solo se utiliza para validación biométrica local.'
     );
   };
 
   const handleRegistrarFacial = () => {
-    Alert.alert(
+    showCustomAlert(
       hasFacial ? 'Actualizar Facial' : 'Registro Facial',
       'El registro o actualización facial únicamente puede realizarse de forma segura desde la aplicación de Escritorio/Computadora o Web.\n\nEn la aplicación móvil solo se utiliza para validación biométrica local al checar.'
     );
@@ -118,17 +150,27 @@ export const AdminCredencialesScreen = ({ empleado, userData, darkMode, onBack }
     try {
       const token = await AsyncStorage.getItem('userToken');
       await guardarPin(empleado.id, pin, token);
-      Alert.alert('Éxito', 'PIN registrado correctamente.');
+      showCustomAlert('Éxito', 'PIN registrado correctamente.');
       await cargarCredenciales();
     } catch (e) {
-      Alert.alert('Error', e.message || 'No se pudo guardar el PIN.');
+      showCustomAlert('Error', e.message || 'No se pudo guardar el PIN.');
     } finally {
       setProcesandoPin(false);
     }
   };
 
   const handleEliminar = (tipo, label) => {
-    Alert.alert(
+    // Validar localmente que no sea la última credencial registrada
+    const activeCount = (hasFingerprint ? 1 : 0) + (hasFacial ? 1 : 0) + (hasPin ? 1 : 0);
+    if (activeCount <= 1) {
+      showCustomAlert(
+        'Acción denegada',
+        `No puedes eliminar la credencial de ${label.toLowerCase()}. El empleado debe contar con al menos un método de acceso (Huella, Facial o PIN) registrado.`
+      );
+      return;
+    }
+
+    showCustomAlert(
       `Eliminar ${label}`,
       `¿Eliminar la credencial de ${label.toLowerCase()} de ${empleado.nombre}?`,
       [
@@ -140,14 +182,17 @@ export const AdminCredencialesScreen = ({ empleado, userData, darkMode, onBack }
             try {
               const token = await AsyncStorage.getItem('userToken');
               await eliminarCredencial(empleado.id, tipo, token);
-              Alert.alert('Eliminado', `${label} eliminada correctamente.`);
+              showCustomAlert('Eliminado', `${label} eliminada correctamente.`);
               await cargarCredenciales();
             } catch (e) {
-              Alert.alert('Error', e.message || 'No se pudo eliminar la credencial.');
+              if (e.code === 'VALIDATION_REQUIRE') {
+                showCustomAlert('Acción denegada', e.message);
+              } else {
+                showCustomAlert('Error', e.message || 'No se pudo eliminar la credencial.');
+              }
             }
           }
         }]
-
     );
   };
 
@@ -289,12 +334,128 @@ export const AdminCredencialesScreen = ({ empleado, userData, darkMode, onBack }
         onConfirm={handleConfirmarPin}
         darkMode={darkMode} />
 
+      {/* Modal de Alerta Custom */}
+      <Modal visible={alertModal.visible} transparent animationType="none" onRequestClose={() => hideCustomAlert()}>
+        <TouchableWithoutFeedback onPress={() => hideCustomAlert()}>
+          <View style={mStyles.backdrop}>
+            <TouchableWithoutFeedback>
+              <Animated.View style={[
+                mStyles.card,
+                { backgroundColor: darkMode ? '#1e293b' : '#ffffff', borderColor: darkMode ? '#334155' : '#e2e8f0' },
+                {
+                  opacity: alertAnim,
+                  transform: [{ scale: alertAnim.interpolate({ inputRange: [0, 1], outputRange: [0.88, 1] }) }]
+                }
+              ]}>
+                <View style={[mStyles.topStripe, { backgroundColor: alertModal.iconColor }]} />
+                <View style={mStyles.body}>
+                  <View style={[mStyles.iconCircle, { backgroundColor: `${alertModal.iconColor}1A` }]}>
+                    <Ionicons name={alertModal.icon} size={36} color={alertModal.iconColor} />
+                  </View>
+                  <Text style={[mStyles.title, { color: darkMode ? '#f1f5f9' : '#111827' }]}>{alertModal.title}</Text>
+                  <Text style={[mStyles.message, { color: darkMode ? '#94a3b8' : '#4b5563' }]}>{alertModal.message}</Text>
 
-      { }
+                  <View style={mStyles.alertActions}>
+                    {alertModal.actions.map((action, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={[
+                          mStyles.btn,
+                          action.style === 'cancel' ? { backgroundColor: darkMode ? '#334155' : '#f1f5f9' } : (action.style === 'destructive' ? { backgroundColor: '#ef4444' } : { backgroundColor: alertModal.iconColor })
+                        ]}
+                        onPress={() => {
+                          hideCustomAlert(() => {
+                            if (action.onPress) action.onPress();
+                          });
+                        }}
+                        activeOpacity={0.85}>
+                        <Text style={[
+                          mStyles.btnText,
+                          action.style === 'cancel' && { color: darkMode ? '#f1f5f9' : '#111827' }
+                        ]}>
+                          {action.text}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </Animated.View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>);
 
 };
 
+
+const mStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: 24,
+    borderWidth: 1,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 16,
+  },
+  topStripe: {
+    height: 4,
+    width: '100%',
+  },
+  body: {
+    padding: 28,
+    alignItems: 'center',
+  },
+  iconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 18,
+    marginTop: 4,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 10,
+    letterSpacing: -0.3,
+  },
+  message: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 21,
+    marginBottom: 24,
+  },
+  alertActions: {
+    width: '100%',
+    gap: 10,
+  },
+  btn: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+  }
+});
 
 const baseStyles = StyleSheet.create({
   container: { flex: 1 },

@@ -12,6 +12,7 @@ import {
   Image
 } from
   'react-native';
+import { CustomAlert } from '../ui/CustomAlert';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getMiEmpresa } from '../../services/empresaService';
@@ -38,6 +39,11 @@ export const SupportScreen = ({ darkMode, onBack, userData }) => {
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [empresaData, setEmpresaData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', actions: [] });
+  const showCustomAlert = (title, message, actions = [{ text: 'OK', onPress: null }]) => {
+    setAlertModal({ visible: true, title, message, actions });
+  };
   const styles = darkMode ? supportStylesDark : supportStyles;
 
   useEffect(() => {
@@ -157,7 +163,7 @@ export const SupportScreen = ({ darkMode, onBack, userData }) => {
             try {
               await Linking.openURL(waWeb);
             } catch (fallbackError) {
-              Alert.alert(
+              showCustomAlert(
                 "WhatsApp no disponible",
                 "No se pudo abrir WhatsApp en este dispositivo. Verifica que lo tengas instalado."
               );
@@ -180,7 +186,7 @@ export const SupportScreen = ({ darkMode, onBack, userData }) => {
           const url = `mailto:${empresaData.correo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
           Linking.openURL(url).catch(() => {
-            Alert.alert("Error", "No se pudo abrir el cliente de correo");
+            showCustomAlert("Error", "No se pudo abrir el cliente de correo");
           });
         }
       });
@@ -196,7 +202,7 @@ export const SupportScreen = ({ darkMode, onBack, userData }) => {
         icon: "call",
         color: "#3b82f6",
         action: () => {
-          Alert.alert(
+          showCustomAlert(
             "Llamar a Soporte",
             `¿Deseas llamar a ${empresaData.telefono}?`,
             [
@@ -205,7 +211,7 @@ export const SupportScreen = ({ darkMode, onBack, userData }) => {
                 text: "Llamar",
                 onPress: () => {
                   Linking.openURL(`tel:${phoneClean}`).catch(() => {
-                    Alert.alert("Error", "No se pudo realizar la llamada");
+                    showCustomAlert("Error", "No se pudo realizar la llamada");
                   });
                 }
               }]
@@ -265,7 +271,7 @@ export const SupportScreen = ({ darkMode, onBack, userData }) => {
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={true}>
 
         <Text style={styles.sectionLabel}>Contácta a la empresa</Text>
         <View style={styles.sectionContainer}>
@@ -324,6 +330,14 @@ export const SupportScreen = ({ darkMode, onBack, userData }) => {
         </View>
         <View style={styles.bottomSpacer} />
       </ScrollView>
+      <CustomAlert
+        visible={alertModal.visible}
+        title={alertModal.title}
+        message={alertModal.message}
+        actions={alertModal.actions}
+        darkMode={darkMode}
+        onClose={() => setAlertModal(prev => ({ ...prev, visible: false }))}
+      />
     </View>);
 
 };
@@ -346,6 +360,7 @@ const supportStyles = StyleSheet.create({
     textAlign: 'center'
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 90

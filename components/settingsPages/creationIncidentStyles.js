@@ -346,7 +346,7 @@ export const creationIncidentStylesDark = StyleSheet.create({
     },
     tipoOption: {
         ...baseStyles.tipoOption,
-        backgroundColor: '#1e293b',
+        backgroundColor: '#334155',
     },
     tipoOptionActive: {
         ...baseStyles.tipoOptionActive,

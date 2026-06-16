@@ -162,7 +162,7 @@ export const TermsAndConditionsScreen = ({ darkMode, onBack }) => {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={true}>
         
         <View style={styles.sectionContainer}>
           {sections.map((section, index) => (
@@ -245,6 +245,7 @@ const termsStyles = StyleSheet.create({
     flex: 1
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 120

@@ -1,5 +1,46 @@
+// Polyfills globales seguros de base64 para entornos React Native / Hermes
+const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+if (typeof global.btoa === 'undefined') {
+  global.btoa = (input) => {
+    const str = String(input);
+    let output = '';
+    for (let block = 0, charCode, i = 0, map = chars;
+         str.charAt(i | 0) || (map = '=', i % 1);
+         output += map.charAt(63 & block >> 8 - i % 1 * 8)) {
+      charCode = str.charCodeAt(i += 3 / 4);
+      if (charCode > 0xFF) {
+        throw new Error("'btoa' failed: The string to be encoded contains characters outside of the Latin1 range.");
+      }
+      block = block << 8 | charCode;
+    }
+    return output;
+  };
+}
+if (typeof global.atob === 'undefined') {
+  global.atob = (input) => {
+    const str = String(input).replace(/[=]+$/, '');
+    let output = '';
+    if (str.length % 4 === 1) {
+      throw new Error("'atob' failed: The string to be decoded is not correctly encoded.");
+    }
+    for (let bc = 0, bs = 0, buffer, i = 0;
+         i < str.length;
+         i++) {
+      const char = str.charAt(i);
+      const idx = chars.indexOf(char);
+      if (idx === -1) continue;
+      buffer = bc % 4 ? buffer * 64 + idx : idx;
+      if (bc++ % 4) {
+        output += String.fromCharCode(255 & buffer >> (-2 * bc & 6));
+      }
+    }
+    return output;
+  };
+}
+
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, ActivityIndicator, View, Alert, AppState, StatusBar } from 'react-native';
+import { CustomAlert } from './components/ui/CustomAlert';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -58,6 +99,11 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [isOfflineSession, setIsOfflineSession] = useState(false);
   const [isMaintenance, setIsMaintenance] = useState(false);
+
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', actions: [] });
+  const showCustomAlert = (title, message, actions = [{ text: 'OK', onPress: null }]) => {
+    setAlertModal({ visible: true, title, message, actions });
+  };
   const [deviceDisabled, setDeviceDisabled] = useState(false);
   const [settingsInitialSection, setSettingsInitialSection] = useState(null);
   const [navVisible, setNavVisible] = useState(true);
@@ -778,7 +824,7 @@ export default function App() {
       (function () { })('[App] Error FATAL en handleLoginSuccess:', error);
 
 
-      Alert.alert(
+      showCustomAlert(
         'Error',
         'Ocurrió un problema al iniciar sesión. Intenta nuevamente.',
         [{ text: 'OK', onPress: () => handleLogout() }]
@@ -897,6 +943,14 @@ export default function App() {
       <SafeAreaProvider>
         <StatusBar barStyle={darkMode ? "light-content" : "dark-content"} backgroundColor={darkMode ? "#0f172a" : "#ffffff"} />
         <LoginScreen onLoginSuccess={handleLoginSuccess} darkMode={darkMode} />
+        <CustomAlert
+          visible={alertModal.visible}
+          title={alertModal.title}
+          message={alertModal.message}
+          actions={alertModal.actions}
+          darkMode={darkMode}
+          onClose={() => setAlertModal(prev => ({ ...prev, visible: false }))}
+        />
       </SafeAreaProvider>);
 
   }
@@ -938,29 +992,39 @@ export default function App() {
   }
 
   return (
-    <MainLayout
-      darkMode={darkMode}
-      currentScreen={currentScreen}
-      onScreenChange={(screen) => { setNavVisible(true); setSettingsInitialSection(null); setCurrentScreen(screen); }}
-      userData={userData}
-      navVisible={navVisible}
-    >
-      {currentScreen === 'home' && <HomeScreen userData={userData} darkMode={darkMode} onOpenAvisos={() => setCurrentScreen('avisos')} onOpenProfile={() => { setSettingsInitialSection('personalinfo'); setCurrentScreen('settings'); }} />}
-      {currentScreen === 'avisos' && <NotifyScreen userData={userData} darkMode={darkMode} onGoBack={() => setCurrentScreen('home')} />}
-      {currentScreen === 'history' && <HistoryScreen darkMode={darkMode} userData={userData} />}
-      {currentScreen === 'schedule' && <ScheduleScreen userData={userData} darkMode={darkMode} />}
-      {currentScreen === 'admin' && userData?.esAdmin && <AdminScreen userData={userData} darkMode={darkMode} />}
-      {currentScreen === 'settings' &&
-        <SettingsScreen
-          userData={userData}
-          email={userData.correo}
-          darkMode={darkMode}
-          onToggleDarkMode={handleToggleDarkMode}
-          onLogout={handleLogout}
-          initialSection={settingsInitialSection}
-          setNavVisible={setNavVisible} />
-      }
-    </MainLayout>
+    <>
+      <MainLayout
+        darkMode={darkMode}
+        currentScreen={currentScreen}
+        onScreenChange={(screen) => { setNavVisible(true); setSettingsInitialSection(null); setCurrentScreen(screen); }}
+        userData={userData}
+        navVisible={navVisible}
+      >
+        {currentScreen === 'home' && <HomeScreen userData={userData} darkMode={darkMode} onOpenAvisos={() => setCurrentScreen('avisos')} onOpenProfile={() => { setSettingsInitialSection('personalinfo'); setCurrentScreen('settings'); }} />}
+        {currentScreen === 'avisos' && <NotifyScreen userData={userData} darkMode={darkMode} onGoBack={() => setCurrentScreen('home')} />}
+        {currentScreen === 'history' && <HistoryScreen darkMode={darkMode} userData={userData} />}
+        {currentScreen === 'schedule' && <ScheduleScreen userData={userData} darkMode={darkMode} />}
+        {currentScreen === 'admin' && userData?.esAdmin && <AdminScreen userData={userData} darkMode={darkMode} />}
+        {currentScreen === 'settings' &&
+          <SettingsScreen
+            userData={userData}
+            email={userData.correo}
+            darkMode={darkMode}
+            onToggleDarkMode={handleToggleDarkMode}
+            onLogout={handleLogout}
+            initialSection={settingsInitialSection}
+            setNavVisible={setNavVisible} />
+        }
+      </MainLayout>
+      <CustomAlert
+        visible={alertModal.visible}
+        title={alertModal.title}
+        message={alertModal.message}
+        actions={alertModal.actions}
+        darkMode={darkMode}
+        onClose={() => setAlertModal(prev => ({ ...prev, visible: false }))}
+      />
+    </>
   );
 
 }

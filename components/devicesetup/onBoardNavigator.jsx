@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Alert, ActivityIndicator, View, Text, useColorScheme } from 'react-native';
+import { CustomAlert } from '../ui/CustomAlert';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { WelcomeScreen } from './WelcomeScreen';
@@ -42,6 +43,11 @@ export const OnboardingNavigator = ({ onComplete, userData, onLogout }) => {
     fechaAprobacion: null,
     motivoRechazo: ''
   });
+
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', actions: [] });
+  const showCustomAlert = (title, message, actions = [{ text: 'OK', onPress: null }]) => {
+    setAlertModal({ visible: true, title, message, actions });
+  };
 
   useEffect(() => {
     checkExistingDevice();
@@ -212,7 +218,7 @@ export const OnboardingNavigator = ({ onComplete, userData, onLogout }) => {
       await saveDeviceData(onboardingData);
       onComplete(onboardingData);
     } catch (error) {
-      Alert.alert(
+      showCustomAlert(
         'Error',
         'No se pudieron guardar los datos. Por favor intenta nuevamente.',
         [
@@ -301,6 +307,14 @@ export const OnboardingNavigator = ({ onComplete, userData, onLogout }) => {
             }} />
 
         }
+        <CustomAlert
+          visible={alertModal.visible}
+          title={alertModal.title}
+          message={alertModal.message}
+          actions={alertModal.actions}
+          darkMode={isDark}
+          onClose={() => setAlertModal(prev => ({ ...prev, visible: false }))}
+        />
       </View>
     </SafeAreaProvider>);
 

@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert } from
 'react-native';
+import { CustomAlert } from '../ui/CustomAlert';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Header } from '../ui/Header';
@@ -43,6 +44,11 @@ export const SecurityScreen = ({ darkMode, onBack, userData }) => {
   const [hasFacial, setHasFacial] = useState(false);
   const [hasPin, setHasPin] = useState(false);
 
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '', actions: [] });
+  const showCustomAlert = (title, message, actions = [{ text: 'OK', onPress: null }]) => {
+    setAlertModal({ visible: true, title, message, actions });
+  };
+
 
   const [isLoadingCredentials, setIsLoadingCredentials] = useState(true);
 
@@ -56,11 +62,10 @@ export const SecurityScreen = ({ darkMode, onBack, userData }) => {
 
 
   const handleEliminarDatos = () => {
-    Alert.alert(
+    showCustomAlert(
       'Eliminación de datos biométricos',
       'Conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) y los derechos ARCO (Acceso, Rectificación, Cancelación y Oposición), tienes todo el derecho de solicitar la eliminación de tus datos biométricos registrados en el sistema.\n\nPara ejercer este derecho, comunícate con el área de Recursos Humanos o con el administrador del sistema, quien procesará tu solicitud conforme a los plazos y procedimientos establecidos por la ley.',
-      [{ text: 'Entendido', style: 'default' }],
-      { cancelable: true }
+      [{ text: 'Entendido' }]
     );
   };
 
@@ -209,7 +214,7 @@ export const SecurityScreen = ({ darkMode, onBack, userData }) => {
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={true}>
         
         <Text style={styles.sectionLabel}>Mis Credenciales</Text>
         <View style={styles.sectionContainer}>
@@ -250,6 +255,14 @@ export const SecurityScreen = ({ darkMode, onBack, userData }) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <CustomAlert
+        visible={alertModal.visible}
+        title={alertModal.title}
+        message={alertModal.message}
+        actions={alertModal.actions}
+        darkMode={darkMode}
+        onClose={() => setAlertModal(prev => ({ ...prev, visible: false }))}
+      />
     </View>);
 
 };
@@ -271,6 +284,7 @@ const securityStyles = StyleSheet.create({
     color: '#6b7280'
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 18,
     paddingTop: 16,
     paddingBottom: 90

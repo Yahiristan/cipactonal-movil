@@ -457,7 +457,7 @@ const baseStyles = {
         borderBottomColor: '#f3f4f6',
     },
     modalListItemActive: {
-        backgroundColor: '#f9fafb',
+        backgroundColor: '#eff6ff',
     },
     modalListItemLeft: {
         flexDirection: 'row',
@@ -474,12 +474,99 @@ const baseStyles = {
         fontWeight: '600',
     },
     modalListItemBadge: {
-        backgroundColor: '#f1f5f9',
+        backgroundColor: '#e2e8f0',
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 12,
         minWidth: 28,
         alignItems: 'center',
+    },
+    modalListItemBadgeText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#64748b',
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#f3f4f6',
+        marginLeft: 16,
+        marginRight: 16,
+    },
+    evidenceButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#e0e7ff',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 6,
+    },
+    evidenceButtonText: {
+        marginLeft: 6,
+        color: '#4f46e5',
+        fontWeight: '600',
+        fontSize: 12,
+    },
+    evidenceImageContainer: {
+        width: '100%',
+        marginTop: 8,
+        borderRadius: 12,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        backgroundColor: '#f1f5f9',
+        position: 'relative',
+    },
+    evidenceImage: {
+        width: '100%',
+        height: 180,
+    },
+    evidenceImageBadge: {
+        position: 'absolute',
+        bottom: 8,
+        right: 8,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
+        gap: 4,
+    },
+    evidenceImageBadgeText: {
+        color: '#ffffff',
+        fontSize: 11,
+        fontWeight: '600',
+    },
+    imageModalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    imageModalCloseArea: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+    },
+    imageModalContainer: {
+        width: '90%',
+        height: '80%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'relative',
+    },
+    imageModalCloseButton: {
+        position: 'absolute',
+        top: -40,
+        right: 10,
+        zIndex: 10,
+        padding: 8,
+    },
+    imageModalContent: {
+        width: '100%',
+        height: '100%',
     },
 };
 
@@ -489,6 +576,10 @@ export const incidenciasStylesDark = StyleSheet.create({
     ...baseStyles,
     container: {
         ...baseStyles.container,
+        backgroundColor: '#0f172a',
+    },
+    loadingContainer: {
+        ...baseStyles.loadingContainer,
         backgroundColor: '#0f172a',
     },
     header: {
@@ -642,7 +733,7 @@ export const incidenciasStylesDark = StyleSheet.create({
     },
     modalListItemActive: {
         ...baseStyles.modalListItemActive,
-        backgroundColor: '#1e293b',
+        backgroundColor: '#172554',
     },
     modalListItemText: {
         ...baseStyles.modalListItemText,
@@ -650,6 +741,59 @@ export const incidenciasStylesDark = StyleSheet.create({
     },
     modalListItemBadge: {
         ...baseStyles.modalListItemBadge,
+        backgroundColor: '#334155',
+    },
+    modalListItemBadgeText: {
+        ...baseStyles.modalListItemBadgeText,
+        color: '#cbd5e1',
+    },
+    modalListItemTextActive: {
+        ...baseStyles.modalListItemTextActive,
+        color: '#60a5fa',
+    },
+    divider: {
+        ...baseStyles.divider,
+        backgroundColor: '#334155',
+    },
+    evidenceButton: {
+        ...baseStyles.evidenceButton,
+        backgroundColor: '#0f172a',
+    },
+    evidenceButtonText: {
+        ...baseStyles.evidenceButtonText,
+        color: '#60a5fa',
+    },
+    evidenceImageContainer: {
+        ...baseStyles.evidenceImageContainer,
+        borderColor: '#334155',
         backgroundColor: '#1e293b',
+    },
+    emptyText: {
+        ...baseStyles.emptyText,
+        color: '#94a3b8',
+    },
+    dayContentSelected: {
+        ...baseStyles.dayContentSelected,
+        backgroundColor: '#3b82f6',
+    },
+    dayContentToday: {
+        ...baseStyles.dayContentToday,
+        borderColor: '#60a5fa',
+    },
+    dayTextToday: {
+        ...baseStyles.dayTextToday,
+        color: '#60a5fa',
+    },
+    dayContentInRange: {
+        ...baseStyles.dayContentInRange,
+        backgroundColor: '#1e3a8a',
+    },
+    dayTextInRange: {
+        ...baseStyles.dayTextInRange,
+        color: '#93c5fd',
+    },
+    dayIndicator: {
+        ...baseStyles.dayIndicator,
+        backgroundColor: '#60a5fa',
     },
 });

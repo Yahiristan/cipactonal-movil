@@ -271,7 +271,7 @@ export const NotifyScreen = ({
         <ScrollView
           style={styles.avisosScrollView}
           contentContainerStyle={styles.detalleScrollContent}
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={true}>
 
           { }
           <View style={[styles.detalleBadge, { backgroundColor: info.bg, alignSelf: 'flex-start' }]}>
@@ -356,21 +356,21 @@ export const NotifyScreen = ({
               {aviso.titulo}
             </Text>
 
+            {aviso.remitente_nombre &&
+              <View style={styles.avisoRemitenteRow}>
+                <Ionicons name="person-outline" size={14} color={darkMode ? '#9ca3af' : '#64748b'} />
+                <Text style={styles.avisoRemitente} numberOfLines={1}>
+                  {aviso.remitente_nombre}
+                </Text>
+              </View>
+            }
+
             <View style={styles.avisoFooter}>
               <View style={styles.avisoFechaContainer}>
                 <Ionicons name="time-outline" size={14} color="#9ca3af" />
                 <Text style={styles.avisoFecha}>
                   {formatearFecha(aviso.fecha_registro)}
                 </Text>
-                {aviso.remitente_nombre &&
-                  <>
-                    <Text style={styles.avisoFechaSeparator}>•</Text>
-                    <Ionicons name="person-outline" size={14} color="#9ca3af" />
-                    <Text style={styles.avisoFecha} numberOfLines={1}>
-                      {aviso.remitente_nombre}
-                    </Text>
-                  </>
-                }
               </View>
 
               <TouchableOpacity
@@ -507,7 +507,7 @@ export const NotifyScreen = ({
       <ScrollView
         style={styles.avisosScrollView}
         contentContainerStyle={styles.avisosContent}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -592,6 +592,7 @@ const stylesLight = StyleSheet.create({
     flex: 1
   },
   avisosContent: {
+    flexGrow: 1,
     padding: 20,
     paddingBottom: 40
   },
@@ -642,6 +643,18 @@ const stylesLight = StyleSheet.create({
     alignItems: 'center',
     gap: 4
   },
+  avisoRemitenteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+    marginBottom: 8
+  },
+  avisoRemitente: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '500'
+  },
   avisoFecha: {
     fontSize: 12,
     color: '#9ca3af',
@@ -654,6 +667,7 @@ const stylesLight = StyleSheet.create({
   },
 
   detalleScrollContent: {
+    flexGrow: 1,
     padding: 20,
     paddingBottom: 40
   },
@@ -859,6 +873,10 @@ const stylesDark = StyleSheet.create({
   avisoTitulo: {
     ...stylesLight.avisoTitulo,
     color: '#f1f5f9'
+  },
+  avisoRemitente: {
+    ...stylesLight.avisoRemitente,
+    color: '#9ca3af'
   },
   detalleTitulo: {
     ...stylesLight.detalleTitulo,

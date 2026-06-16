@@ -77,15 +77,36 @@ export const getIncidenciaById = async (incidenciaId, token) => {
 
 export const createIncidencia = async (incidenciaData, token) => {
   try {
+    const formData = new FormData();
+    formData.append('empleado_id', String(incidenciaData.empleado_id));
+    formData.append('tipo', String(incidenciaData.tipo));
+    if (incidenciaData.motivo) formData.append('motivo', String(incidenciaData.motivo));
+    if (incidenciaData.observaciones) formData.append('observaciones', String(incidenciaData.observaciones));
+    
+    // Formatear fechas a YYYY-MM-DD
+    if (incidenciaData.fecha_inicio) {
+        formData.append('fecha_inicio', incidenciaData.fecha_inicio.split('T')[0]);
+    }
+    if (incidenciaData.fecha_fin) {
+        formData.append('fecha_fin', incidenciaData.fecha_fin.split('T')[0]);
+    }
+
+    if (incidenciaData.archivos && incidenciaData.archivos.length > 0) {
+      const archivo = incidenciaData.archivos[0];
+      formData.append('archivo', {
+        uri: archivo.uri,
+        name: archivo.name,
+        type: archivo.type
+      });
+    }
 
     const response = await fetchTimeout(`${API_URL}/incidencias`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(incidenciaData)
-    });
+      body: formData
+    }, 60000);
 
     const responseText = await response.text();
 
@@ -111,21 +132,45 @@ export const createIncidencia = async (incidenciaData, token) => {
 
 export const updateIncidencia = async (incidenciaId, incidenciaData, token) => {
   try {
+    const formData = new FormData();
+    if (incidenciaData.empleado_id) formData.append('empleado_id', String(incidenciaData.empleado_id));
+    if (incidenciaData.tipo) formData.append('tipo', String(incidenciaData.tipo));
+    if (incidenciaData.motivo) formData.append('motivo', String(incidenciaData.motivo));
+    if (incidenciaData.observaciones) formData.append('observaciones', String(incidenciaData.observaciones));
+    
+    if (incidenciaData.fecha_inicio) formData.append('fecha_inicio', incidenciaData.fecha_inicio.split('T')[0]);
+    if (incidenciaData.fecha_fin) formData.append('fecha_fin', incidenciaData.fecha_fin.split('T')[0]);
+    
+    if (incidenciaData.archivos && incidenciaData.archivos.length > 0) {
+      const archivo = incidenciaData.archivos[0];
+      formData.append('archivo', {
+        uri: archivo.uri,
+        name: archivo.name,
+        type: archivo.type
+      });
+    }
+
     const response = await fetchTimeout(`${API_URL}/incidencias/${incidenciaId}`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(incidenciaData)
-    });
+      body: formData
+    }, 60000);
+
+    const responseText = await response.text();
 
     if (!response.ok) {
-      const errorData = await response.json();
+      let errorData;
+      try {
+        errorData = JSON.parse(responseText);
+      } catch {
+        errorData = { message: responseText };
+      }
       throw new Error(errorData.message || `Error del servidor (${response.status})`);
     }
 
-    const data = await response.json();
+    const data = JSON.parse(responseText);
     return data;
   } catch (error) {
     throw error;

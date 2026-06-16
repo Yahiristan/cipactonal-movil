@@ -126,7 +126,7 @@ export const NotificationsScreen = ({ darkMode, onBack }) => {
 
             <ScrollView
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={true}>
         
         {grupos.map((grupo) => (
           <View key={grupo.id}>
@@ -165,6 +165,7 @@ const notifStyles = StyleSheet.create({
     backgroundColor: '#f8fafc'
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 18,
     paddingTop: 16,
     paddingBottom: 90

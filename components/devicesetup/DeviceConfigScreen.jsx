@@ -559,58 +559,60 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, empresaLogo, onNe
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-          <View style={styles.contentArea}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={true} keyboardShouldPersistTaps="handled">
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <View style={styles.contentArea}>
 
-            <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Empresa Vinculada</Text>
-            <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
-              <View style={styles.settingItem}>
-                <View style={[styles.settingLeft, { alignItems: 'center' }]}>
-                  {empresaLogo ? (
-                    <View style={[styles.iconCircle, { backgroundColor: isDark ? '#1e293b' : '#ffffff', overflow: 'hidden' }]}>
-                      <Image source={{ uri: obtenerUrlLogo(empresaLogo) }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+              <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Empresa Vinculada</Text>
+              <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
+                <View style={styles.settingItem}>
+                  <View style={[styles.settingLeft, { alignItems: 'center' }]}>
+                    {empresaLogo ? (
+                      <View style={[styles.iconCircle, { backgroundColor: isDark ? '#1e293b' : '#ffffff', overflow: 'hidden' }]}>
+                        <Image source={{ uri: obtenerUrlLogo(empresaLogo) }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+                      </View>
+                    ) : (
+                      <View style={[styles.iconCircle, { backgroundColor: t.iconCircleBg }]}>
+                        <Ionicons name="business" size={20} color={t.iconColor} />
+                      </View>
+                    )}
+                    <View style={{ flex: 1, paddingRight: 10, paddingLeft: 14, justifyContent: 'center' }}>
+                      <Text style={[styles.settingTitle, { marginBottom: 0, color: t.textPrimary }]} numberOfLines={1}>{empresaNombre || 'Empresa'}</Text>
                     </View>
-                  ) : (
+                  </View>
+                </View>
+              </View>
+
+              <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Dispositivo Detectado</Text>
+              <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
+                <View style={styles.settingItem}>
+                  <View style={styles.settingLeft}>
                     <View style={[styles.iconCircle, { backgroundColor: t.iconCircleBg }]}>
-                      <Ionicons name="business" size={20} color={t.iconColor} />
+                      <Ionicons name={Platform.OS === 'ios' ? "logo-apple" : "logo-android"} size={20} color={Platform.OS === 'android' ? '#22c55e' : t.textPrimary} />
                     </View>
-                  )}
-                  <View style={{ flex: 1, paddingRight: 10, paddingLeft: 14, justifyContent: 'center' }}>
-                    <Text style={[styles.settingTitle, { marginBottom: 0, color: t.textPrimary }]} numberOfLines={1}>{empresaNombre || 'Empresa'}</Text>
+                    <View style={{ flex: 1, paddingRight: 10, paddingLeft: 14 }}>
+                      <Text style={[styles.settingTitle, { color: t.textPrimary }]} numberOfLines={1}>{formData.deviceModel}</Text>
+                      <Text style={[styles.settingValue, { color: t.textMuted }]} numberOfLines={1}>Sistema: {formData.os}</Text>
+                    </View>
                   </View>
                 </View>
               </View>
-            </View>
 
-            <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Dispositivo Detectado</Text>
-            <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
-              <View style={styles.settingItem}>
-                <View style={styles.settingLeft}>
-                  <View style={[styles.iconCircle, { backgroundColor: t.iconCircleBg }]}>
-                    <Ionicons name={Platform.OS === 'ios' ? "logo-apple" : "logo-android"} size={20} color={Platform.OS === 'android' ? '#22c55e' : t.textPrimary} />
-                  </View>
-                  <View style={{ flex: 1, paddingRight: 10, paddingLeft: 14 }}>
-                    <Text style={[styles.settingTitle, { color: t.textPrimary }]} numberOfLines={1}>{formData.deviceModel}</Text>
-                    <Text style={[styles.settingValue, { color: t.textMuted }]} numberOfLines={1}>Sistema: {formData.os}</Text>
-                  </View>
+              <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Configuración</Text>
+              <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
+                {deviceConfig.fields.map((field, index) => renderField(field, index))}
+              </View>
+
+              {solicitudExistente &&
+                <View style={[styles.retryBadge, { backgroundColor: isDark ? '#422006' : '#fef3c7', borderColor: isDark ? '#78350f' : '#fde68a' }]}>
+                  <Ionicons name="refresh-circle" size={16} color="#f59e0b" />
+                  <Text style={[styles.retryText, { color: isDark ? '#fbbf24' : '#92400e' }]}>Reintentando solicitud anterior</Text>
                 </View>
-              </View>
+              }
+
             </View>
-
-            <Text style={[styles.sectionLabel, { color: t.sectionLabel }]}>Configuración</Text>
-            <View style={[styles.sectionContainer, { backgroundColor: t.card }]}>
-              {deviceConfig.fields.map((field, index) => renderField(field, index))}
-            </View>
-
-            {solicitudExistente &&
-              <View style={[styles.retryBadge, { backgroundColor: isDark ? '#422006' : '#fef3c7', borderColor: isDark ? '#78350f' : '#fde68a' }]}>
-                <Ionicons name="refresh-circle" size={16} color="#f59e0b" />
-                <Text style={[styles.retryText, { color: isDark ? '#fbbf24' : '#92400e' }]}>Reintentando solicitud anterior</Text>
-              </View>
-            }
-
-          </View>
-        </TouchableWithoutFeedback>
+          </TouchableWithoutFeedback>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       <View style={[styles.footer, { backgroundColor: t.bg, borderTopColor: t.divider, paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 16) : insets.bottom + 8 }]}>
@@ -679,7 +681,7 @@ export const DeviceConfigScreen = ({ empresaId, empresaNombre, empresaLogo, onNe
                   </TouchableOpacity>
                 </View>
 
-                <ScrollView style={{ maxHeight: 280 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 8 }}>
+                <ScrollView style={{ maxHeight: 280 }} showsVerticalScrollIndicator={true} contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingBottom: 8 }}>
                   {Platform.OS === 'android' ? (
                     <>
                       <View style={mStyles.stepItem}>

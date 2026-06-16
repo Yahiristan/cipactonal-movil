@@ -417,34 +417,43 @@ const baseStyles = {
   },
   modalTurnoDetails: {
     backgroundColor: '#f9fafb',
-    borderRadius: 24,
+    borderRadius: 20,
     overflow: 'hidden',
-  },
-  modalTurnoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
     justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginTop: 6,
+  },
+  modalTurnoTimeContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  modalTurnoIconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
   },
   modalTurnoLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-    letterSpacing: -0.2,
-    marginLeft: 12,
-    flex: 1,
-  },
-  modalTurnoTime: {
-    fontSize: 15,
+    fontSize: 10,
     fontWeight: '700',
     color: '#64748b',
-    marginRight: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1.1,
+    marginBottom: 2,
   },
-  modalTurnoDivider: {
-    height: 1,
-    backgroundColor: '#f3f4f6',
-    marginVertical: 4
+  modalTurnoTime: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#072146',
+    letterSpacing: -0.5,
+  },
+  modalTurnoArrow: {
+    paddingHorizontal: 16,
   },
   modalEmptyState: {
     alignItems: 'center',
@@ -653,7 +662,7 @@ export const scheduleStylesDark = StyleSheet.create({
   },
   modalTurnoDetails: {
     ...baseStyles.modalTurnoDetails,
-    backgroundColor: '#0f172a'
+    backgroundColor: '#1e293b'
   },
   modalTurnoTitle: {
     ...baseStyles.modalTurnoTitle,
@@ -661,15 +670,11 @@ export const scheduleStylesDark = StyleSheet.create({
   },
   modalTurnoLabel: {
     ...baseStyles.modalTurnoLabel,
-    color: '#f1f5f9'
+    color: '#94a3b8'
   },
   modalTurnoTime: {
     ...baseStyles.modalTurnoTime,
     color: '#f1f5f9'
-  },
-  modalTurnoDivider: {
-    ...baseStyles.modalTurnoDivider,
-    backgroundColor: '#334155'
   },
   modalTurnoNumber: {
     ...baseStyles.modalTurnoNumber,

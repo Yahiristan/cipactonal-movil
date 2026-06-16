@@ -26,7 +26,9 @@ export const getCredencialesByEmpleado = async (empleadoId, token) => {
           }
         };
       }
-      throw new Error(data.message || 'Error al obtener credenciales');
+      const error = new Error(data.message || 'Error al obtener credenciales');
+      error.code = data.code;
+      throw error;
     }
     return data;
   } catch (error) {
@@ -54,7 +56,9 @@ export const guardarDactilar = async (empleadoId, dactilarBase64, token) => {
     );
     const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.message || 'Error al guardar huella dactilar');
+      const error = new Error(data.message || 'Error al guardar huella dactilar');
+      error.code = data.code;
+      throw error;
     }
     return data;
   } catch (error) {
@@ -80,7 +84,9 @@ export const guardarFacial = async (empleadoId, facialBase64, token) => {
     );
     const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.message || 'Error al guardar reconocimiento facial');
+      const error = new Error(data.message || 'Error al guardar reconocimiento facial');
+      error.code = data.code;
+      throw error;
     }
     return data;
   } catch (error) {
@@ -109,7 +115,9 @@ export const guardarPin = async (empleadoId, pin, token) => {
     );
     const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.message || 'Error al guardar PIN');
+      const error = new Error(data.message || 'Error al guardar PIN');
+      error.code = data.code;
+      throw error;
     }
     return data;
   } catch (error) {
@@ -145,7 +153,9 @@ export const verificarPin = async (empleadoId, pin, token) => {
       throw new Error('Servidor inactivo o respuesta no válida (Server Down)');
     }
     if (!response.ok) {
-      throw new Error(data.message || 'Error al verificar PIN');
+      const error = new Error(data.message || 'Error al verificar PIN');
+      error.code = data.code;
+      throw error;
     }
     return data;
   } catch (error) {
@@ -167,7 +177,9 @@ export const eliminarCredencial = async (empleadoId, tipo, token) => {
     );
     const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.message || 'Error al eliminar credencial');
+      const error = new Error(data.message || 'Error al eliminar credencial');
+      error.code = data.code;
+      throw error;
     }
     return data;
   } catch (error) {

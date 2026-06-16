@@ -84,7 +84,7 @@ export const PersonalInfoScreen = ({ userData, darkMode, onBack }) => {
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={true}>
         
         <View style={styles.profileCard}>
           <View style={styles.profileGradient}>
@@ -193,6 +193,7 @@ const personalInfoStyles = StyleSheet.create({
     backgroundColor: '#f8fafc'
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 100

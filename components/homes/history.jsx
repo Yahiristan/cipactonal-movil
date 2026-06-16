@@ -538,7 +538,7 @@ export const HistoryScreen = ({ darkMode, userData }) => {
         ListHeaderComponent={ListHeader}
         ListEmptyComponent={ListEmpty}
         ListFooterComponent={<View style={{ height: 100 }} />}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
         stickySectionHeadersEnabled={false}
         initialNumToRender={12}
         maxToRenderPerBatch={10}
