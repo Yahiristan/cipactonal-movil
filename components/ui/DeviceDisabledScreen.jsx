@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  TouchableOpacity, ActivityIndicator, ScrollView
-} from
-  'react-native';
+  TouchableOpacity, ActivityIndicator, ScrollView, Animated, View, Text, StyleSheet
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { verificarDispositivoPorEmpleado } from '../../services/solicitudMovilService';
 import AsyncStorage from '@react-native-async-storage/async-storage';

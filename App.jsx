@@ -38,6 +38,8 @@ if (typeof global.atob === 'undefined') {
   };
 }
 
+import "./global.css";
+
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, ActivityIndicator, View, Alert, AppState, StatusBar } from 'react-native';
 import { CustomAlert } from './components/ui/CustomAlert';

@@ -30,6 +30,7 @@ import { PinInputModal } from '../settingsPages/PinModal';
 import { FacialCaptureScreen } from '../../services/FacialCaptureScreen';
 import MapaZonasPermitidas from './MapScreen';
 import { notificarRegistro, notificarEstadoAsistencia } from '../../services/localNotificationService';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 
 import sqliteManager, { saveOnlineAsistenciaToCache } from '../../services/offline/sqliteManager.mjs';
@@ -120,6 +121,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
   const [mostrarAutenticacion, setMostrarAutenticacion] = useState(false);
   const [mostrarPinAuth, setMostrarPinAuth] = useState(false);
   const [mostrarCapturaFacial, setMostrarCapturaFacial] = useState(false);
+  const [skipFacialInstructions, setSkipFacialInstructions] = useState(false);
   const [credencialesUsuario, setCredencialesUsuario] = useState(null);
   const [metodosDisponibles, setMetodosDisponibles] = useState([]);
   const [ordenCredenciales, setOrdenCredenciales] = useState([]);
@@ -1403,7 +1405,10 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         showCustomAlert(
           'Doble Seguridad',
           'Huella verificada localmente.\n\nPor favor, realiza el reconocimiento facial para completar tu registro.',
-          [{ text: 'Continuar a Cámara', onPress: () => setMostrarCapturaFacial(true) }]
+          [{ text: 'Continuar a Cámara', onPress: () => {
+            setSkipFacialInstructions(false);
+            setMostrarCapturaFacial(true);
+          }}]
         );
       } else {
         throw new Error('Autenticación biométrica fallida');
@@ -1432,6 +1437,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
     try {
       datosRegistroRef.current.metodo = 'FACIAL';
       setMostrarAutenticacion(false);
+      setSkipFacialInstructions(false);
       setMostrarCapturaFacial(true);
     } catch (error) {
       showCustomAlert(
@@ -1447,8 +1453,6 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
     setRegistrando(true);
 
     try {
-      (function () { })('🤖 [VERIFICACIÓN FACIAL] Captura facial completada para autenticación de registro');
-
       if (!captureData.faceDetectionUsed || !captureData.validated) {
         throw new Error('No se detectó un rostro válido en la captura');
       }
@@ -1457,20 +1461,19 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       const validation = validateFaceQuality(faceFeatures);
 
       if (!validation.isValid) {
-        (function () { })('🤖 [VERIFICACIÓN FACIAL] ⚠️ Validación de calidad falló:', validation.errors);
         showCustomAlert(
           'Calidad insuficiente',
           validation.errors.join('\n') + '\n\n¿Deseas intentar de nuevo?',
           [
             { text: 'Cancelar', style: 'cancel', onPress: () => setRegistrando(false) },
-            { text: 'Reintentar', onPress: () => setMostrarCapturaFacial(true) }]
-
+            { text: 'Reintentar', onPress: () => {
+              setSkipFacialInstructions(true);
+              setMostrarCapturaFacial(true);
+            }}]
         );
         setRegistrando(false);
         return;
       }
-
-      (function () { })('🤖 [VERIFICACIÓN FACIAL] Validación facial detectó rostro de calidad, enviando imagen al servidor para verificar identidad...');
 
       const empleadoId = userData?.empleado?.id || userData?.empleado_id || userData?.id;
 
@@ -1487,10 +1490,8 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
           })
         });
 
-        // Si hay un error del servidor (500, 502, 503, etc.), no bloqueamos al usuario.
-        // Guardamos offline y dejamos que el servidor valide cuando se sincronice la asistencia.
+        // Errores 5xx: guardar offline, no bloquear al usuario
         if (response.status >= 500) {
-          (function () { })(`🤖 [VERIFICACIÓN FACIAL] Error de servidor/puerta de enlace (${response.status}). Procediendo a guardado local offline.`);
           datosRegistroRef.current.payloadBiometrico = captureData.photoBase64;
           await procederConRegistro(true);
           return;
@@ -1499,21 +1500,20 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
         const verification = await response.json();
 
         if (!response.ok || !verification.success) {
-          (function () { })('🤖 [VERIFICACIÓN FACIAL] Falló en el servidor:', verification);
           showCustomAlert(
             'Identidad no verificada',
             verification.message || 'El rostro capturado no coincide con tu registro.',
             [
               { text: 'Cancelar', style: 'cancel', onPress: () => setRegistrando(false) },
-              { text: 'Reintentar', onPress: () => setMostrarCapturaFacial(true) }]
+              { text: 'Reintentar', onPress: () => {
+                setSkipFacialInstructions(true);
+                setMostrarCapturaFacial(true);
+              }}]
           );
           setRegistrando(false);
           return;
         }
-
-        (function () { })(`🤖 [VERIFICACIÓN FACIAL] Identidad verificada (${verification.data?.matchScore || 100}% similitud), procediendo con el registro`);
       } catch (networkError) {
-        (function () { })('🤖 [VERIFICACIÓN FACIAL] Error de red en verificación facial. El servidor/guardado local se encargará.', networkError);
         datosRegistroRef.current.payloadBiometrico = captureData.photoBase64;
         await procederConRegistro(true);
         return;
@@ -1522,7 +1522,6 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       datosRegistroRef.current.payloadBiometrico = captureData.photoBase64;
       await procederConRegistro();
     } catch (error) {
-      (function () { })('🤖 [VERIFICACIÓN FACIAL] Error en autenticación facial:', error);
       showCustomAlert(
         'Error de Autenticación',
         error.message || 'No se pudo verificar tu identidad',
@@ -1535,6 +1534,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
   const handleFacialCaptureCancel = () => {
     setMostrarCapturaFacial(false);
     setRegistrando(false);
+    setSkipFacialInstructions(false);
   };
 
   const procederConRegistro = async (forzarOffline = false) => {
@@ -1972,7 +1972,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
     if (estadoHorario === 'espera') return 'Espera requerida';
     if (jornadaCompletada) return 'Jornada completada';
     if (estadoHorario === 'dia_festivo' || diaFestivo) return diaFestivo ? `Día festivo: ${diaFestivo.nombre}` : 'Día festivo';
-    if (estadoHorario === 'falta_previa') return 'Falta registrada — turno cerrado';
+    if (estadoHorario === 'falta_previa') return 'Falta registrada';
     if (estadoHorario === 'bloque_completo') return 'Bloque completado';
     if (estadoHorario === 'turno_extra') return 'Turno extra disponible';
     if (!dentroDelArea) return 'Fuera del área';
@@ -1991,7 +1991,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
     if (estadoHorario === 'espera') return 'Espera temporal activa';
     if (jornadaCompletada || estadoHorario === 'bloque_completo') return 'Jornada completada';
     if (estadoHorario === 'dia_festivo' || diaFestivo) return 'Día festivo';
-    if (estadoHorario === 'falta_previa') return 'Turno cerrado por falta';
+    if (estadoHorario === 'falta_previa') return 'Turno cerrado';
     if (!puedeRegistrar || !dentroDelArea || !tipoSiguienteRegistro) return 'No disponible';
     return `Registrar ${tipoSiguienteRegistro === 'entrada' ? 'Entrada' : 'Salida'}`;
   };
@@ -2004,9 +2004,10 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
       <FacialCaptureScreen
         onCapture={handleFacialCaptureComplete}
         onCancel={handleFacialCaptureCancel}
-        darkMode={darkMode} />);
-
-
+        darkMode={darkMode}
+        skipInstructions={skipFacialInstructions}
+      />
+    );
   }
 
   // Aquí se renderiza la vista principal del botón
@@ -2076,7 +2077,7 @@ export const RegisterButton = ({ userData, darkMode, onRegistroExitoso }) => {
                   {estadoHorario === 'espera' ?
                     '1 min. entre registros' :
                     estadoHorario === 'falta_previa' ?
-                      'Turno cerrado (falta)' :
+                      'Turno cerrado' :
                       estadoHorario === 'bloque_completo' ?
                         'Bloque completado' :
                         !puedeRegistrar ?

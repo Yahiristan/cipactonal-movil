@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  TouchableOpacity, ActivityIndicator, ScrollView } from
-'react-native';
+  TouchableOpacity, ActivityIndicator, ScrollView, Animated, View, Text, StyleSheet
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const MaintenanceScreen = ({ onRetry, onLogout, darkMode = false }) => {

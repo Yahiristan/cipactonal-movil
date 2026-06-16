@@ -10,7 +10,8 @@ import {
   Platform,
   ActivityIndicator,
   StatusBar,
-  Modal
+  Modal,
+  ScrollView
 } from
   'react-native';
 import { CustomAlert } from '../components/ui/CustomAlert';
@@ -23,7 +24,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const OVAL_WIDTH = SCREEN_WIDTH * 0.65;
 const OVAL_HEIGHT = SCREEN_HEIGHT * 0.42;
 const OVAL_CENTER_X = SCREEN_WIDTH / 2;
-const OVAL_CENTER_Y = SCREEN_HEIGHT / 2 - 20;
+const OVAL_CENTER_Y = SCREEN_HEIGHT / 2;
 const OVAL_LEFT = OVAL_CENTER_X - OVAL_WIDTH / 2;
 const OVAL_RIGHT = OVAL_CENTER_X + OVAL_WIDTH / 2;
 const OVAL_TOP = OVAL_CENTER_Y - OVAL_HEIGHT / 2;
@@ -49,7 +50,8 @@ const isFaceInOval = (face, livenessActive = false) => {
 export const FacialCaptureScreen = ({
   onCapture,
   onCancel,
-  darkMode = false
+  darkMode = false,
+  skipInstructions = false
 }) => {
   const device = useCameraDevice('front');
   const camera = useRef(null);
@@ -74,27 +76,95 @@ export const FacialCaptureScreen = ({
     landmarkMode: 'all',
     contourMode: 'none',
     trackingEnabled: true,
-    minFaceSize: 0.15
+    minFaceSize: 0.08, // Más sensible para detectar rostros un poco más lejanos
+    autoMode: true,
+    windowWidth: SCREEN_WIDTH,
+    windowHeight: SCREEN_HEIGHT
   }).current;
   const [instruction, setInstruction] = useState('Centra tu rostro dentro del óvalo');
   const [isProcessing, setIsProcessing] = useState(false);
+  const isProcessingRef = useRef(false);
   const [countdown, setCountdown] = useState(null);
+  const countdownRef = useRef(null);
   const [isValidating, setIsValidating] = useState(false);
+  const isValidatingRef = useRef(false);
   const [facesDetected, setFacesDetected] = useState([]);
   const [faceDetected, setFaceDetected] = useState(false);
   const [lastFaceData, setLastFaceData] = useState(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const faceDetectionTimeout = useRef(null);
   const errorFramesRef = useRef(0);
+
+  // Keep refs in sync so the face-detection callback always has fresh values
+  const setIsProcessingSafe = (val) => { isProcessingRef.current = val; setIsProcessing(val); };
+  const setCountdownSafe = (val) => { countdownRef.current = typeof val === 'function' ? val(countdownRef.current) : val; setCountdown(val); };
+  const setIsValidatingSafe = (val) => { isValidatingRef.current = val; setIsValidating(val); };
   
-  const livenessStepRef = useRef(0); // 0: init, 1: target1, 2: target2, 3: recenter, 4: done
-  const activeTargetRef = useRef(null);
+  const [showInstructions, setShowInstructions] = useState(!skipInstructions);
+  const livenessStepRef = useRef(0); // 0: init, 1: first_move, 2: first_recenter, 3: second_move, 4: second_recenter, 5: done
   const livenessCompletedRef = useRef(false);
   const isTransitioningRef = useRef(false);
-  const [renderTarget, setRenderTarget] = useState(null);
+  const targetDirectionRef = useRef(null); // 'left' | 'right' | 'up' | 'down' | 'center'
+  const directionSequenceRef = useRef([]); // e.g. ['left', 'right']
+  const transitionTimeoutRef = useRef(null);
+  const countdownTimerRef = useRef(null);
+  const livenessFaceDataRef = useRef(null);
+
+  const resetLiveness = () => {
+    if (transitionTimeoutRef.current) {
+      clearTimeout(transitionTimeoutRef.current);
+      transitionTimeoutRef.current = null;
+    }
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
+    livenessStepRef.current = 0;
+    targetDirectionRef.current = null;
+    directionSequenceRef.current = [];
+    isTransitioningRef.current = false;
+    livenessFaceDataRef.current = null;
+  };
+
+  const handleRetry = () => {
+    livenessCompletedRef.current = false;
+    resetLiveness();
+    setInstruction('Centra tu rostro dentro del óvalo');
+  };
+
+  const getDirectionText = (dir) => {
+    switch (dir) {
+      case 'left': return 'Gira la cabeza a la IZQUIERDA';
+      case 'right': return 'Gira la cabeza a la DERECHA';
+      case 'up': return 'Gira la cabeza hacia ARRIBA';
+      case 'down': return 'Gira la cabeza hacia ABAJO';
+      case 'center': return 'Mira al CENTRO';
+      default: return '';
+    }
+  };
+
+  const generateSequence = () => {
+    const directions = ['left', 'right', 'up', 'down'];
+    const first = directions[Math.floor(Math.random() * directions.length)];
+    const remaining = directions.filter(d => d !== first);
+    const second = remaining[Math.floor(Math.random() * remaining.length)];
+    return [first, second];
+  };
+
   useEffect(() => {
     checkPermissions();
     startPulseAnimation();
+    return () => {
+      if (faceDetectionTimeout.current) {
+        clearTimeout(faceDetectionTimeout.current);
+      }
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+      }
+    };
   }, []);
   const checkPermissions = async () => {
     const cameraPermission = await VisionCamera.getCameraPermissionStatus();
@@ -133,158 +203,149 @@ export const FacialCaptureScreen = ({
       }
       const leftEyeOpen = face.leftEyeOpenProbability !== undefined ? face.leftEyeOpenProbability : 1;
       const rightEyeOpen = face.rightEyeOpenProbability !== undefined ? face.rightEyeOpenProbability : 1;
-      const yaw = Math.abs(face.yawAngle || 0);
+      const yaw = face.yawAngle || 0;
+      const pitch = face.pitchAngle || 0;
       const roll = Math.abs(face.rollAngle || 0);
       const step = livenessStepRef.current;
-      const livenessActive = step === 1 || step === 2;
+      const livenessActive = step >= 1 && step <= 4;
       const maxYaw = livenessActive ? 80 : 20; // 20 para centrar, 80 para permitir giro completo
-      const isGoodQuality = leftEyeOpen > 0.3 && rightEyeOpen > 0.3 && yaw <= maxYaw && roll <= 30; // Roll más permisivo
+      const isGoodQuality = leftEyeOpen > 0.3 && rightEyeOpen > 0.3 && Math.abs(yaw) <= maxYaw && roll <= 30; // Roll más permisivo
       const inOval = isFaceInOval(face, livenessActive);
 
-      if (!countdown && !isProcessing && !isValidating && !livenessCompletedRef.current && !isTransitioningRef.current) {
+      if (!countdownRef.current && !isProcessingRef.current && !isValidatingRef.current && !livenessCompletedRef.current && !isTransitioningRef.current) {
         if (!inOval) {
           errorFramesRef.current += 1;
           if (errorFramesRef.current > 5) {
             setFaceDetected(false);
             setInstruction('Centra tu rostro dentro del óvalo');
-            if (step > 0 && step < 4) {
-              livenessStepRef.current = 0;
-              activeTargetRef.current = null;
-              setRenderTarget(null);
-            }
+            resetLiveness();
+            errorFramesRef.current = 0; // ← resetear para que al volver la cara arranque limpio
           }
         } else if (isGoodQuality && step === 0) {
           errorFramesRef.current = 0;
           setFaceDetected(true);
-          // Iniciar liveness
+          const seq = generateSequence();
+          directionSequenceRef.current = seq;
+          targetDirectionRef.current = seq[0];
           livenessStepRef.current = 1;
-          const isLeft = Math.random() > 0.5;
-          const tX = OVAL_CENTER_X + (isLeft ? -1 : 1) * (OVAL_WIDTH * 0.40); // Más lejos del centro
-          const tY = OVAL_CENTER_Y + (Math.random() * 40 - 20);
-          activeTargetRef.current = { id: 1, x: tX, y: tY, hit: false };
-          setRenderTarget(activeTargetRef.current);
-          setInstruction('Toca el punto rojo con tu nariz');
-        } else if (step === 1 || step === 2) {
+          setInstruction(getDirectionText(seq[0]));
+        } else if (!isGoodQuality && step === 0) {
+          // Cara detectada en óvalo pero calidad insuficiente (ojos cerrados, ladeada)
           errorFramesRef.current = 0;
           setFaceDetected(true);
-          
-          // Usamos el centro del bounding box en vez de landmarks para evitar errores de escala de coordenadas
-          const headCX = face.bounds.x + face.bounds.width / 2;
-          const headCY = face.bounds.y + face.bounds.height / 2;
-          const target = activeTargetRef.current;
-          
-          if (target && !target.hit) {
-            const dx = target.x - headCX;
-            const dy = target.y - headCY;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            
-            if (dist < 50) { // Hit tolerante (bounding box center)
-              if (step === 1) {
-                activeTargetRef.current.hit = true;
-                setRenderTarget({ ...activeTargetRef.current });
-                setInstruction('¡Punto tocado!');
-                isTransitioningRef.current = true;
-                
-                setTimeout(() => {
-                  livenessStepRef.current = 2;
-                  const wasLeft = target.x < OVAL_CENTER_X;
-                  const tX = OVAL_CENTER_X + (wasLeft ? 1 : -1) * (OVAL_WIDTH * 0.40); // Siguiente al otro lado
-                  const tY = OVAL_CENTER_Y + (Math.random() * 40 - 20);
-                  activeTargetRef.current = { id: 2, x: tX, y: tY, hit: false };
-                  setRenderTarget(activeTargetRef.current);
-                  setInstruction('Ahora toca el segundo punto rojo');
-                  isTransitioningRef.current = false;
-                }, 800);
-                
-              } else if (step === 2) {
-                activeTargetRef.current.hit = true;
-                setRenderTarget({ ...activeTargetRef.current });
-                setInstruction('¡Prueba superada!');
-                isTransitioningRef.current = true;
-                
-                setTimeout(() => {
-                  livenessStepRef.current = 3;
-                  activeTargetRef.current = null;
-                  setRenderTarget(null);
-                  setInstruction('Centra tu rostro en el óvalo');
-                  isTransitioningRef.current = false;
-                }, 800);
-              }
+          setInstruction('Mira de frente con los ojos abiertos');
+        } else if (step === 1 || step === 3) {
+          errorFramesRef.current = 0;
+          setFaceDetected(true);
+          const target = targetDirectionRef.current;
+          let hit = false;
+          if (target === 'left' && yaw < -18) hit = true;
+          else if (target === 'right' && yaw > 18) hit = true;
+          else if (target === 'up' && pitch > 12) hit = true;
+          else if (target === 'down' && pitch < -12) hit = true;
+
+          if (hit) {
+            isTransitioningRef.current = true;
+            if (step === 1) {
+              setInstruction('¡Bien hecho! Ahora regresa al centro');
+              transitionTimeoutRef.current = setTimeout(() => {
+                livenessStepRef.current = 2;
+                targetDirectionRef.current = 'center';
+                setInstruction('Mira al centro');
+                isTransitioningRef.current = false;
+                transitionTimeoutRef.current = null;
+              }, 1000);
             } else {
-              setInstruction(step === 1 ? 'Mueve tu cabeza hacia el punto rojo' : 'Ahora hacia el segundo punto');
+              setInstruction('¡Excelente! Regresa al centro');
+              transitionTimeoutRef.current = setTimeout(() => {
+                livenessStepRef.current = 4;
+                targetDirectionRef.current = 'center';
+                setInstruction('Mira al centro');
+                isTransitioningRef.current = false;
+                transitionTimeoutRef.current = null;
+              }, 1000);
             }
+          } else {
+            setInstruction(getDirectionText(target));
           }
-        } else if (step === 3) {
+        } else if (step === 2) {
           errorFramesRef.current = 0;
           setFaceDetected(true);
-          if (isGoodQuality && inOval && yaw < 15 && roll < 15) {
-            livenessStepRef.current = 4;
+          const isCentered = Math.abs(yaw) < 8 && Math.abs(pitch) < 8;
+          if (isCentered) {
+            isTransitioningRef.current = true;
+            const nextDir = directionSequenceRef.current[1];
+            setInstruction('¡Listo! Prepárate para el siguiente movimiento');
+            transitionTimeoutRef.current = setTimeout(() => {
+              livenessStepRef.current = 3;
+              targetDirectionRef.current = nextDir;
+              setInstruction(getDirectionText(nextDir));
+              isTransitioningRef.current = false;
+              transitionTimeoutRef.current = null;
+            }, 1000);
+          } else {
+            setInstruction('Mira al centro');
+          }
+        } else if (step === 4) {
+          errorFramesRef.current = 0;
+          setFaceDetected(true);
+          const isCentered = Math.abs(yaw) < 8 && Math.abs(pitch) < 8;
+          if (isCentered && isGoodQuality && inOval) {
+            livenessStepRef.current = 5;
             livenessCompletedRef.current = true;
+            livenessFaceDataRef.current = face;
             setInstruction('¡Perfecto! Mantén la posición');
-            setTimeout(() => {
+            transitionTimeoutRef.current = setTimeout(() => {
               startCountdown();
+              transitionTimeoutRef.current = null;
             }, 600);
           } else {
-            setInstruction('Centra tu rostro mirando al frente');
-          }
-        } else {
-          errorFramesRef.current += 1;
-          if (errorFramesRef.current > 5) {
-            setFaceDetected(false);
-            if (leftEyeOpen < 0.3 || rightEyeOpen < 0.3) {
-              setInstruction('Abre bien los ojos');
-            } else if (yaw > maxYaw) {
-              setInstruction(livenessActive ? 'Mueve tu cabeza hacia el punto rojo' : 'Mira de frente a la cámara');
-            } else if (roll > 20) {
-              setInstruction('Mantén la cabeza recta');
-            } else {
-              setInstruction('Ajusta la posición de tu rostro');
-            }
+            setInstruction('Mira al centro');
           }
         }
       }
 
       faceDetectionTimeout.current = setTimeout(() => {
-        errorFramesRef.current = 10;
+        errorFramesRef.current = 0; // ← reset para reinicio limpio
         setFaceDetected(false);
-        if (!countdown && !isProcessing && !isValidating && !livenessCompletedRef.current) {
+        if (!countdownRef.current && !isProcessingRef.current && !isValidatingRef.current && !livenessCompletedRef.current) {
           setInstruction('Centra tu rostro dentro del óvalo');
-          if (livenessStepRef.current > 0 && livenessStepRef.current < 4) {
-            livenessStepRef.current = 0;
-            activeTargetRef.current = null;
-            setRenderTarget(null);
-          }
+          resetLiveness();
         }
       }, 500);
 
     } else {
+      if (faceDetectionTimeout.current) {
+        clearTimeout(faceDetectionTimeout.current);
+        faceDetectionTimeout.current = null;
+      }
       errorFramesRef.current += 1;
       if (errorFramesRef.current > 5) {
         setFaceDetected(false);
         setLastFaceData(null);
-        if (!countdown && !isProcessing && !isValidating && !livenessCompletedRef.current) {
+        if (!countdownRef.current && !isProcessingRef.current && !isValidatingRef.current && !livenessCompletedRef.current) {
           setInstruction('No se detecta rostro');
-          if (livenessStepRef.current > 0 && livenessStepRef.current < 4) {
-            livenessStepRef.current = 0;
-            activeTargetRef.current = null;
-            setRenderTarget(null);
-          }
+          resetLiveness();
+          errorFramesRef.current = 0; // ← reset para que al reaparecer no se quede en loop
         }
       }
     }
-  }, [countdown, isProcessing, isValidating]);
+  }, []);
 
   const handleFaceDetection = useCallback((faces) => {
     updateFaceDetection(faces);
   }, [updateFaceDetection]);
 
   const startCountdown = () => {
-    setCountdown(3);
+    setCountdownSafe(3);
     setInstruction('Mantén la posición');
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
+    countdownTimerRef.current = setInterval(() => {
+      setCountdownSafe((prev) => {
         if (prev === 1) {
-          clearInterval(timer);
+          if (countdownTimerRef.current) {
+            clearInterval(countdownTimerRef.current);
+            countdownTimerRef.current = null;
+          }
           handleCapture();
           return null;
         }
@@ -294,66 +355,85 @@ export const FacialCaptureScreen = ({
   };
 
   const handleCapture = async () => {
-    if (!camera.current || isProcessing) return;
+    if (!camera.current || isProcessingRef.current) return;
     try {
-      setIsProcessing(true);
+      setIsProcessingSafe(true);
       setInstruction(' Capturando foto...');
       const photo = await camera.current.takePhoto({
         qualityPrioritization: 'quality',
         flash: 'off',
-        skipMetadata: true
+        skipMetadata: false
       });
       const fileUri = Platform.OS === 'ios' ? photo.path : `file://${photo.path}`;
       const fileInfo = await FileSystem.getInfoAsync(fileUri);
+      
+      const actions = [];
+      if (Platform.OS === 'android' && photo.width > photo.height) {
+        if (photo.orientation === 'portrait') {
+          actions.push({ rotate: 270 });
+        } else if (photo.orientation === 'portrait-upside-down') {
+          actions.push({ rotate: 90 });
+        } else if (photo.orientation === 'landscape-left') {
+          actions.push({ rotate: 180 });
+        } else {
+          actions.push({ rotate: 270 });
+        }
+      } else if (Platform.OS === 'android' && (!photo.width || !photo.height)) {
+        actions.push({ rotate: 270 });
+      }
+      actions.push({ resize: { width: 1200 } });
+
       const manipResult = await ImageManipulator.manipulateAsync(
         fileUri,
-        [{ resize: { width: 800 } }],
-        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+        actions,
+        { compress: 0.95, format: ImageManipulator.SaveFormat.JPEG, base64: true }
       );
       const photoBase64 = manipResult.base64;
       if (!fileInfo.exists || fileInfo.size < 50000) {
         throw new Error('La captura falló. Intenta de nuevo con mejor iluminación.');
       }
       setInstruction(' Analizando rostro...');
-      setIsValidating(true);
-      if (!lastFaceData) {
-        setIsValidating(false);
-        setIsProcessing(false);
-        setCountdown(null);
+      setIsValidatingSafe(true);
+      
+      const faceToVerify = livenessFaceDataRef.current || lastFaceData;
+      if (!faceToVerify) {
+        setIsValidatingSafe(false);
+        setIsProcessingSafe(false);
+        setCountdownSafe(null);
         showCustomAlert(
           ' No se detectó rostro',
           'No se detectó ningún rostro en el momento de la captura.\n\nPor favor:\n• Asegúrate de que tu rostro esté visible\n• Verifica que haya buena iluminación\n• Posiciónate dentro del óvalo',
-          [{ text: 'Tomar otra foto', onPress: () => setInstruction('Centra tu rostro dentro del óvalo') }]
+          [{ text: 'Tomar otra foto', onPress: handleRetry }]
         );
         return;
       }
-      if (!isFaceInOval(lastFaceData)) {
-        setIsValidating(false);
-        setIsProcessing(false);
-        setCountdown(null);
+      if (!isFaceInOval(faceToVerify)) {
+        setIsValidatingSafe(false);
+        setIsProcessingSafe(false);
+        setCountdownSafe(null);
         showCustomAlert(
           '️ Rostro fuera del óvalo',
           'Tu rostro no estaba centrado en el óvalo al momento de capturar.\n\nPor favor posiciona tu rostro dentro del óvalo e inténtalo de nuevo.',
-          [{ text: 'Reintentar', onPress: () => setInstruction('Centra tu rostro dentro del óvalo') }]
+          [{ text: 'Reintentar', onPress: handleRetry }]
         );
         return;
       }
-      const detectedFace = lastFaceData;
+      const detectedFace = faceToVerify;
       const leftEyeOpen = detectedFace.leftEyeOpenProbability !== undefined ? detectedFace.leftEyeOpenProbability : 1;
       const rightEyeOpen = detectedFace.rightEyeOpenProbability !== undefined ? detectedFace.rightEyeOpenProbability : 1;
       const yaw = Math.abs(detectedFace.yawAngle || 0);
       const roll = Math.abs(detectedFace.rollAngle || 0);
       if (leftEyeOpen < 0.2 || rightEyeOpen < 0.2 || yaw > 40 || roll > 40) {
-        setIsValidating(false);
-        setIsProcessing(false);
-        setCountdown(null);
+        setIsValidatingSafe(false);
+        setIsProcessingSafe(false);
+        setCountdownSafe(null);
         showCustomAlert(
           '️ Calidad insuficiente',
           'Se detectó un rostro pero la calidad no es suficiente.\n\n' + (
             leftEyeOpen < 0.2 || rightEyeOpen < 0.2 ? '• Mantén los ojos abiertos\n' : '') + (
             yaw > 40 ? '• Mira de frente a la cámara\n' : '') + (
             roll > 40 ? '• Mantén la cabeza recta\n' : ''),
-          [{ text: 'Tomar otra foto', onPress: () => setInstruction('Centra tu rostro en el óvalo') }]
+          [{ text: 'Tomar otra foto', onPress: handleRetry }]
         );
         return;
       }
@@ -385,13 +465,13 @@ export const FacialCaptureScreen = ({
         faceDetectionUsed: true
       });
     } catch (error) {
-      setIsValidating(false);
-      setIsProcessing(false);
-      setCountdown(null);
+      setIsValidatingSafe(false);
+      setIsProcessingSafe(false);
+      setCountdownSafe(null);
       showCustomAlert(
         ' Error de captura',
         error.message || 'No se pudo capturar o analizar la foto correctamente.',
-        [{ text: 'Reintentar', onPress: () => setInstruction('Centra tu rostro en el óvalo') }]
+        [{ text: 'Reintentar', onPress: handleRetry }]
       );
     }
   };
@@ -437,10 +517,91 @@ export const FacialCaptureScreen = ({
   const ovalBorderColor = countdown ?
     '#10b981' :
     isValidating ?
-      '#f59e0b' :
+      '#2563eb' :
       faceDetected ?
         '#10b981' :
-        '#3b82f6';
+        '#2563eb';
+
+  if (showInstructions) {
+    return (
+      <Modal visible={true} animationType="slide" statusBarTranslucent>
+        <View style={[
+          styles.instructionModalContainer,
+          { backgroundColor: bgColor, paddingTop: Platform.OS === 'ios' ? 52 : (StatusBar.currentHeight || 24) + 16 }
+        ]}>
+          <StatusBar barStyle={dm ? "light-content" : "dark-content"} backgroundColor={bgColor} />
+          
+          <View style={styles.instructionModalHeader}>
+            <View style={styles.instructionIconHeaderCircle}>
+              <Ionicons name="scan-circle-outline" size={52} color="#2563eb" />
+            </View>
+            <Text style={[styles.instructionModalTitle, { color: textColor }]}>
+              Indicaciones de Registro
+            </Text>
+            <Text style={[styles.instructionModalSubtitle, { color: dm ? '#94a3b8' : '#64748b' }]}>
+              Sigue estos consejos para un registro rápido y seguro
+            </Text>
+          </View>
+          
+          <ScrollView style={styles.instructionModalBody} contentContainerStyle={{ paddingBottom: 30 }}>
+            {/* Indicación 1: Gorra/Lentes */}
+            <View style={[styles.instructionModalCard, { backgroundColor: tipBg }]}>
+              <Ionicons name="glasses-outline" size={22} color={dm ? '#60a5fa' : '#2563eb'} style={styles.cardIcon} />
+              <View style={styles.cardTextContainer}>
+                <Text style={[styles.cardTitle, { color: textColor }]}>Sin gorras ni accesorios</Text>
+                <Text style={[styles.cardDesc, { color: dm ? '#94a3b8' : '#64748b' }]}>
+                  Retira gorras, capuchas o lentes de sol. Tu rostro debe estar totalmente despejado.
+                </Text>
+              </View>
+            </View>
+
+            {/* Indicación 2: Iluminación */}
+            <View style={[styles.instructionModalCard, { backgroundColor: tipBg }]}>
+              <Ionicons name="sunny-outline" size={22} color={dm ? '#60a5fa' : '#2563eb'} style={styles.cardIcon} />
+              <View style={styles.cardTextContainer}>
+                <Text style={[styles.cardTitle, { color: textColor }]}>Busca buena iluminación</Text>
+                <Text style={[styles.cardDesc, { color: dm ? '#94a3b8' : '#64748b' }]}>
+                  Usa luz frontal. Evita estar a contraluz o tener sombras marcadas sobre tu cara.
+                </Text>
+              </View>
+            </View>
+
+            {/* Indicación 3: Ojos abiertos */}
+            <View style={[styles.instructionModalCard, { backgroundColor: tipBg }]}>
+              <Ionicons name="eye-outline" size={22} color={dm ? '#60a5fa' : '#2563eb'} style={styles.cardIcon} />
+              <View style={styles.cardTextContainer}>
+                <Text style={[styles.cardTitle, { color: textColor }]}>Ojos abiertos y al frente</Text>
+                <Text style={[styles.cardDesc, { color: dm ? '#94a3b8' : '#64748b' }]}>
+                  Mira fijamente a la cámara y mantén los ojos bien abiertos al capturar.
+                </Text>
+              </View>
+            </View>
+
+
+          </ScrollView>
+          
+          <View style={styles.instructionModalFooter}>
+            <TouchableOpacity 
+              style={styles.instructionStartBtn} 
+              onPress={() => setShowInstructions(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.instructionStartBtnText}>Comenzar Registro</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.instructionCancelBtn, { borderColor: dm ? '#334155' : '#cbd5e1' }]} 
+              onPress={onCancel}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.instructionCancelBtnText, { color: dm ? '#94a3b8' : '#64748b' }]}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
+
   return (
     <Modal visible={true} animationType="fade" statusBarTranslucent>
       <View style={styles.fullScreen}>
@@ -472,34 +633,9 @@ export const FacialCaptureScreen = ({
             <Text style={styles.countdownText}>{countdown}</Text>
           }
           {isValidating &&
-            <ActivityIndicator size="large" color="#f59e0b" style={styles.validatingIndicator} />
+            <ActivityIndicator size="large" color="#2563eb" style={styles.validatingIndicator} />
           }
         </View>
-
-        {/* Liveness Target Render */}
-        {!countdown && !isValidating && renderTarget && (
-          <View
-            style={{
-              position: 'absolute',
-              left: renderTarget.x - 15,
-              top: renderTarget.y - 15,
-              width: 30,
-              height: 30,
-              borderRadius: 15,
-              backgroundColor: renderTarget.hit ? '#10b981' : '#ef4444',
-              borderWidth: 2,
-              borderColor: '#ffffff',
-              zIndex: 20,
-              opacity: renderTarget.hit ? 0.8 : 1,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.5,
-              shadowRadius: 4,
-              elevation: 5
-            }}
-          />
-        )}
-
         { }
         <TouchableOpacity
           style={[styles.closeButton, {
@@ -523,52 +659,25 @@ export const FacialCaptureScreen = ({
           </View>
         </View>
         { }
-        {!countdown && !isValidating &&
-          <View style={styles.tipsContainer} pointerEvents="none">
-            <View style={[styles.tipItem, { backgroundColor: tipBg }]}>
-              <Ionicons name="sunny-outline" size={14} color="#f59e0b" />
-              <Text style={[styles.tipText, { color: textColor }]}>Busca buena iluminación</Text>
-            </View>
-            <View style={[styles.tipItem, { backgroundColor: tipBg }]}>
-              <Ionicons name="eye-outline" size={14} color="#3b82f6" />
-              <Text style={[styles.tipText, { color: textColor }]}>Mira directamente a la cámara</Text>
+
+        {/* Captura automática: no hay botón manual para evitar saltarse la validación de liveness */}
+        {(isProcessing || isValidating || countdown) &&
+          <View style={styles.bottomContainer}>
+            <View style={styles.captureStatusContainer}>
+              <ActivityIndicator size="small" color={dm ? '#60a5fa' : '#2563eb'} />
+              <Text style={[styles.helpText, { color: textColor, marginTop: 8 }]}>
+                {isProcessing
+                  ? 'Procesando...'
+                  : isValidating
+                  ? 'Analizando rostro...'
+                  : countdown
+                  ? `Capturando en ${countdown}...`
+                  : ''}
+              </Text>
             </View>
           </View>
         }
-        { }
-        <View style={styles.bottomContainer}>
-          <TouchableOpacity
-            style={[
-              styles.captureButton,
-              (isProcessing || countdown !== null || isValidating) && styles.captureButtonDisabled]
-            }
-            onPress={startCountdown}
-            disabled={isProcessing || countdown !== null || isValidating}
-            activeOpacity={0.8}>
-            <View style={[
-              styles.captureButtonInner,
-              countdown && styles.captureButtonInnerCountdown,
-              faceDetected && !countdown && !isValidating && styles.captureButtonInnerReady]
-            }>
-              <Ionicons
-                name={isProcessing || isValidating ? 'hourglass' : 'camera'}
-                size={28}
-                color="#fff" />
 
-            </View>
-          </TouchableOpacity>
-          <Text style={[styles.helpText, { color: textColor }]}>
-            {isProcessing ?
-              'Procesando...' :
-              isValidating ?
-                'Analizando rostro...' :
-                countdown ?
-                  `Capturando en ${countdown}...` :
-                  faceDetected && livenessCompletedRef.current ?
-                    'Iniciando captura...' :
-                    ''}
-          </Text>
-        </View>
         <CustomAlert
           visible={alertModal.visible}
           title={alertModal.title}
@@ -708,31 +817,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10
   },
-  captureButton: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
+  captureStatusContainer: {
     alignItems: 'center',
-    marginBottom: 12,
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6
-  },
-  captureButtonDisabled: { opacity: 0.6 },
-  captureButtonInner: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#3b82f6',
     justifyContent: 'center',
-    alignItems: 'center'
+    paddingVertical: 8,
   },
-  captureButtonInnerCountdown: { backgroundColor: '#10b981' },
-  captureButtonInnerReady: { backgroundColor: '#10b981' },
   helpText: {
     color: '#374151',
     fontSize: 13,
@@ -763,5 +852,90 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 15,
     fontWeight: '600'
+  },
+  
+  // Novedades para el Modal de Indicaciones Premium
+  instructionModalContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  instructionModalHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  instructionIconHeaderCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  instructionModalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  instructionModalSubtitle: {
+    fontSize: 13,
+    textAlign: 'center',
+    paddingHorizontal: 12,
+    lineHeight: 18,
+  },
+  instructionModalBody: {
+    flex: 1,
+  },
+  instructionModalCard: {
+    flexDirection: 'row',
+    padding: 12,
+    borderRadius: 14,
+    marginBottom: 10,
+    alignItems: 'flex-start',
+  },
+  cardIcon: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  cardTextContainer: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 3,
+  },
+  cardDesc: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  instructionModalFooter: {
+    paddingTop: 12,
+    gap: 10,
+  },
+  instructionStartBtn: {
+    backgroundColor: '#2563eb',
+    paddingVertical: 13,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  instructionStartBtnText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  instructionCancelBtn: {
+    paddingVertical: 11,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  instructionCancelBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
   }
 });

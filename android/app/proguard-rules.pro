@@ -12,3 +12,21 @@
 -keep class com.facebook.react.turbomodule.** { *; }
 
 # Add any project specific keep options here:
+
+# Shopify React Native Skia
+-keep class com.shopify.reactnative.skia.** { *; }
+
+# React Native Vision Camera
+-keep class com.mrousavy.camera.** { *; }
+-keep class com.mrousavy.camera.frameprocessor.** { *; }
+-keepclassmembers class com.mrousavy.camera.frameprocessor.** { *; }
+
+# React Native Vision Camera Face Detector
+-keep class com.visioncamerafacedetector.** { *; }
+
+# React Native Worklets Core
+-keep class com.worklets.** { *; }
+-dontwarn com.worklets.**
+
+# React Native WebView
+-keep class com.reactnativecommunity.webview.** { *; }

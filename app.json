@@ -2,7 +2,7 @@
   "expo": {
     "name": "FASITLAC",
     "slug": "FASITLAC",
-    "version": "1.0.5",
+    "version": "1.0.6.0",
     "web": {
       "favicon": "./assets/icon.png"
     },
